@@ -1,8 +1,2 @@
-# Netlify Redirects & API Proxy Configuration
-
-# Rule 1: Proxy API requests to the Render backend service (same-origin to browser, preserves HTTP-only cookies)
-# NOTE: Replace '<YOUR-RENDER-SERVICE>' with your actual Render service name before deployment
-/api/*  https://<YOUR-RENDER-SERVICE>.onrender.com/api/:splat  200
-
-# Rule 2: Single Page Application (SPA) fallback to index.html for client-side routing
+/api/*  https://dsa-tracker-backend-jw3a.onrender.com/api/:splat  200
 /*      /index.html  200
