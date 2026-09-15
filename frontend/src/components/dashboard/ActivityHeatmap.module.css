@@ -1,0 +1,210 @@
+.card {
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.streakSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.streakBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.heatmapWrapper {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  position: relative;
+}
+
+.heatmapContainer {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 720px;
+}
+
+.monthLabels {
+  display: flex;
+  margin-left: 32px;
+  height: 16px;
+  position: relative;
+}
+
+.monthLabel {
+  position: absolute;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.gridArea {
+  display: flex;
+  gap: 6px;
+}
+
+.dayLabels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 104px;
+  width: 26px;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  text-align: right;
+  padding-right: 4px;
+}
+
+.weeksGrid {
+  display: flex;
+  gap: 3px;
+}
+
+.weekColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dayCell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  outline: none;
+}
+
+.dayCell:hover,
+.dayCell:focus {
+  transform: scale(1.35);
+  z-index: 10;
+  border-color: #fff;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+/* Intensity levels using dark canvas theme */
+.level0 {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.level1 {
+  background: #0e4429;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.level2 {
+  background: #006d32;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.level3 {
+  background: #26a641;
+}
+
+.level4 {
+  background: #39d353;
+  box-shadow: 0 0 6px rgba(57, 211, 83, 0.4);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legendCells {
+  display: flex;
+  gap: 3px;
+}
+
+.legendCell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+
+/* Active Tooltip Popover */
+.tooltipBox {
+  position: absolute;
+  bottom: 30px;
+  transform: translateX(-50%);
+  background: #0f172a;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  box-shadow: var(--shadow-card);
+  z-index: 50;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  animation: fadeIn var(--transition-fast) ease-out;
+}
+
+.tooltipDate {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.tooltipCount {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.tooltipBreakdown {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}

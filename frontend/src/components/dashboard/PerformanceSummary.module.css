@@ -1,0 +1,144 @@
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-md);
+}
+
+.card {
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-sm);
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerMeta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.barsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.barItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.barLabelRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.barLabel {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.barValue {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.track {
+  height: 6px;
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+/* Review outcome fills */
+.fillEasy {
+  background: #10b981;
+}
+
+.fillStruggled {
+  background: #f59e0b;
+}
+
+.fillHint {
+  background: #38bdf8;
+}
+
+.fillForgot {
+  background: #f43f5e;
+}
+
+/* Retention fills */
+.fillLearning {
+  background: #94a3b8;
+}
+
+.fillFamiliar {
+  background: #38bdf8;
+}
+
+.fillIndependent {
+  background: #6366f1;
+}
+
+.fillStrong {
+  background: #a855f7;
+}
+
+/* Timing fills */
+.fillOnTime {
+  background: #10b981;
+}
+
+.fillLate {
+  background: #f43f5e;
+}
+
+.fillEarly {
+  background: #38bdf8;
+}
+
+.footerSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-xs);
+}
+
+.highlight {
+  color: var(--text-main);
+  font-weight: 600;
+}

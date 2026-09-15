@@ -1,0 +1,191 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.containerCompact {
+  gap: var(--space-xs);
+}
+
+.stepperWrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding: 8px 4px 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stepperTrack {
+  display: flex;
+  align-items: center;
+  min-width: 620px;
+  justify-content: space-between;
+}
+
+.stepNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+  transition: transform var(--transition-fast);
+}
+
+.nodeIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+}
+
+.nodeLabel {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Completed Stage */
+.stepCompleted .nodeIcon {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1.5px solid var(--color-easy);
+  color: var(--color-easy);
+}
+
+.stepCompleted .nodeLabel {
+  color: var(--color-easy);
+}
+
+/* Current Active Stage */
+.stepCurrent .nodeIcon {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+  transform: scale(1.15);
+}
+
+.stepCurrent .nodeLabel {
+  color: var(--accent-cyan);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+/* Future Stage */
+.stepFuture .nodeIcon {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+}
+
+.stepFuture .nodeLabel {
+  color: var(--text-dim);
+}
+
+/* Connector Line */
+.stepConnector {
+  flex: 1;
+  height: 2px;
+  background: var(--border-subtle);
+  margin: 0 4px 18px 4px;
+  min-width: 16px;
+  transition: background var(--transition-normal);
+}
+
+.connectorActive {
+  background: var(--color-easy);
+  opacity: 0.6;
+}
+
+/* Metrics Box */
+.metricsBox {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.metricsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-xs);
+}
+
+.metricsTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metricsTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.statusOverdue {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.statusDueToday {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--accent-cyan);
+}
+
+.statusUpcoming {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: var(--color-easy);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-sm);
+  padding-top: var(--space-xs);
+}
+
+.metricItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.metricLabel {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.metricValue {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

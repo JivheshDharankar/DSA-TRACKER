@@ -1,0 +1,16 @@
+{
+  "name": "dsa-tracker-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DSA Tracker — Notion organization + LeetCode problems + Anki-style spaced repetition + personal DSA knowledge graph",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "test:backend": "npm --prefix backend test"
+  },
+  "keywords": ["dsa", "spaced-repetition", "anki", "leetcode", "react", "node", "mongodb", "express", "typescript"],
+  "author": "DSA Tracker Team",
+  "license": "ISC"
+}
