@@ -1,7 +1,9 @@
 .sidebar {
   width: 260px;
   background: var(--bg-surface);
-  border-right: 1px solid var(--border-subtle);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border-right: 1px solid var(--border-glass);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -9,6 +11,19 @@
   top: 0;
   z-index: 20;
   transition: width var(--transition-normal);
+  animation: slideRight 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Subtle glass shimmer on top of sidebar */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+  z-index: 1;
 }
 
 .brand {
@@ -17,19 +32,27 @@
   align-items: center;
   gap: var(--space-sm);
   border-bottom: 1px solid var(--border-subtle);
+  animation: slideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
 .brandIcon {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+  background: linear-gradient(135deg, #F59E0B, #D97706);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #000;
   font-weight: 800;
   font-size: 1.1rem;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.brandIcon:hover {
+  transform: scale(1.08) rotate(-4deg);
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.5);
 }
 
 .brandName {
@@ -78,23 +101,53 @@
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.navLink::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent 60%, rgba(255, 255, 255, 0.03));
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
 .navLink:hover {
   background: var(--bg-glass-hover);
   color: var(--text-main);
+  transform: translateX(4px);
+}
+
+.navLink:hover::before {
+  opacity: 1;
 }
 
 .navLinkActive {
-  background: rgba(56, 189, 248, 0.12);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
   font-weight: 600;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.12);
+}
+
+.navLinkActive::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .navLinkActive svg {
-  color: var(--accent-cyan);
+  color: var(--primary);
 }
 
 .sidebarFooter {
@@ -120,10 +173,17 @@
   gap: 8px;
   padding: 8px 10px;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   font-size: 0.75rem;
   color: var(--text-muted);
+  transition: border-color var(--transition-fast);
+}
+
+.userFootprint:hover {
+  border-color: var(--border-medium);
 }
 
 .userFootprintEmail {

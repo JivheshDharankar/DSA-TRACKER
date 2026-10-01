@@ -5,6 +5,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--space-lg) 0;
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .backLink {
@@ -28,10 +29,23 @@
   flex-direction: column;
   gap: var(--space-md);
   background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
 }
 
 .headerTop {
@@ -53,7 +67,7 @@
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--text-dim);
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-surface-elevated);
   padding: 0.2rem 0.6rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
@@ -82,13 +96,31 @@
 
 .sectionCard {
   background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+
+.sectionCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+}
+
+.sectionCard:hover {
+  border-color: var(--border-medium);
 }
 
 .sectionTitle {
@@ -118,11 +150,11 @@
 }
 
 .mistakeItem {
-  color: #fca5a5;
+  color: var(--color-error);
 }
 
 .signalsList .listItem {
-  color: #e2e8f0;
+  color: var(--text-main);
 }
 
 .prereqList {
@@ -166,11 +198,12 @@
 }
 
 .problemRow {
-  transition: background var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .problemRow:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-glass-hover);
+  transform: translateX(3px);
 }
 
 .problemLink {

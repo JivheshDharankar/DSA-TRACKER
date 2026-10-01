@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { RefreshCw, LogOut, User as UserIcon } from 'lucide-react';
+import { RefreshCw, LogOut, User as UserIcon, Sun, Moon } from 'lucide-react';
 import { checkApiHealth } from '../../api/health.api';
 import { HealthCheckData } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import styles from './Header.module.css';
 
 const routeTitleMap: Record<string, string> = {
@@ -22,6 +23,7 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const [health, setHealth] = useState<HealthCheckData | null>(null);
   const [status, setStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
@@ -66,6 +68,25 @@ export const Header: React.FC = () => {
       </div>
 
       <div className={styles.actionsArea}>
+        <button
+          onClick={toggleTheme}
+          className={styles.themeToggleBtn}
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+          aria-label="Toggle Theme"
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun size={15} className={styles.themeIconSun} />
+              <span className={styles.themeLabel}>Light</span>
+            </>
+          ) : (
+            <>
+              <Moon size={15} className={styles.themeIconMoon} />
+              <span className={styles.themeLabel}>Dark</span>
+            </>
+          )}
+        </button>
+
         <div className={styles.statusPill}>
           <span
             className={`${styles.statusDot} ${

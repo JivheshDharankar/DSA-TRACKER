@@ -63,17 +63,16 @@
 
 /* Current Active Stage */
 .stepCurrent .nodeIcon {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+  background: var(--primary);
   border: 2px solid #ffffff;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+  color: #000000;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.5);
   transform: scale(1.15);
 }
 
 .stepCurrent .nodeLabel {
-  color: var(--accent-cyan);
+  color: var(--primary);
   font-weight: 700;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
 }
 
 /* Future Stage */

@@ -1,27 +1,44 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(4, 8, 18, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(4, 8, 18, 0.7);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
   padding: var(--space-md);
   overflow-y: auto;
+  animation: backdropFadeIn 0.25s ease both;
 }
 
 .modal {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-glass);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 620px;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), 0 0 60px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   max-height: 90vh;
+  animation: modalSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  position: relative;
+}
+
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+  z-index: 1;
 }
 
 .header {
@@ -31,6 +48,8 @@
   align-items: center;
   justify-content: space-between;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .title {
@@ -46,12 +65,13 @@
   justify-content: center;
   padding: 4px;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .closeBtn:hover {
   color: var(--text-main);
   background: var(--bg-glass-hover);
+  transform: rotate(90deg);
 }
 
 .form {
@@ -92,22 +112,24 @@
 .select,
 .textarea {
   width: 100%;
-  background: var(--bg-surface-elevated);
+  background: var(--bg-surface-input);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 10px 12px;
   color: var(--text-main);
   font-size: 0.9rem;
   font-family: inherit;
-  transition: all var(--transition-fast);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .input:focus,
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px var(--accent-cyan-glow);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-bg), var(--shadow-glow);
 }
 
 .textarea {
@@ -116,21 +138,25 @@
 }
 
 .errorBanner {
-  background: var(--color-hard-bg);
-  border: 1px solid var(--color-hard-border);
-  color: var(--color-hard);
+  background: var(--color-error-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-error-border);
+  color: var(--color-error);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   font-size: 0.85rem;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  animation: scaleIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .footer {
   padding: var(--space-md) var(--space-xl);
   border-top: 1px solid var(--border-subtle);
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -155,18 +181,29 @@
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-  color: #04101e;
+  background: var(--primary);
+  color: var(--text-inverse);
   font-weight: 700;
   font-size: 0.9rem;
   border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: var(--shadow-sm), 0 0 12px rgba(234, 179, 8, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.submitBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.15));
+  border-radius: inherit;
 }
 
 .submitBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+  background: var(--primary-hover);
+  box-shadow: 0 8px 24px rgba(234, 179, 8, 0.4);
 }
 
 .submitBtn:disabled {

@@ -14,6 +14,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-md);
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .titleArea {
