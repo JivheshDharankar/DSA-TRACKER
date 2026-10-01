@@ -1,9 +1,10 @@
 .card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
-  border: 1px solid var(--border-medium);
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
   box-shadow: var(--shadow-card);
   display: flex;
   justify-content: space-between;
@@ -12,6 +13,13 @@
   gap: var(--space-lg);
   position: relative;
   overflow: hidden;
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
 .card::before {
@@ -21,7 +29,21 @@
   left: 0;
   bottom: 0;
   width: 4px;
-  background: linear-gradient(180deg, var(--accent-cyan), var(--accent-violet));
+  background: var(--primary);
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
+}
+
+/* Floating glass orb in background */
+.card::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(234, 179, 8, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  animation: floatGlow 6s ease-in-out infinite;
 }
 
 .leftArea {
@@ -61,10 +83,18 @@
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.35rem 0.75rem;
+  transition: all var(--transition-fast);
+}
+
+.metricBox:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
 }
 
 .metricVal {
@@ -83,15 +113,15 @@
 }
 
 .overdueVal {
-  color: #f87171;
+  color: var(--color-error);
 }
 
 .dueTodayVal {
-  color: #38bdf8;
+  color: var(--color-pending);
 }
 
 .dueNowVal {
-  color: #34d399;
+  color: var(--color-success);
 }
 
 .rightArea {
@@ -104,20 +134,31 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--accent-cyan);
+  background: var(--primary);
   color: var(--text-inverse);
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-md);
   font-weight: 700;
   font-size: 0.95rem;
   text-decoration: none;
-  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
-  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm), 0 0 16px rgba(234, 179, 8, 0.15);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.startBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.15));
+  border-radius: inherit;
 }
 
 .startBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  background: var(--primary-hover);
+  box-shadow: 0 8px 28px rgba(234, 179, 8, 0.4);
 }
 
 .clearBadge {
@@ -126,9 +167,12 @@
   gap: 0.4rem;
   padding: 0.5rem 1rem;
   background: rgba(16, 185, 129, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(16, 185, 129, 0.35);
   color: #34d399;
   border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.85rem;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
 }

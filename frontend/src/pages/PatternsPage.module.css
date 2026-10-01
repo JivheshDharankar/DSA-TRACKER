@@ -11,6 +11,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .titleRow {
@@ -25,9 +26,6 @@
   font-size: 2rem;
   font-weight: 800;
   color: var(--text-main);
-  background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -49,13 +47,37 @@
 
 .statCard {
   background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: var(--shadow-card);
+  animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+}
+
+.statCard:nth-child(1) { animation-delay: 0.06s; }
+.statCard:nth-child(2) { animation-delay: 0.12s; }
+.statCard:nth-child(3) { animation-delay: 0.18s; }
+.statCard:nth-child(4) { animation-delay: 0.24s; }
+
+.statCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
 .statLabel {
@@ -81,10 +103,13 @@
   gap: var(--space-md);
   flex-wrap: wrap;
   background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--space-md);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: var(--shadow-card);
+  animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
 .searchBox {
@@ -104,18 +129,20 @@
 .searchInput {
   width: 100%;
   padding: 0.625rem 0.875rem 0.625rem 2.5rem;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-surface-input);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-main);
   font-size: 0.875rem;
-  transition: all var(--transition-fast);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .searchInput:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 0 0 3px var(--primary-bg), var(--shadow-glow);
 }
 
 .filterPills {
@@ -128,24 +155,27 @@
   padding: 0.4rem 0.75rem;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-subtle);
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(4px);
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .filterBtn:hover {
   background: var(--bg-glass-hover);
   color: var(--text-main);
   border-color: var(--border-medium);
+  transform: translateY(-1px);
 }
 
 .filterBtnActive {
   background: rgba(56, 189, 248, 0.15);
   color: var(--accent-cyan);
   border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.15);
 }
 
 /* Pattern Grid */
@@ -157,7 +187,7 @@
 
 .patternCard {
   background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   display: flex;
@@ -166,32 +196,34 @@
   gap: var(--space-md);
   text-decoration: none;
   color: inherit;
-  backdrop-filter: blur(12px);
-  transition: all var(--transition-normal);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
   overflow: hidden;
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+.patternCard:nth-child(1) { animation-delay: 0.05s; }
+.patternCard:nth-child(2) { animation-delay: 0.10s; }
+.patternCard:nth-child(3) { animation-delay: 0.15s; }
+.patternCard:nth-child(4) { animation-delay: 0.20s; }
+.patternCard:nth-child(5) { animation-delay: 0.25s; }
+.patternCard:nth-child(6) { animation-delay: 0.30s; }
 
 .patternCard::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--border-medium), transparent);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
 }
 
 .patternCard:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   border-color: var(--border-medium);
-  box-shadow: var(--shadow-card), 0 0 20px rgba(56, 189, 248, 0.1);
-}
-
-.patternCard:hover::before {
-  opacity: 1;
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
 .cardTop {
@@ -225,12 +257,15 @@
 }
 
 .signalsPreview {
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  border: 1px solid var(--border-subtle);
 }
 
 .signalLabel {
@@ -269,6 +304,7 @@
 .prereqPill {
   font-size: 0.7rem;
   background: rgba(148, 163, 184, 0.1);
+  backdrop-filter: blur(4px);
   color: var(--text-dim);
   padding: 0.15rem 0.45rem;
   border-radius: var(--radius-sm);
@@ -282,13 +318,22 @@
   align-items: center;
   gap: 0.25rem;
   white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.actionLink:hover {
+  transform: translateX(3px);
 }
 
 .emptyState {
   text-align: center;
   padding: var(--space-2xl);
   background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   color: var(--text-muted);
+  animation: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

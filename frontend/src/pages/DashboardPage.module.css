@@ -15,6 +15,7 @@
   padding: 0.5rem 0;
   flex-wrap: wrap;
   gap: 1rem;
+  animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .welcomeText {
@@ -47,21 +48,31 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--accent-cyan);
-  color: #0b0f17;
+  background: var(--primary);
+  color: var(--text-inverse);
   font-weight: 600;
   font-size: 0.875rem;
   padding: 0.6rem 1.1rem;
   border-radius: var(--radius-md);
   text-decoration: none;
-  transition: all var(--transition-fast);
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: var(--shadow-sm), 0 0 16px rgba(234, 179, 8, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.newProblemBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.15));
+  border-radius: inherit;
 }
 
 .newProblemBtn:hover {
-  background: #22d3ee;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+  background: var(--primary-hover);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 24px rgba(234, 179, 8, 0.4);
 }
 
 /* Skeleton Loading State */
@@ -82,6 +93,7 @@
 .skeletonHero {
   height: 140px;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   animation: pulse 1.5s infinite ease-in-out;
@@ -96,6 +108,7 @@
 .skeletonCard {
   height: 150px;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   animation: pulse 1.5s infinite ease-in-out;
@@ -104,21 +117,10 @@
 .skeletonHeatmap {
   height: 200px;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   animation: pulse 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    opacity: 0.4;
-  }
 }
 
 /* Error State */
@@ -129,12 +131,16 @@
   justify-content: center;
   text-align: center;
   padding: 3.5rem 1.5rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   gap: 1rem;
   max-width: 480px;
   margin: 3rem auto;
+  animation: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .errorIcon {
@@ -162,8 +168,10 @@
   align-items: center;
   gap: 0.5rem;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-subtle);
   font-size: 0.875rem;
   font-weight: 600;
   padding: 0.55rem 1.25rem;
@@ -173,8 +181,8 @@
 }
 
 .retryBtn:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--border-hover);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
 }
 
 /* Empty State */
@@ -185,12 +193,16 @@
   justify-content: center;
   text-align: center;
   padding: 3.5rem 1.5rem;
-  background: var(--bg-surface);
-  border: 1px dashed var(--border-default);
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px dashed var(--border-medium);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   gap: 1.25rem;
   max-width: 600px;
   margin: 2rem auto;
+  animation: scaleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .emptyIconWrapper {
@@ -198,10 +210,12 @@
   height: 56px;
   border-radius: 50%;
   background: rgba(6, 182, 212, 0.1);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent-cyan);
+  animation: floatGlow 3s ease-in-out infinite;
 }
 
 .emptyHeading {

@@ -113,14 +113,14 @@
 }
 
 .collegeLink {
-  background: rgba(168, 85, 247, 0.12);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
 }
 
 .collegeLink:hover {
-  background: rgba(168, 85, 247, 0.22);
-  color: #f3e8ff;
+  background: rgba(239, 68, 68, 0.22);
+  color: var(--text-main);
 }
 
 .leetcodeLink {

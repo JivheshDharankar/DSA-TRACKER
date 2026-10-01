@@ -1,9 +1,24 @@
 .tableContainer {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-card);
+  animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  position: relative;
+}
+
+.tableContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+  z-index: 1;
 }
 
 .tableWrapper {
@@ -21,6 +36,8 @@
 .th {
   padding: 12px 14px;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-dim);
   font-weight: 700;
   text-transform: uppercase;
@@ -32,11 +49,12 @@
 
 .tr {
   border-bottom: 1px solid var(--border-subtle);
-  transition: background-color var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .tr:hover {
   background-color: var(--bg-glass-hover);
+  transform: translateX(3px);
 }
 
 .td {
@@ -72,7 +90,7 @@
   color: var(--text-main);
   text-decoration: none;
   font-size: 0.92rem;
-  transition: color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .titleLink:hover {
@@ -98,6 +116,7 @@
 
 .topicTag {
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(4px);
   color: var(--text-muted);
   padding: 1px 6px;
   border-radius: var(--radius-sm);
@@ -149,21 +168,21 @@
 }
 
 .dueOverdue {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  color: var(--color-error);
 }
 
 .dueToday {
-  background: rgba(56, 189, 248, 0.15);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  color: var(--accent-cyan);
+  background: var(--color-pending-bg);
+  border: 1px solid var(--color-pending-border);
+  color: var(--color-pending);
 }
 
 .dueUpcoming {
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  color: var(--color-easy);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
 }
 
 .nextDateSub {
@@ -191,6 +210,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.15);
 }
 
 .unlockedSub {
@@ -219,14 +239,14 @@
 }
 
 .collegeLink {
-  background: rgba(168, 85, 247, 0.12);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
 }
 
 .collegeLink:hover {
-  background: rgba(168, 85, 247, 0.22);
-  color: #f3e8ff;
+  background: rgba(239, 68, 68, 0.22);
+  color: var(--text-main);
 }
 
 .leetcodeLink {
@@ -262,13 +282,14 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   text-decoration: none;
 }
 
 .actionBtn:hover {
   color: var(--text-main);
   background: var(--bg-surface-elevated);
+  transform: scale(1.1);
 }
 
 .deleteActionBtn:hover {

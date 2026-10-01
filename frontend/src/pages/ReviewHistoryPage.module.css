@@ -9,12 +9,10 @@
 }
 
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-md);
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+
 
 .titleArea {
   display: flex;
@@ -93,11 +91,15 @@
   align-items: center;
   justify-content: center;
   padding: 80px 20px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   text-align: center;
   gap: var(--space-sm);
+  animation: scaleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .emptyIcon {
@@ -144,10 +146,14 @@
 }
 
 .historyCard {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
 .tableWrapper {
@@ -180,8 +186,13 @@
   vertical-align: middle;
 }
 
+.tr {
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .tr:hover {
   background: var(--bg-glass-hover);
+  transform: translateX(3px);
 }
 
 .sNoCell {
@@ -359,13 +370,15 @@
   gap: 4px;
   padding: 6px 14px;
   background: var(--bg-surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-main);
   font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .pageBtn:hover:not(:disabled) {

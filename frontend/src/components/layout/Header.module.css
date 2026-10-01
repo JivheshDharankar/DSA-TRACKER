@@ -1,8 +1,9 @@
 .header {
   height: 64px;
   background: var(--bg-glass);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: 1px solid var(--border-glass);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -10,6 +11,18 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  animation: slideDown 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Subtle glass highlight on top edge */
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
 }
 
 .titleArea {
@@ -28,6 +41,70 @@
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  animation: slideLeft 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.themeToggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.themeToggleBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.06));
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.themeToggleBtn:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-medium);
+  color: var(--text-main);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.themeToggleBtn:hover::before {
+  opacity: 1;
+}
+
+.themeIconSun {
+  color: #f59e0b;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.themeToggleBtn:hover .themeIconSun {
+  transform: rotate(180deg);
+}
+
+.themeIconMoon {
+  color: var(--primary);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.themeToggleBtn:hover .themeIconMoon {
+  transform: rotate(-30deg) scale(1.15);
+}
+
+.themeLabel {
+  font-size: 0.75rem;
 }
 
 .statusPill {
@@ -36,10 +113,17 @@
   gap: 8px;
   padding: 6px 14px;
   background: var(--bg-surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
   font-size: 0.8rem;
   font-weight: 500;
+  transition: border-color var(--transition-fast);
+}
+
+.statusPill:hover {
+  border-color: var(--border-medium);
 }
 
 .statusDot {
@@ -52,11 +136,13 @@
 .statusConnected {
   background-color: var(--color-easy);
   box-shadow: 0 0 10px var(--color-easy);
+  animation: subtleBreathe 3s ease-in-out infinite;
 }
 
 .statusChecking {
   background-color: var(--color-medium);
   box-shadow: 0 0 10px var(--color-medium);
+  animation: pulse 1s ease-in-out infinite;
 }
 
 .statusDisconnected {
@@ -77,6 +163,7 @@
 .refreshBtn:hover {
   color: var(--text-main);
   background: var(--bg-surface-elevated);
+  transform: rotate(90deg);
 }
 
 .userProfilePill {
@@ -85,21 +172,35 @@
   gap: var(--space-sm);
   padding: 4px 12px 4px 6px;
   background: var(--bg-surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+}
+
+.userProfilePill:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
 }
 
 .userAvatar {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+  background: linear-gradient(135deg, #F59E0B, #D97706);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #fff;
+  color: #000;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+  transition: transform var(--transition-fast);
+}
+
+.userProfilePill:hover .userAvatar {
+  transform: scale(1.1);
 }
 
 .userName {
@@ -141,9 +242,12 @@
   font-weight: 600;
   font-size: 0.8rem;
   border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
 }
 
 .loginBtn:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.35);
 }

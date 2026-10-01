@@ -6,18 +6,39 @@
 }
 
 .card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  background: var(--bg-glass-card);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition-fast);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+}
+
+.card:nth-child(2) {
+  animation-delay: 0.48s;
 }
 
 .card:hover {
-  border-color: var(--border-hover);
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
 
 .cardHeader {
@@ -44,12 +65,13 @@
   font-weight: 500;
   color: var(--accent-cyan);
   text-decoration: none;
-  transition: opacity var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .viewAllLink:hover {
   opacity: 0.8;
   text-decoration: underline;
+  transform: translateX(2px);
 }
 
 .overviewBar {
@@ -59,6 +81,8 @@
   margin-bottom: 1.25rem;
   padding: 0.75rem;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
 }
@@ -101,17 +125,34 @@
   flex-direction: column;
   padding: 0.85rem;
   background: var(--bg-surface-elevated);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   text-decoration: none;
   color: inherit;
-  transition: all var(--transition-fast);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.patternItem::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 70%, rgba(255, 255, 255, 0.03));
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
 .patternItem:hover {
-  border-color: var(--border-hover);
-  transform: translateY(-1px);
-  background: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+  transform: translateY(-2px) translateX(3px);
+  box-shadow: var(--shadow-sm);
+}
+
+.patternItem:hover::before {
+  opacity: 1;
 }
 
 .patternTop {
@@ -195,12 +236,12 @@
 .fill {
   height: 100%;
   border-radius: 9999px;
-  transition: width 0.4s ease-out;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.fillStrong { background: linear-gradient(90deg, #10b981, #34d399); }
+.fillStrong { background: linear-gradient(90deg, #10b981, #34d399); box-shadow: 0 0 6px rgba(16, 185, 129, 0.3); }
 .fillIndependent { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-.fillFamiliar { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.fillFamiliar { background: linear-gradient(90deg, #f59e0b, #fbbf24); box-shadow: 0 0 6px rgba(245, 158, 11, 0.3); }
 .fillLearning { background: linear-gradient(90deg, #64748b, #94a3b8); }
 
 .problemCount {

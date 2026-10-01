@@ -6,14 +6,41 @@
 
 .card {
   background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+}
+
+.card:hover {
+  border-color: var(--border-medium);
+}
+
+.card:nth-child(2) {
+  animation-delay: 0.42s;
+}
+
+.card:nth-child(3) {
+  animation-delay: 0.49s;
 }
 
 .cardHeader {
@@ -78,54 +105,59 @@
 .fill {
   height: 100%;
   border-radius: var(--radius-full);
-  transition: width 0.4s ease;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Review outcome fills */
 .fillEasy {
-  background: #10b981;
+  background: var(--color-success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
 }
 
 .fillStruggled {
-  background: #f59e0b;
+  background: var(--color-pending);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.3);
 }
 
 .fillHint {
-  background: #38bdf8;
+  background: var(--secondary);
 }
 
 .fillForgot {
-  background: #f43f5e;
+  background: var(--color-error);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
 }
 
 /* Retention fills */
 .fillLearning {
-  background: #94a3b8;
+  background: var(--retention-learning);
 }
 
 .fillFamiliar {
-  background: #38bdf8;
+  background: var(--retention-familiar);
 }
 
 .fillIndependent {
-  background: #6366f1;
+  background: var(--retention-independent);
 }
 
 .fillStrong {
-  background: #a855f7;
+  background: var(--retention-strong);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
 }
 
 /* Timing fills */
 .fillOnTime {
-  background: #10b981;
+  background: var(--color-success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
 }
 
 .fillLate {
-  background: #f43f5e;
+  background: var(--color-error);
 }
 
 .fillEarly {
-  background: #38bdf8;
+  background: var(--secondary);
 }
 
 .footerSummary {

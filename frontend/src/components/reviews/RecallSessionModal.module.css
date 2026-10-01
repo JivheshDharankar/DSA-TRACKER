@@ -23,13 +23,15 @@
 
 .modal {
   background: var(--bg-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   width: 100%;
   max-width: 650px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-modal);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
 }
@@ -113,14 +115,14 @@
 }
 
 .collegeLink {
-  background: rgba(168, 85, 247, 0.12);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
 }
 
 .collegeLink:hover {
-  background: rgba(168, 85, 247, 0.22);
-  color: #f3e8ff;
+  background: rgba(239, 68, 68, 0.22);
+  color: var(--text-main);
 }
 
 .leetcodeLink {
@@ -209,23 +211,23 @@
 }
 
 .recallCardEasy:hover {
-  border-color: var(--color-easy);
-  background: rgba(34, 197, 94, 0.08);
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
 }
 
 .recallCardStruggled:hover {
-  border-color: var(--color-medium);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: var(--color-pending);
+  background: var(--color-pending-bg);
 }
 
 .recallCardHint:hover {
-  border-color: var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.08);
+  border-color: var(--secondary);
+  background: var(--secondary-bg);
 }
 
 .recallCardForgot:hover {
-  border-color: var(--color-hard);
-  background: rgba(239, 68, 68, 0.08);
+  border-color: var(--color-error);
+  background: var(--color-error-bg);
 }
 
 .recallTitle {
