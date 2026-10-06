@@ -10,6 +10,8 @@ const envSchema = z.object({
   MONGODB_URI: z.string().min(1).default('mongodb://localhost:27017/dsa_tracker'),
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters long'),
   JWT_EXPIRES_IN: z.string().default('7d'),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().default(process.env.NODE_ENV === 'test' ? 1000 : 20),
 });
 
 const parseEnv = () => {

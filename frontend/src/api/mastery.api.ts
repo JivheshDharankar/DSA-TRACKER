@@ -7,7 +7,7 @@ import {
 } from '../types';
 
 /**
- * Fetches current mastery status and 5-gate qualification breakdown for a problem.
+ * Fetches current mastery status and 4-gate qualification breakdown for a problem.
  */
 export const fetchProblemMastery = async (
   problemId: string
@@ -22,7 +22,7 @@ export const fetchProblemMastery = async (
 };
 
 /**
- * Triggers server-side evaluation of all 5 gates and transitions to LOCKED if eligible.
+ * Triggers server-side evaluation of all 4 gates and transitions to LOCKED if eligible.
  */
 export const evaluateProblemMastery = async (
   problemId: string

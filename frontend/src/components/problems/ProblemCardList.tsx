@@ -6,6 +6,7 @@ import { DifficultyBadge } from './DifficultyBadge';
 import { RetentionBadge } from './RetentionBadge';
 import { StatusBadge } from './StatusBadge';
 import { MasteryBadge } from './MasteryBadge';
+import { getSafeUrl } from '../../utils/url.util';
 import styles from './ProblemCardList.module.css';
 
 interface ProblemCardListProps {
@@ -31,9 +32,9 @@ export const ProblemCardList: React.FC<ProblemCardListProps> = ({
               {prob.title}
             </Link>
             <div className={styles.linkGroup}>
-              {prob.collegeLink && (
+              {getSafeUrl(prob.collegeLink) && (
                 <a
-                  href={prob.collegeLink}
+                  href={getSafeUrl(prob.collegeLink)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.linkBadge} ${styles.collegeLink}`}
@@ -43,9 +44,9 @@ export const ProblemCardList: React.FC<ProblemCardListProps> = ({
                   <ExternalLink size={11} />
                 </a>
               )}
-              {prob.leetcodeLink && (
+              {getSafeUrl(prob.leetcodeLink) && (
                 <a
-                  href={prob.leetcodeLink}
+                  href={getSafeUrl(prob.leetcodeLink)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.linkBadge} ${styles.leetcodeLink}`}

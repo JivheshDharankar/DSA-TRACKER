@@ -485,7 +485,7 @@ describe('Spaced Repetition & Revision Engine API (Phase 4)', () => {
       expect(typeof firstItem.problem.sNo).toBe('number');
     });
 
-    it('preserves review history and returns problem: null when a reviewed problem is deleted', async () => {
+    it('cleans up review history cascade when a reviewed problem is deleted', async () => {
       // Create a problem specifically to review then delete
       const createRes = await request(app)
         .post('/api/v1/problems')
@@ -509,11 +509,19 @@ describe('Spaced Repetition & Revision Engine API (Phase 4)', () => {
           coldSolve: true,
         });
 
+      // Verify review exists before deletion
+      const preDbReviews = await RevisionHistory.find({ problemId: delProblemId });
+      expect(preDbReviews.length).toBe(1);
+
       // Delete the problem
       const delRes = await request(app)
         .delete(`/api/v1/problems/${delProblemId}`)
         .set('Cookie', userACookie);
       expect(delRes.status).toBe(200);
+
+      // Verify DB records are completely purged (no orphan records per P0-A)
+      const postDbReviews = await RevisionHistory.find({ problemId: delProblemId });
+      expect(postDbReviews.length).toBe(0);
 
       // Query user-wide history
       const historyRes = await request(app)
@@ -524,12 +532,10 @@ describe('Spaced Repetition & Revision Engine API (Phase 4)', () => {
       const delHistoryItem = historyRes.body.data.items.find(
         (it: any) => it.problemId === delProblemId
       );
-      expect(delHistoryItem).toBeDefined();
-      expect(delHistoryItem.problem).toBeNull();
-      expect(delHistoryItem.recallResult).toBe('EASY');
+      expect(delHistoryItem).toBeUndefined();
     });
 
-    it('verifies existing problem appears with real title and valid link data, while deleted problem is omitted from visible presentation with no fabricated labels', async () => {
+    it('verifies existing problem appears with real title and valid link data, while deleted problem is purged from DB and omitted from presentation', async () => {
       // 1. Create a problem that remains active
       const activeRes = await request(app)
         .post('/api/v1/problems')
@@ -579,9 +585,10 @@ describe('Spaced Repetition & Revision Engine API (Phase 4)', () => {
         .delete(`/api/v1/problems/${doomedProbId}`)
         .set('Cookie', userACookie);
 
-      // Verify underlying DB persistence: both review history records remain in database
+      // Verify underlying DB persistence: doomed problem reviews are purged per P0-A, only active remains
       const dbReviews = await RevisionHistory.find({ problemId: { $in: [activeProbId, doomedProbId] } });
-      expect(dbReviews.length).toBe(2);
+      expect(dbReviews.length).toBe(1);
+      expect(dbReviews[0]!.problemId.toString()).toBe(activeProbId);
 
       // Fetch user review history from API
       const historyRes = await request(app)
@@ -598,10 +605,9 @@ describe('Spaced Repetition & Revision Engine API (Phase 4)', () => {
       expect(activeItem.problem.title).toBe('Surviving History Problem');
       expect(activeItem.problem._id || activeItem.problem.id).toBeDefined();
 
-      // 2. Deleted problem history record remains in DB and API response with problem: null
+      // 2. Deleted problem history record is purged
       const doomedItem = items.find((it: any) => it.problemId === doomedProbId);
-      expect(doomedItem).toBeDefined();
-      expect(doomedItem.problem).toBeNull();
+      expect(doomedItem).toBeUndefined();
 
       // 3. Transformation to visible Review History presentation (matches ReviewHistoryPage logic)
       const visibleItems = items

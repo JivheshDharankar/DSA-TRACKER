@@ -114,7 +114,9 @@ export class PatternService {
       const reviews = await RevisionHistory.find({
         userId: new mongoose.Types.ObjectId(userId),
         problemId: { $in: Array.from(allUserProblemIds).map((id) => new mongoose.Types.ObjectId(id)) },
-      });
+      })
+        .select('problemId recallResult coldSolve reviewedAt')
+        .lean();
       for (const r of reviews) {
         const pId = r.problemId.toString();
         if (!problemReviewsMap.has(pId)) {
@@ -220,7 +222,9 @@ export class PatternService {
     const reviews = await RevisionHistory.find({
       userId: new mongoose.Types.ObjectId(userId),
       problemId: { $in: problemIds.map((id) => new mongoose.Types.ObjectId(id)) },
-    });
+    })
+      .select('problemId recallResult coldSolve reviewedAt')
+      .lean();
 
     const reviewSummaries: ReviewSummaryForMastery[] = reviews.map((r) => ({
       problemId: r.problemId.toString(),

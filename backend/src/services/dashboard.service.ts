@@ -3,8 +3,17 @@ import { Problem } from '../models/Problem.model.js';
 import { RevisionHistory } from '../models/RevisionHistory.model.js';
 import { ProblemPattern } from '../models/ProblemPattern.model.js';
 import { User } from '../models/User.model.js';
-import { patternService, PatternService } from './pattern.service.js';
+import { patternService, PatternService, PatternWithMastery } from './pattern.service.js';
 import { AppError } from '../middleware/error.middleware.js';
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+const LEVEL_RANK: Record<string, number> = {
+  Learning: 1,
+  Familiar: 2,
+  Independent: 3,
+  Strong: 4,
+};
 
 export interface ActivityHeatmapDay {
   date: string; // YYYY-MM-DD
@@ -256,17 +265,17 @@ export class DashboardService {
     // 3. Patterns with Phase 5 mastery
     const patternsPromise = this.patternSvc.getPatternsWithMastery(userId);
 
-    // 4. Recent activity with problem details
+    // 4. Recent activity with problem details (projecting only display fields to prevent over-fetching notes)
     const recentActivityPromise = RevisionHistory.find({ userId: userObjectId })
       .sort({ reviewedAt: -1 })
       .limit(10)
-      .populate('problemId');
+      .populate('problemId', 'title section difficulty');
 
-    // 5. ProblemPattern primary patterns for user
+    // 5. ProblemPattern primary patterns for user (projecting only pattern name)
     const problemPatternsPromise = ProblemPattern.find({
       userId: userObjectId,
       isPrimary: true,
-    }).populate('patternId');
+    }).populate('patternId', 'name');
 
     // Execute all queries in parallel
     const [
@@ -283,22 +292,56 @@ export class DashboardService {
       problemPatternsPromise,
     ]);
 
-    // --- Format Review Queue ---
-    const queueData = problemAggResult?.queueStats?.[0] || {
-      dueNow: 0,
-      overdue: 0,
-      dueToday: 0,
-      upcoming: 0,
-    };
-    const reviewQueue = {
-      dueNow: queueData.dueNow || 0,
-      overdue: queueData.overdue || 0,
-      dueToday: queueData.dueToday || 0,
-      upcoming: queueData.upcoming || 0,
-    };
+    const reviewQueue = this.buildReviewQueue(problemAggResult?.queueStats?.[0]);
+    const problemStats = this.buildProblemStats(
+      problemAggResult?.statusAndSectionStats || [],
+      problemAggResult?.masteryStats || []
+    );
+    const retention = this.buildRetentionStats(problemAggResult?.retentionStats || []);
+    const reviewStats = this.buildReviewStats(reviewAggResult?.outcomeStats?.[0]);
+    const timing = this.buildTimingStats(reviewAggResult?.timingStats?.[0]);
+    const { activityHeatmap, streak } = this.buildActivityHeatmapAndStreak(
+      reviewAggResult?.dailyActivity || [],
+      startOfTodayUTC
+    );
+    const patternSummary = this.buildPatternSummary(patternsWithMastery);
+    const recentActivity = this.buildRecentActivity(recentReviews, primaryProblemPatterns);
 
-    // --- Format Problem Stats ---
-    const statusSectionDocs = problemAggResult?.statusAndSectionStats || [];
+    return {
+      user: {
+        name: user.name,
+        email: user.email,
+      },
+      reviewQueue,
+      problemStats,
+      reviewStats,
+      retention,
+      timing,
+      streak,
+      activityHeatmap,
+      patternSummary,
+      recentActivity,
+    };
+  }
+
+  private buildReviewQueue(queueData?: {
+    dueNow?: number;
+    overdue?: number;
+    dueToday?: number;
+    upcoming?: number;
+  }): DashboardData['reviewQueue'] {
+    return {
+      dueNow: queueData?.dueNow || 0,
+      overdue: queueData?.overdue || 0,
+      dueToday: queueData?.dueToday || 0,
+      upcoming: queueData?.upcoming || 0,
+    };
+  }
+
+  private buildProblemStats(
+    statusSectionDocs: Array<{ _id?: { section?: string; status?: string }; count?: number }>,
+    masteryDocs: Array<{ _id?: string; count?: number }>
+  ): DashboardData['problemStats'] {
     let collegeSolved = 0;
     let collegeAttempted = 0;
     let collegeNotStarted = 0;
@@ -329,7 +372,6 @@ export class DashboardService {
     const totalNotStarted = collegeNotStarted + personalNotStarted;
     const totalProblems = collegeTotal + personalTotal;
 
-    const masteryDocs = problemAggResult?.masteryStats || [];
     let lockedCount = 0;
     let unlockedCount = 0;
     for (const doc of masteryDocs) {
@@ -340,7 +382,7 @@ export class DashboardService {
       }
     }
 
-    const problemStats = {
+    return {
       total: totalProblems,
       solved: totalSolved,
       attempted: totalAttempted,
@@ -360,9 +402,11 @@ export class DashboardService {
         notStarted: personalNotStarted,
       },
     };
+  }
 
-    // --- Format Retention Stats ---
-    const retentionDocs = problemAggResult?.retentionStats || [];
+  private buildRetentionStats(
+    retentionDocs: Array<{ _id?: string; count?: number }>
+  ): DashboardData['retention'] {
     const retention = {
       learning: 0,
       familiar: 0,
@@ -379,25 +423,27 @@ export class DashboardService {
       else if (lvl === 'Strong') retention.strong += count;
     }
 
-    // --- Format Review Stats ---
-    const outcomeData = reviewAggResult?.outcomeStats?.[0] || {
-      totalReviews: 0,
-      easy: 0,
-      struggled: 0,
-      hint: 0,
-      forgot: 0,
-      independentColdSolves: 0,
-    };
-    const totalReviews = outcomeData.totalReviews || 0;
-    const easy = outcomeData.easy || 0;
-    const struggled = outcomeData.struggled || 0;
-    const hint = outcomeData.hint || 0;
-    const forgot = outcomeData.forgot || 0;
-    const independentColdSolves = outcomeData.independentColdSolves || 0;
+    return retention;
+  }
+
+  private buildReviewStats(outcomeData?: {
+    totalReviews?: number;
+    easy?: number;
+    struggled?: number;
+    hint?: number;
+    forgot?: number;
+    independentColdSolves?: number;
+  }): DashboardData['reviewStats'] {
+    const totalReviews = outcomeData?.totalReviews || 0;
+    const easy = outcomeData?.easy || 0;
+    const struggled = outcomeData?.struggled || 0;
+    const hint = outcomeData?.hint || 0;
+    const forgot = outcomeData?.forgot || 0;
+    const independentColdSolves = outcomeData?.independentColdSolves || 0;
     const successRate =
       totalReviews > 0 ? Math.round(((easy + struggled) / totalReviews) * 100) : 0;
 
-    const reviewStats = {
+    return {
       totalReviews,
       easy,
       struggled,
@@ -406,29 +452,39 @@ export class DashboardService {
       independentColdSolves,
       successRate,
     };
+  }
 
-    // --- Format Timing Stats ---
-    const timingData = reviewAggResult?.timingStats?.[0] || {
-      onTime: 0,
-      late: 0,
-      early: 0,
-      totalLatenessDays: 0,
-      lateCount: 0,
-    };
-    const lateCount = timingData.lateCount || 0;
-    const totalLatenessDays = timingData.totalLatenessDays || 0;
+  private buildTimingStats(timingData?: {
+    onTime?: number;
+    late?: number;
+    early?: number;
+    totalLatenessDays?: number;
+    lateCount?: number;
+  }): DashboardData['timing'] {
+    const lateCount = timingData?.lateCount || 0;
+    const totalLatenessDays = timingData?.totalLatenessDays || 0;
     const averageLatenessDays =
       lateCount > 0 ? Math.round(totalLatenessDays / lateCount) : 0;
 
-    const timing = {
-      onTime: timingData.onTime || 0,
-      late: timingData.late || 0,
-      early: timingData.early || 0,
+    return {
+      onTime: timingData?.onTime || 0,
+      late: timingData?.late || 0,
+      early: timingData?.early || 0,
       averageLatenessDays,
     };
+  }
 
-    // --- Format Activity Heatmap & Streaks ---
-    const dailyActivityDocs = reviewAggResult?.dailyActivity || [];
+  private buildActivityHeatmapAndStreak(
+    dailyActivityDocs: Array<{
+      _id?: string;
+      count?: number;
+      easy?: number;
+      struggled?: number;
+      hint?: number;
+      forgot?: number;
+    }>,
+    startOfTodayUTC: Date
+  ): { activityHeatmap: ActivityHeatmapDay[]; streak: DashboardData['streak'] } {
     const activityMap = new Map<
       string,
       { count: number; easy: number; struggled: number; hint: number; forgot: number }
@@ -451,8 +507,8 @@ export class DashboardService {
     const activeDateStrings = new Set<string>();
 
     for (let i = 364; i >= 0; i--) {
-      const d = new Date(startOfTodayUTC.getTime() - i * 24 * 60 * 60 * 1000);
-      const dateStr = d.toISOString().split('T')[0]!;
+      const d = new Date(startOfTodayUTC.getTime() - i * ONE_DAY_MS);
+      const dateStr = d.toISOString().slice(0, 10);
       const act = activityMap.get(dateStr);
 
       const count = act?.count || 0;
@@ -478,9 +534,9 @@ export class DashboardService {
     }
 
     // Streak calculations
-    const todayStr = startOfTodayUTC.toISOString().split('T')[0]!;
-    const yesterdayDate = new Date(startOfTodayUTC.getTime() - 24 * 60 * 60 * 1000);
-    const yesterdayStr = yesterdayDate.toISOString().split('T')[0]!;
+    const todayStr = startOfTodayUTC.toISOString().slice(0, 10);
+    const yesterdayDate = new Date(startOfTodayUTC.getTime() - ONE_DAY_MS);
+    const yesterdayStr = yesterdayDate.toISOString().slice(0, 10);
 
     let currentStreak = 0;
     let anchorDate: Date | null = null;
@@ -494,10 +550,10 @@ export class DashboardService {
     if (anchorDate) {
       let checkDate = new Date(anchorDate.getTime());
       while (true) {
-        const checkStr = checkDate.toISOString().split('T')[0]!;
+        const checkStr = checkDate.toISOString().slice(0, 10);
         if (activeDateStrings.has(checkStr)) {
           currentStreak++;
-          checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000);
+          checkDate = new Date(checkDate.getTime() - ONE_DAY_MS);
         } else {
           break;
         }
@@ -515,7 +571,7 @@ export class DashboardService {
       if (prevDateTime === null) {
         runningStreak = 1;
       } else {
-        const diffDays = Math.round((currentDateTime - prevDateTime) / (24 * 60 * 60 * 1000));
+        const diffDays = Math.round((currentDateTime - prevDateTime) / ONE_DAY_MS);
         if (diffDays === 1) {
           runningStreak++;
         } else {
@@ -530,16 +586,22 @@ export class DashboardService {
 
     const lastActiveDate =
       sortedAllActiveDates.length > 0
-        ? sortedAllActiveDates[sortedAllActiveDates.length - 1]!
+        ? sortedAllActiveDates[sortedAllActiveDates.length - 1] ?? null
         : null;
 
-    const streak = {
-      current: currentStreak,
-      longest: longestStreak,
-      lastActiveDate,
+    return {
+      activityHeatmap,
+      streak: {
+        current: currentStreak,
+        longest: longestStreak,
+        lastActiveDate,
+      },
     };
+  }
 
-    // --- Format Pattern Mastery Summary ---
+  private buildPatternSummary(
+    patternsWithMastery: PatternWithMastery[]
+  ): DashboardData['patternSummary'] {
     const totalPatterns = patternsWithMastery.length;
     let strongCount = 0;
     let independentCount = 0;
@@ -572,16 +634,9 @@ export class DashboardService {
     }));
 
     // Needs Practice Patterns: prioritized by level: Learning (1) -> Familiar (2) -> Independent (3) -> Strong (4), then score ascending, then name ascending
-    const levelRank: Record<string, number> = {
-      Learning: 1,
-      Familiar: 2,
-      Independent: 3,
-      Strong: 4,
-    };
-
     const sortedNeedsPractice = [...patternsWithMastery].sort((a, b) => {
-      const rankA = levelRank[a.mastery.masteryLevel] ?? 5;
-      const rankB = levelRank[b.mastery.masteryLevel] ?? 5;
+      const rankA = LEVEL_RANK[a.mastery.masteryLevel] ?? 5;
+      const rankB = LEVEL_RANK[b.mastery.masteryLevel] ?? 5;
       if (rankA !== rankB) {
         return rankA - rankB;
       }
@@ -600,7 +655,7 @@ export class DashboardService {
       problemCount: p.mastery.problemCount,
     }));
 
-    const patternSummary = {
+    return {
       totalPatterns,
       strong: strongCount,
       independent: independentCount,
@@ -609,8 +664,23 @@ export class DashboardService {
       strongestPatterns,
       needsPracticePatterns,
     };
+  }
 
-    // --- Format Recent Activity ---
+  private buildRecentActivity(
+    recentReviews: Array<{
+      _id: mongoose.Types.ObjectId;
+      problemId?: unknown;
+      recallResult: string;
+      timingStatus: string;
+      latenessDays: number;
+      coldSolve?: boolean | null;
+      reviewedAt: Date;
+    }>,
+    primaryProblemPatterns: Array<{
+      problemId?: mongoose.Types.ObjectId;
+      patternId?: unknown;
+    }>
+  ): RecentActivityItem[] {
     const primaryPatternByProblemId = new Map<string, string>();
     for (const pp of primaryProblemPatterns) {
       const probId = pp.problemId ? pp.problemId.toString() : '';
@@ -655,21 +725,7 @@ export class DashboardService {
       });
     }
 
-    return {
-      user: {
-        name: user.name,
-        email: user.email,
-      },
-      reviewQueue,
-      problemStats,
-      reviewStats,
-      retention,
-      timing,
-      streak,
-      activityHeatmap,
-      patternSummary,
-      recentActivity,
-    };
+    return recentActivity;
   }
 }
 

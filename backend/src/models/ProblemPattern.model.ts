@@ -22,7 +22,6 @@ const problemPatternSchema = new Schema<IProblemPatternDocument>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User ID is required'],
-      index: true,
     },
     problemId: {
       type: Schema.Types.ObjectId,
@@ -76,6 +75,9 @@ problemPatternSchema.index({ userId: 1, problemId: 1, patternId: 1 }, { unique: 
 
 // Compound index for querying all problems for a pattern by user
 problemPatternSchema.index({ userId: 1, patternId: 1 });
+
+// Compound index for dashboard primary pattern lookups
+problemPatternSchema.index({ userId: 1, isPrimary: 1 });
 
 export const ProblemPattern: Model<IProblemPatternDocument> =
   mongoose.model<IProblemPatternDocument>('ProblemPattern', problemPatternSchema);

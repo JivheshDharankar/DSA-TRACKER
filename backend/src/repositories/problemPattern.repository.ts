@@ -14,7 +14,7 @@ export interface IProblemPatternRepository {
     isPrimary?: boolean;
   }): Promise<IProblemPatternDocument>;
   delete(userId: string, problemId: string, patternId: string): Promise<boolean>;
-  deleteByProblem(userId: string, problemId: string): Promise<number>;
+  deleteByProblem(userId: string, problemId: string, session?: mongoose.ClientSession): Promise<number>;
   findByProblem(userId: string, problemId: string): Promise<IProblemPatternDocument[]>;
   findByPattern(userId: string, patternId: string): Promise<IProblemPatternDocument[]>;
   findByUser(userId: string): Promise<IProblemPatternDocument[]>;
@@ -57,14 +57,21 @@ export class ProblemPatternRepository implements IProblemPatternRepository {
     return result.deletedCount === 1;
   }
 
-  async deleteByProblem(userId: string, problemId: string): Promise<number> {
+  async deleteByProblem(
+    userId: string,
+    problemId: string,
+    session?: mongoose.ClientSession
+  ): Promise<number> {
     if (!mongoose.Types.ObjectId.isValid(problemId)) {
       return 0;
     }
-    const result = await ProblemPattern.deleteMany({
-      userId: new mongoose.Types.ObjectId(userId),
-      problemId: new mongoose.Types.ObjectId(problemId),
-    });
+    const result = await ProblemPattern.deleteMany(
+      {
+        userId: new mongoose.Types.ObjectId(userId),
+        problemId: new mongoose.Types.ObjectId(problemId),
+      },
+      { session }
+    );
     return result.deletedCount;
   }
 

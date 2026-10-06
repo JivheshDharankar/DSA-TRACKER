@@ -20,6 +20,7 @@ export interface IReviewRepository {
     limit?: number
   ): Promise<IRevisionHistoryDocument[]>;
   countUserHistory(userId: string): Promise<number>;
+  deleteByProblem(userId: string, problemId: string, session?: mongoose.ClientSession): Promise<number>;
 }
 
 export class ReviewRepository implements IReviewRepository {
@@ -79,6 +80,24 @@ export class ReviewRepository implements IReviewRepository {
     return RevisionHistory.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
     });
+  }
+
+  async deleteByProblem(
+    userId: string,
+    problemId: string,
+    session?: mongoose.ClientSession
+  ): Promise<number> {
+    if (!mongoose.Types.ObjectId.isValid(problemId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return 0;
+    }
+    const result = await RevisionHistory.deleteMany(
+      {
+        problemId: new mongoose.Types.ObjectId(problemId),
+        userId: new mongoose.Types.ObjectId(userId),
+      },
+      { session }
+    );
+    return result.deletedCount;
   }
 }
 

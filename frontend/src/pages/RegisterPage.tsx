@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getErrorMessage } from '../utils/error.utils';
 import styles from '../styles/Auth.module.css';
 
 export const RegisterPage: React.FC = () => {
@@ -49,8 +50,7 @@ export const RegisterPage: React.FC = () => {
       });
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      setErrorMessage(error.message || 'Registration failed. Please try again.');
+      setErrorMessage(getErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

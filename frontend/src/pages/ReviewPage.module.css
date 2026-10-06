@@ -6,6 +6,18 @@
   margin: 0 auto;
 }
 
+.errorBanner {
+  background: var(--color-hard-bg);
+  border: 1px solid var(--color-hard-border);
+  color: var(--color-hard);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .headerRow {
   display: flex;
   align-items: center;

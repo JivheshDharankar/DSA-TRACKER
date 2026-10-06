@@ -28,3 +28,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Generated Test, Coverage & Tool Artifacts
+frontend/coverage/
+frontend/test-results/
+.freebuff/

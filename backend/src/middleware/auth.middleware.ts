@@ -24,7 +24,7 @@ export const requireAuth = async (
 
     const payload = verifyToken(token);
 
-    const user = await User.findById(payload.userId);
+    const user = await User.findById(payload.userId).select('name email').lean();
     if (!user) {
       throw new AppError('Authenticated user no longer exists.', 401, 'USER_NOT_FOUND');
     }

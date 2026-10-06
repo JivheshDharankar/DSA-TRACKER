@@ -7,6 +7,7 @@ import { RetentionBadge } from './RetentionBadge';
 import { StatusBadge } from './StatusBadge';
 import { computeDueStatus } from '../reviews/SrsProgressionStepper';
 import { formatCalendarDate } from '../../utils/date.utils';
+import { getSafeUrl } from '../../utils/url.util';
 import styles from './ProblemTable.module.css';
 
 interface ProblemTableProps {
@@ -126,9 +127,9 @@ export const ProblemTable: React.FC<ProblemTableProps> = ({
                   {/* Column 6: Links */}
                   <td className={styles.td}>
                     <div className={styles.linksCol}>
-                      {prob.leetcodeLink && (
+                      {getSafeUrl(prob.leetcodeLink) && (
                         <a
-                          href={prob.leetcodeLink}
+                          href={getSafeUrl(prob.leetcodeLink)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`${styles.linkBadge} ${styles.leetcodeLink}`}
@@ -138,9 +139,9 @@ export const ProblemTable: React.FC<ProblemTableProps> = ({
                           <ExternalLink size={10} />
                         </a>
                       )}
-                      {prob.collegeLink && (
+                      {getSafeUrl(prob.collegeLink) && (
                         <a
-                          href={prob.collegeLink}
+                          href={getSafeUrl(prob.collegeLink)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`${styles.linkBadge} ${styles.collegeLink}`}
@@ -150,7 +151,7 @@ export const ProblemTable: React.FC<ProblemTableProps> = ({
                           <ExternalLink size={10} />
                         </a>
                       )}
-                      {!prob.leetcodeLink && !prob.collegeLink && (
+                      {!getSafeUrl(prob.leetcodeLink) && !getSafeUrl(prob.collegeLink) && (
                         <span className={styles.emptyDash}>—</span>
                       )}
                     </div>

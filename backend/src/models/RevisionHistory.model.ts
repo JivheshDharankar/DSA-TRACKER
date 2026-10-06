@@ -30,13 +30,52 @@ export interface IRevisionHistoryDocument extends IRevisionHistory, Document {
   _id: mongoose.Types.ObjectId;
 }
 
+interface MongooseDocWithPopulated {
+  populated?: (path: string) => unknown;
+}
+
+export function transformRevisionHistory(
+  doc: unknown,
+  ret: Record<string, unknown>
+): Record<string, unknown> {
+  ret['id'] = ret['_id']?.toString();
+  ret['userId'] = ret['userId']?.toString();
+
+  if (ret['problemId'] && typeof ret['problemId'] === 'object') {
+    const populatedProblem = ret['problemId'] as Record<string, unknown>;
+    const problemIdStr = (populatedProblem['_id'] || populatedProblem['id'])?.toString();
+    ret['problemId'] = problemIdStr;
+    ret['problem'] = {
+      id: problemIdStr,
+      _id: problemIdStr,
+      title: populatedProblem['title'],
+      sNo: populatedProblem['sNo'],
+      section: populatedProblem['section'],
+      difficulty: populatedProblem['difficulty'],
+      topic: populatedProblem['topic'],
+    };
+  } else if (
+    doc &&
+    typeof (doc as MongooseDocWithPopulated).populated === 'function' &&
+    (doc as MongooseDocWithPopulated).populated?.('problemId')
+  ) {
+    ret['problemId'] = (doc as MongooseDocWithPopulated).populated?.('problemId')?.toString() || null;
+    ret['problem'] = null;
+  } else if (ret['problemId']) {
+    ret['problemId'] = ret['problemId']?.toString();
+  }
+
+  delete ret['_id'];
+  delete ret['__v'];
+  return ret;
+}
+
 const revisionHistorySchema = new Schema<IRevisionHistoryDocument>(
   {
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User ID is required'],
-      index: true,
     },
     problemId: {
       type: Schema.Types.ObjectId,
@@ -119,64 +158,10 @@ const revisionHistorySchema = new Schema<IRevisionHistoryDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(doc, ret: Record<string, unknown>) {
-        ret['id'] = ret['_id']?.toString();
-        ret['userId'] = ret['userId']?.toString();
-
-        if (ret['problemId'] && typeof ret['problemId'] === 'object') {
-          const populatedProblem = ret['problemId'] as Record<string, unknown>;
-          const problemIdStr = (populatedProblem['_id'] || populatedProblem['id'])?.toString();
-          ret['problemId'] = problemIdStr;
-          ret['problem'] = {
-            id: problemIdStr,
-            _id: problemIdStr,
-            title: populatedProblem['title'],
-            sNo: populatedProblem['sNo'],
-            section: populatedProblem['section'],
-            difficulty: populatedProblem['difficulty'],
-            topic: populatedProblem['topic'],
-          };
-        } else if (doc && typeof (doc as any).populated === 'function' && (doc as any).populated('problemId')) {
-          ret['problemId'] = (doc as any).populated('problemId')?.toString() || null;
-          ret['problem'] = null;
-        } else if (ret['problemId']) {
-          ret['problemId'] = ret['problemId']?.toString();
-        }
-
-        delete ret['_id'];
-        delete ret['__v'];
-        return ret;
-      },
+      transform: transformRevisionHistory,
     },
     toObject: {
-      transform(doc, ret: Record<string, unknown>) {
-        ret['id'] = ret['_id']?.toString();
-        ret['userId'] = ret['userId']?.toString();
-
-        if (ret['problemId'] && typeof ret['problemId'] === 'object') {
-          const populatedProblem = ret['problemId'] as Record<string, unknown>;
-          const problemIdStr = (populatedProblem['_id'] || populatedProblem['id'])?.toString();
-          ret['problemId'] = problemIdStr;
-          ret['problem'] = {
-            id: problemIdStr,
-            _id: problemIdStr,
-            title: populatedProblem['title'],
-            sNo: populatedProblem['sNo'],
-            section: populatedProblem['section'],
-            difficulty: populatedProblem['difficulty'],
-            topic: populatedProblem['topic'],
-          };
-        } else if (doc && typeof (doc as any).populated === 'function' && (doc as any).populated('problemId')) {
-          ret['problemId'] = (doc as any).populated('problemId')?.toString() || null;
-          ret['problem'] = null;
-        } else if (ret['problemId']) {
-          ret['problemId'] = ret['problemId']?.toString();
-        }
-
-        delete ret['_id'];
-        delete ret['__v'];
-        return ret;
-      },
+      transform: transformRevisionHistory,
     },
   }
 );

@@ -7,6 +7,7 @@ import {
   CreateProblemInput,
   UpdateProblemInput,
 } from '../types';
+import { getErrorMessage } from '../utils/error.utils';
 import {
   fetchProblems,
   createProblem,
@@ -22,7 +23,7 @@ interface UseProblemsResult {
   filters: ProblemQueryParams;
   updateFilters: (newFilters: Partial<ProblemQueryParams>) => void;
   resetFilters: () => void;
-  handleCreateProblem: (data: CreateProblemInput) => Promise<void>;
+  handleCreateProblem: (data: CreateProblemInput) => Promise<Problem>;
   handleUpdateProblem: (id: string, data: UpdateProblemInput) => Promise<void>;
   handleDeleteProblem: (id: string) => Promise<void>;
   refreshProblems: () => Promise<void>;
@@ -58,8 +59,7 @@ export const useProblems = (section: SectionType): UseProblemsResult => {
       setProblems(result.items);
       setPagination(result.pagination);
     } catch (err: unknown) {
-      const errorObj = err as { message?: string };
-      setError(errorObj.message || 'Failed to load problems.');
+      setError(getErrorMessage(err, 'Failed to load problems.'));
     } finally {
       setIsLoading(false);
     }
@@ -93,9 +93,10 @@ export const useProblems = (section: SectionType): UseProblemsResult => {
     });
   };
 
-  const handleCreate = async (data: CreateProblemInput) => {
-    await createProblem(data);
+  const handleCreate = async (data: CreateProblemInput): Promise<Problem> => {
+    const created = await createProblem(data);
     await loadProblems();
+    return created;
   };
 
   const handleUpdate = async (id: string, data: UpdateProblemInput) => {

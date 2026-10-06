@@ -1,304 +1,574 @@
 # DSA Tracker — MERN Stack Spaced Repetition Platform
 
-> A production-grade, personal DSA learning and long-term retention platform built with the MERN stack (React, Vite, Node.js, Express, MongoDB, TypeScript).
+> A personal DSA learning and long-term retention platform built with the MERN stack (React 18, Vite 6, Node.js, Express, MongoDB, TypeScript). Combines structured problem tracking with active recall, deterministic spaced repetition (SRS), 4-gate mastery qualification, and pattern-oriented analytics.
 
 ---
 
 ## 1. Project Overview
 
-**DSA Tracker** is engineered for structured problem tracking and long-term retention using active recall and adaptive spaced repetition.
+**DSA Tracker** is engineered for structured problem management and long-term algorithmic retention. Unlike generic note-taking tools or static spreadsheets, DSA Tracker enforces an active recall workflow coupled with a deterministic spaced repetition scheduling engine.
 
-### Key Conceptual Features:
-- **Two Distinct Trackers**:
-  - **College DSA**: For coursework, lectures, lab assignments, and semester exams.
-  - **Personal DSA**: For independent problem solving, LeetCode mastery, and MAANG interview preparation (with optional LeetCode Number identification).
-- **System-Generated S.No.**: Independent, zero-gap sequential numbers per user per section (`College: 1, 2, 3...` and `Personal: 1, 2, 3...`).
-- **Strict Data Isolation**: Multi-tenant architecture ensuring complete data privacy across users.
-- **SOLID Clean Architecture**: Layered separation of concerns (Controllers → Services → Repositories → Models).
-- **Spaced Repetition Foundation**: Ready for deterministic adaptive milestone progression (`0d → 1d → 3d → 7d → 14d → 30d → 60d → 120d → 240d → 365d`) in Phase 4.
-
----
-
-## 2. SOLID Architectural Design (Phase 3)
-
-| Principle | Implementation in Phase 3 |
-| :--- | :--- |
-| **S — Single Responsibility** | • **Controllers** (`problem.controller.ts`) handle only HTTP request parsing and response envelopes.<br>• **Services** (`problem.service.ts`) orchestrate business rules, domain invariants, and pagination.<br>• **Repositories** (`problem.repository.ts`, `problemSequence.repository.ts`) encapsulate raw MongoDB queries and ensure `userId` scoping.<br>• **Validators** (`problem.validator.ts`) handle input schema parsing and sanitization.<br>• **UI Components** (`ProblemTable`, `ProblemCardList`, `ProblemModal`) focus strictly on presentation. |
-| **O — Open/Closed** | • The `Problem` model and `ProblemService` are designed to allow future spaced repetition metadata and pattern relations to be attached without mutating core CRUD logic. |
-| **L — Liskov Substitution** | • `ProblemRepository` and `ProblemSequenceRepository` fulfill typed interfaces (`IProblemRepository`, `IProblemSequenceRepository`), enabling seamless mocking in unit tests. |
-| **I — Interface Segregation** | • Discrete interfaces are defined for problem creation (`CreateProblemInput`), updates (`UpdateProblemInput`), query filters (`ListProblemsQuery`), and sequence generation (`IProblemSequenceRepository`). |
-| **D — Dependency Inversion** | • `ProblemService` depends on repository abstractions injected via constructor defaults, decoupling business logic from direct Mongoose global instances. |
+### Core Capabilities:
+- **Two Distinct Problem Trackers**:
+  - **College DSA**: Track coursework, lecture concepts, lab assignments, and semester exam problems.
+  - **Personal DSA**: Manage independent problem-solving, LeetCode practice, and technical interview preparation with optional LeetCode problem numbering.
+- **Zero-Gap Sequential Numbering (S.No.)**: Per-user, per-section atomic counters (`College: 1, 2, 3...` and `Personal: 1, 2, 3...`) guaranteeing gap preservation upon deletion.
+- **Dual Problem Links**: Independent optional links for both academic/college portals and LeetCode problems, supporting decoupled LeetCode problem numbers.
+- **Deterministic 10-Stage Spaced Repetition (SRS)**: Adaptive interval scheduling (`0d → 1d → 3d → 7d → 14d → 30d → 60d → 120d → 240d → 365d`) with an active recall UI (notes hidden during recall).
+- **Proof-of-Learning Mastery System**: A strict **4-gate qualification** model ensuring problems only achieve locked mastery after meeting objective evidence of solved status, spaced repetition maturity, independent cold recall, and recent review success.
+- **Pattern Library & 5-Factor Mastery Engine**: 30 foundational DSA patterns with real-time multi-factor mastery scoring calculated across coverage, cold recall, quality, consistency, and problem transfer.
+- **Command Center Dashboard**: Unified derived analytics computed on-the-fly via parallel aggregations: review queues, calendar-day timing, 365-day UTC activity heatmap, streak tracking, pattern strengths, and recent activity.
+- **Multi-Layered Security Architecture**: Scoped multi-tenant queries (`req.user.userId`), HTTP-only SameSite JWT cookies, dual-tier rate limiting, Helmet security headers, Zod validation, ReDoS regex escaping, and defense-in-depth URL sanitization.
 
 ---
 
-## 3. Data Privacy & Ownership Model
+## 2. Core Implemented Features
 
-> [!IMPORTANT]
-> **User data privacy is non-negotiable**.
-> - Every database query and mutation is strictly scoped to `req.user.userId` obtained from the cryptographically verified JWT session cookie.
-> - Client-supplied `userId` fields in request bodies or query parameters are **never trusted**.
-> - Attempting to view, update, or delete another user's problem returns a safe **`404 NOT_FOUND`** to eliminate enumeration vulnerabilities.
-
----
-
-## 4. Display S.No. Sequencing System
-
-- **MongoDB `_id`** is the true database identity.
-- **S.No.** is a user-facing display identifier managed via a dedicated `ProblemSequence` collection with a unique compound index on `{ userId: 1, section: 1 }`.
-- **Atomic Counter Allocation**: Uses MongoDB atomic `$inc` within `findOneAndUpdate`, ensuring non-colliding sequential numbers (`1, 2, 3...`) even under rapid concurrent requests.
-- **Deletion Behavior & Gaps**: Deleting a problem (e.g. deleting `#2` from `1, 2, 3`) leaves remaining problems unchanged (`1, 3`). The next created problem receives `#4`. Gaps are preserved and never reused.
-
----
-
-## 5. Dual Problem Links & LeetCode Identification (Phase 3.1)
-
-- **Independent Optional Links**: Replaces single `problemLink` with independent `collegeLink` and `leetcodeLink`.
-- **Flexible Matrix**: A single logical problem can have `only collegeLink`, `only leetcodeLink`, `both`, or `neither` (zero duplication of records).
-- **Independent LeetCode #**: `leetcodeNumber` remains an optional positive integer decoupled from links.
-- **Safe Non-Destructive Migration**: In the `Problem` model's JSON transform, legacy documents containing `problemLink` are preserved and dynamically mapped (`leetcode.com` → `leetcodeLink`, others → `collegeLink`) without destructive writes.
-- **UI Integration**:
-  - **College DSA & Personal DSA Tables**: Dedicated `College` (`College ↗`) and `LeetCode` (`LeetCode ↗`) columns with glowing badges.
-  - **Problem Details & Cards**: Independent clickable external link buttons with safe `rel="noopener noreferrer"` attributes.
-  - **Create / Edit Modal**: Clean dual URL inputs with URL validation and optional LeetCode #.
+| Feature | Description | Implementation Status |
+| :--- | :--- | :--- |
+| **College DSA Tracker** | Coursework, lab, and exam problem tracking with dedicated academic source tags. | Verified Complete |
+| **Personal DSA Tracker** | Independent LeetCode practice with LeetCode numbering and dedicated interview sources. | Verified Complete |
+| **Atomic S.No. Sequencing** | Non-colliding, gap-preserving sequential counters per user per section via `ProblemSequence`. | Verified Complete |
+| **Dual External Links** | Independent `collegeLink` and `leetcodeLink` with safe HTTP/HTTPS URL validation. | Verified Complete |
+| **10-Stage SRS Engine** | Adaptive intervals up to 365 days with recovery sequences and UTC calendar-day timing. | Verified Complete |
+| **Active Recall UI** | Solution notes strictly hidden during review; revealed only during self-evaluation. | Verified Complete |
+| **4-Gate Mastery System** | Evidence-based completion seal requiring 4 simultaneous gates, with automatic demotion on failure. | Verified Complete |
+| **DSA Pattern Catalog** | 30 foundational patterns seeded idempotently with signals, common mistakes, and prerequisites. | Verified Complete |
+| **5-Factor Pattern Mastery** | Weighted composite score across Coverage, Independent Recall, Quality, Consistency, and Transfer. | Verified Complete |
+| **Command Center Dashboard** | Unified derived read-model providing queue metrics, streaks, heatmaps, and pattern summaries. | Verified Complete |
+| **Revision History** | Immutable, append-only history capturing intervals, lateness, cold-solve flags, and time spent. | Verified Complete |
+| **JWT Cookie Authentication** | Stateless JWT stored in HTTP-only, SameSite cookies with bcrypt password hashing. | Verified Complete |
+| **Adversarial Security Hardening** | Dual rate limiting, IDOR isolation, strict Zod schemas, ReDoS protection, and URL sanitization. | Verified Complete |
 
 ---
 
-## 6. Spaced Repetition Engine & Day-Based Timing (Phase 4)
+## 3. Architecture & Data Flow
 
-- **Backend-Authoritative Scheduling**: The backend is the sole authority calculating stages, intervals, lateness, retention, and next review dates.
-- **Milestone Progression Intervals**:
-  - `Stage 0 → 0d` (Initial / Created)
-  - `Stage 1 → 1d`
-  - `Stage 2 → 3d`
-  - `Stage 3 → 7d`
-  - `Stage 4 → 14d`
-  - `Stage 5 → 30d`
-  - `Stage 6 → 60d`
-  - `Stage 7 → 120d`
-  - `Stage 8 → 240d`
-  - `Stage 9 → 365d`
-- **Adaptive Recall Outcomes**:
-  - `EASY`: Advances stage + 1 (capped at Stage 9 / 365d), promotes retention (`Learning → Familiar → Independent → Strong`), exits recovery mode if active.
-  - `STRUGGLED`: Conservative progression (advances at stages 0-1, holds stage for higher tiers), advances recovery step.
-  - `HINT`: Holds stage or drops 1 stage, schedules near review (3-7 days).
-  - `FORGOT`: Enters short-term recovery sequence (`1d → 3d → 7d → 14d`) without erasing baseline stage or history.
-- **Calendar-Day Timing Semantics**:
-  - Compares UTC calendar days between `scheduledReviewAt` and `reviewedAt`.
-  - Timing Status: `ON_TIME` (`latenessDays = 0`), `LATE` (`latenessDays = diffDays`), `EARLY` (`latenessDays = Math.abs(diffDays)`).
-  - `latenessDays` is **strictly non-negative**.
-  - **No hours/minutes in UI**: Displayed strictly as `"On time"`, `"Late by 1 day"`, `"Late by 15 days"`, `"Early by 2 days"`.
-- **Review Date Anchor**: Next review date is calculated from the **actual review calendar date** (`reviewedAt + newIntervalDays`), preventing overdue snowballing.
-- **Independence of Recall & Timing**: Lateness never penalizes recall quality (e.g. `Late by 3 days + EASY` remains `recallResult: 'EASY'`).
-- **Append-Only Revision History**: Every completed review creates an immutable `RevisionHistory` record.
-- **Active Recall Session UI**: Solution notes remain **strictly hidden** during cold attempt and are revealed only during self-evaluation.
+### Architectural Topology
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       Frontend (React 18 + Vite)                │
+│   Pages → Shared TrackerPage → useProblems Hook → API Client    │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ HTTPS / REST (HTTP-only Cookie)
+┌───────────────────────────────▼─────────────────────────────────┐
+│                     Backend (Node.js + Express 4)               │
+│   Routes → Middleware (Auth, Validation, Rate Limiter)          │
+│     ↓                                                           │
+│   Controllers (Request parsing & response envelope)             │
+│     ↓                                                           │
+│   Services (Domain business rules & scheduling algorithms)      │
+│     ↓                                                           │
+│   Repositories (Data access layer & multi-tenant userId scoping)│
+│     ↓                                                           │
+│   Mongoose Models → MongoDB Database                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Frontend Architecture
+- **Route Structure**: Configured in `App.tsx` using React Router 6. Includes guest-only routes (`/login`, `/register`) wrapped in `GuestRoute` and authenticated routes (`/dashboard`, `/college-dsa`, `/personal-dsa`, `/review`, `/reviews/history`, `/patterns`, `/patterns/:id`, `/problems/locked`, `/problems/:id`) wrapped in `ProtectedRoute`.
+- **Shared `TrackerPage` Pattern**: `CollegeDsaPage` and `PersonalDsaPage` are thin wrappers around the reusable `TrackerPage` component parameterized by `section="COLLEGE"` or `section="PERSONAL"`. This eliminates UI and logic duplication while guaranteeing identical sorting, filtering, pagination, and modal behaviors across both sections.
+- **State & Data Flow (`useProblems`)**: The custom hook `useProblems(section)` manages problem fetching, multi-parameter filter state (search, topic, difficulty, source, status, retentionLevel, sorting), pagination, and CRUD handler dispatching.
+- **Shared Tracker Components**: `TrackerHeader`, `ProblemFilterBar`, `ProblemTable`, `ProblemCardList`, `Pagination`, `ProblemModal`, and `DeleteProblemDialog`.
+- **API Client Layer**: Axios client configured with `withCredentials: true` ensuring automated cookie transmission on every request, with centralized error response unwrapping.
+- **Defense-in-Depth URL Sanitizer**: All external links are passed through `getSafeUrl()` (`frontend/src/utils/url.ts`), strictly enforcing `http:` and `https:` protocols and discarding unsafe schemes (e.g. `javascript:`, `data:`).
+
+### Backend Architecture
+- **Responsibility Boundaries**:
+  - **Routes**: Define HTTP paths, apply route-level middleware (`requireAuth`, `validateBody`, `rateLimiter`).
+  - **Controllers**: Handle HTTP semantics, extract request parameters, and format standard JSON responses (`ApiResponse<T>`).
+  - **Services**: Contain pure business logic, deterministic scheduling calculations, mastery gate evaluation, and multi-step transaction orchestration. Services receive repository dependencies via constructor defaults.
+  - **Repositories**: Encapsulate Mongoose queries, ensure strict multi-tenant scoping (`userId`), and abstract database access.
+  - **Mongoose Models**: Define database schemas, data types, validation constraints, transforms, and compound indexes.
+- **Centralized Error Handling**: Unhandled exceptions and operational errors (`AppError`) are processed by `errorHandler` middleware, producing consistent JSON error structures without leaking stack traces in production.
+- **Input Validation Middleware**: Zod schemas validate request payloads prior to controller execution, enforcing strict typing, string length bounds, regex escaping, and stripping unexpected keys.
 
 ---
 
-## 7. API Endpoints (`/api/v1`)
+## 4. Database Entities & Relationships
+
+```mermaid
+erDiagram
+    USER ||--o{ PROBLEM : owns
+    USER ||--o{ PROBLEM_SEQUENCE : maintains
+    USER ||--o{ REVISION_HISTORY : logs
+    USER ||--o{ MASTERY_EVENT : records
+    USER ||--o{ PROBLEM_PATTERN : associates
+    PATTERN ||--o{ PROBLEM_PATTERN : categorizes
+    PROBLEM ||--o{ REVISION_HISTORY : has
+    PROBLEM ||--o{ PROBLEM_PATTERN : tagged_with
+    PROBLEM ||--o{ MASTERY_EVENT : transitions
+```
+
+### Entity Schemas & Practical Relationships:
+1. **`User`**: Core account entity (`name`, `email`, `passwordHash`). Passwords hashed with bcrypt (salt rounds: 10). `passwordHash` is excluded from default queries via `select: false`.
+2. **`Problem`**: Central domain record (`userId`, `section`, `sNo`, `title`, `collegeLink`, `leetcodeLink`, `leetcodeNumber`, `topic`, `difficulty`, `source`, `status`, `retentionLevel`, `repetitionStage`, `intervalDays`, `nextReviewDate`, `recoveryStage`, `masteryStatus`, `lockVersion`, `lockedAt`, `unlockedAt`).
+   - Unique compound index: `{ userId: 1, section: 1, sNo: 1 }` guarantees zero duplicate S.No. within a section.
+   - Compound indexes: `{ userId: 1, section: 1, nextReviewDate: 1 }`, `{ userId: 1, nextReviewDate: 1, sNo: 1 }`, `{ userId: 1, masteryStatus: 1 }`.
+3. **`ProblemSequence`**: Atomic counter document (`userId`, `section`, `nextSNo`).
+   - Unique compound index: `{ userId: 1, section: 1 }`. Counter is incremented atomically via `$inc` in `findOneAndUpdate`.
+4. **`RevisionHistory`**: Immutable, append-only log of every completed review (`userId`, `problemId`, `reviewedAt`, `scheduledReviewAt`, `recallResult`, `timingStatus`, `latenessDays`, `previousStage`, `newStage`, `previousIntervalDays`, `newIntervalDays`, `previousRetention`, `newRetention`, `coldSolve`, `timeSpentSeconds`).
+   - Compound indexes: `{ userId: 1, reviewedAt: -1 }`, `{ userId: 1, problemId: 1, reviewedAt: -1 }`.
+5. **`Pattern`**: Global catalog of 30 foundational DSA patterns (`name`, `slug`, `description`, `recognitionSignals`, `commonMistakes`, `prerequisites`). Seeded idempotently on startup with a unique index on `slug`.
+6. **`ProblemPattern`**: Many-to-many relationship junction (`userId`, `problemId`, `patternId`, `confidence`, `isPrimary`).
+   - Compound indexes: `{ userId: 1, problemId: 1, patternId: 1 }` (unique), `{ userId: 1, isPrimary: 1 }`, `{ userId: 1, patternId: 1 }`.
+7. **`MasteryEvent`**: Audit log of mastery state transitions (`userId`, `problemId`, `eventType: 'LOCKED' | 'UNLOCKED'`, `occurredAt`, `reason: 'QUALIFICATION_MET' | 'SRS_FAILURE'`, `lockVersion`).
+   - Compound index: `{ userId: 1, problemId: 1, occurredAt: -1 }`.
+
+---
+
+## 5. Spaced Repetition (SRS) Engine
+
+The Spaced Repetition engine is implemented deterministically in `backend/src/services/revisionScheduler.ts`.
+
+### 10-Stage Milestone Progression
+Progression intervals are defined as an explicit array of calendar day milestones:
+
+| Stage | Interval | Retention Level | Conceptual Milestone |
+| :---: | :---: | :---: | :--- |
+| **0** | 0 days | Learning | Newly created / Initial baseline |
+| **1** | 1 day | Learning / Familiar | First recall review |
+| **2** | 3 days | Familiar | Short-term consolidation |
+| **3** | 7 days | Familiar / Independent | One-week retention barrier (Gate B threshold) |
+| **4** | 14 days | Independent | Two-week milestone |
+| **5** | 30 days | Independent / Strong | One-month milestone |
+| **6** | 60 days | Strong | Two-month milestone |
+| **7** | 120 days | Strong | Four-month milestone |
+| **8** | 240 days | Strong | Eight-month milestone |
+| **9** | 365 days | Strong | Terminal milestone (capped) |
+
+### Adaptive Recall Outcomes
+
+```
+           ┌────────── EASY ───────────► Stage + 1 (capped at 9)
+           │
+Recall     ├──────── STRUGGLED ────────► Advance stage if < 2, else Hold stage
+Outcome ───┤
+           ├────────── HINT ───────────► Drop 1 stage (min 1) or Hold stage
+           │
+           └───────── FORGOT ──────────► Enter Recovery [1d → 3d → 7d → 14d]
+                                         (Stage preserved; Retention → Learning)
+```
+
+1. **`EASY`**:
+   - **Normal Mode**: Advances stage by $+1$ (`newStage = Math.min(9, currentStage + 1)`), sets `intervalDays = STAGE_INTERVALS[newStage]`. Promotes retention (`Learning → Familiar → Independent → Strong`).
+   - **Recovery Mode**: Advances recovery step (`recoveryStage + 1`). If the final recovery step ($\ge 3$) is completed successfully, exits recovery mode back to normal milestone scheduling (`newStage = Math.min(9, Math.max(1, currentStage))`).
+2. **`STRUGGLED`**:
+   - **Normal Mode**: Conservative progression. Advances stage only if at initial stages (`currentStage < 2`), otherwise holds current stage (`newStage = currentStage`). Promotes retention conservatively (promotes `Learning → Familiar`; holds `Familiar`, `Independent`, and `Strong`).
+   - **Recovery Mode**: Advances recovery step slowly (`Math.min(3, recoveryStage + 1)`).
+3. **`HINT`**:
+   - **Normal Mode**: Holds stage or drops 1 stage (`Math.max(1, currentStage > 2 ? currentStage - 1 : currentStage)`). Demotes retention by one tier (`Strong → Independent → Familiar → Learning`).
+   - **Recovery Mode**: Holds current recovery step.
+4. **`FORGOT`**:
+   - Enters the short-term recovery sequence at Step 0 (`1 day`).
+   - **Non-Destructive Design**: Does **not** reset baseline `repetitionStage`. Historical learning progress is preserved while the problem enters accelerated recovery.
+   - Resets `retentionLevel` to `Learning`.
+   - Recovery Sequence: `Step 0: 1d → Step 1: 3d → Step 2: 7d → Step 3: 14d`.
+
+### Calendar-Day Timing Semantics
+- Evaluates calendar dates using UTC midnight boundaries:
+  $$\text{diffDays} = \text{round}\left(\frac{\text{reviewedUtc} - \text{scheduledUtc}}{86,400,000}\right)$$
+- Timing Status:
+  - `ON_TIME`: $\text{diffDays} = 0$, $\text{latenessDays} = 0$.
+  - `LATE`: $\text{diffDays} > 0$, $\text{latenessDays} = \text{diffDays}$.
+  - `EARLY`: $\text{diffDays} < 0$, $\text{latenessDays} = |\text{diffDays}|$.
+- **Lateness is strictly non-negative**.
+- Displayed strictly in human-readable whole days (`"On time"`, `"Late by 3 days"`, `"Early by 1 day"`), never in hours or minutes.
+- **Overdue Anchor Prevention**: The next review date is calculated by adding `newIntervalDays` to the **actual review date** (`reviewedAt`), preventing overdue review snowballing.
+- **Independence of Recall Quality & Timing**: Review lateness never penalizes recall score (e.g. an `EASY` solve on an overdue problem retains full `EASY` progression).
+
+---
+
+## 6. Problem-Level Mastery System (Exactly 4 Gates)
+
+Locked Mastery represents verifiable proof of durable conceptual understanding. A problem does not achieve locked mastery simply by being marked "Solved" or having a high retention level.
+
+`masteryStatus` is binary (`UNLOCKED` | `LOCKED`) and orthogonal to `retentionLevel`:
+
+```
+                       THE 4 MASTERY GATES
+ ┌─────────────────────────────────────────────────────────────┐
+ │ Gate A: Solved Status                                       │
+ │   Requirement: problem.status === 'Solved'                  │
+ ├─────────────────────────────────────────────────────────────┤
+ │ Gate B: Spaced Repetition Evidence                          │
+ │   Requirement: ≥ 3 successful reviews (EASY/STRUGGLED)      │
+ │                AND reached repetitionStage ≥ 3 (≥ 7 days)   │
+ ├─────────────────────────────────────────────────────────────┤
+ │ Gate C: Independent Cold Recall                             │
+ │   Requirement: ≥ 2 successful cold solves (coldSolve: true) │
+ ├─────────────────────────────────────────────────────────────┤
+ │ Gate D: Recent Review Success                               │
+ │   Requirement: Most recent review was EASY or STRUGGLED     │
+ └─────────────────────────────────────────────────────────────┘
+                                │
+                      ALL 4 GATES SATISFIED?
+                     ┌──────────┴──────────┐
+                    YES                    NO
+                     ▼                     ▼
+             [ LOCKED STATUS ]    [ UNLOCKED STATUS ]
+```
+
+### The 4 Qualification Gates
+1. **Gate A — Solved Status**: The problem must satisfy the completed status requirement (`problem.status === 'Solved'`).
+2. **Gate B — Spaced Repetition Evidence**: Requires at least 3 successful reviews (`EASY` or `STRUGGLED`) and at least one review reaching or exceeding `repetitionStage >= 3` (a 7-day interval milestone).
+3. **Gate C — Independent Cold Recall**: Requires at least 2 successful independent cold solves (`RevisionHistory` entries where `coldSolve === true` and outcome was `EASY` or `STRUGGLED`).
+4. **Gate D — Recent Review Success**: The most recent review outcome must be `EASY` or `STRUGGLED`.
+   - **Deterministic Tie-Breaker**: When reviews share identical millisecond timestamps, reviews are sorted by `reviewedAt DESC`, then by MongoDB `_id` string descending (`_id DESC`).
+
+### State Transitions & Concurrency
+- **Locking (`UNLOCKED → LOCKED`)**: Triggers when all 4 gates evaluate to `true` during evaluation or upon a qualifying review submission. Atomically increments `lockVersion` by $+1$, sets `lockedAt = now`, and writes an immutable `MasteryEvent` with `reason: 'QUALIFICATION_MET'`.
+- **Automatic Demotion (`LOCKED → UNLOCKED`)**: If a locked problem undergoes a genuine failure (`HINT` or `FORGOT`), it is automatically demoted. Increments `lockVersion` by $+1$, sets `unlockedAt = now`, and writes a `MasteryEvent` with `reason: 'SRS_FAILURE'`.
+- **No Manual Unlock**: There is no client endpoint or UI button to arbitrarily toggle locked status. Transitions are strictly server-authoritative.
+- **Optimistic Concurrency**: Transitions execute via atomic conditional updates:
+  ```typescript
+  Problem.findOneAndUpdate(
+    { _id: problemId, userId, masteryStatus: 'UNLOCKED' },
+    { $set: { masteryStatus: 'LOCKED', lockedAt: new Date() }, $inc: { lockVersion: 1 } }
+  );
+  ```
+
+---
+
+## 7. Pattern Library & 5-Factor Mastery Engine
+
+The pattern mastery engine is implemented deterministically in `backend/src/services/patternMasteryCalculator.ts`.
+
+### Authoritative 5-Factor Formula
+$$\text{Score} = 0.25 \times \text{Coverage} + 0.25 \times \text{IndependentRecall} + 0.20 \times \text{RecallQuality} + 0.15 \times \text{RecentConsistency} + 0.15 \times \text{TransferEvidence}$$
+
+### Factor Breakdown:
+1. **Coverage (25% Weight)**: Measures problem volume and completion breadth:
+   $$\text{Coverage} = \text{round}\left(0.60 \times \min\left(100, \frac{\text{solvedCount}}{10} \times 100\right) + 0.40 \times \min\left(100, \frac{\text{totalCount}}{15} \times 100\right)\right)$$
+2. **Independent Recall (25% Weight)**: Evaluates performance strictly on sessions conducted under cold solve conditions (`coldSolve === true`). Computed as the average quality score:
+   - Quality points: `EASY` = 100, `STRUGGLED` = 60, `HINT` = 30, `FORGOT` = 0.
+   - Yields 0 if no cold solve sessions have occurred.
+3. **Recall Quality (20% Weight)**: Average quality score across all logged reviews for problems associated with the pattern.
+4. **Recent Consistency (15% Weight)**: Evaluates the most recent 5 review sessions with linear recency weights `[5, 4, 3, 2, 1]`:
+   $$\text{RecentConsistency} = \text{round}\left(\frac{\sum_{i=1}^{k} w_i \times \text{quality}_i}{\sum_{i=1}^{k} w_i}\right)$$
+5. **Transfer Evidence (15% Weight)**: Assesses cross-problem conceptual transfer by measuring distinct problems solved successfully under cold conditions (`EASY` or `STRUGGLED`), capped at 8 problems:
+   $$\text{TransferEvidence} = \text{round}\left(\min\left(100, \frac{\text{distinctColdSolved}}{8} \times 100\right)\right)$$
+
+### Mastery Thresholds:
+- **Strong**: $\text{Score} \ge 85$
+- **Independent**: $65 \le \text{Score} \le 84$
+- **Familiar**: $35 \le \text{Score} \le 64$
+- **Learning**: $\text{Score} < 35$
+
+---
+
+## 8. Command Center Dashboard Analytics
+
+The Command Center Dashboard (`GET /api/v1/dashboard`) operates as a **unified derived read-model**:
+- **Zero Redundant Counters**: No mutable counters exist on the `User` model (such as `streak` or `totalSolved`). All metrics are computed dynamically on-the-fly using parallel MongoDB `$facet` aggregation pipelines.
+- **On-Demand Computation**: Analytics are fetched when the dashboard loads; the system does not use background worker cron jobs or push websockets.
+
+### Metrics Computed:
+- **Review Queue**:
+  - `dueNow`: Problems with `nextReviewDate <= now`.
+  - `overdue`: Problems scheduled strictly prior to today's UTC midnight (`nextReviewDate < startOfTodayUTC`).
+  - `dueToday`: Problems scheduled within today's UTC calendar window.
+  - `upcoming`: Problems scheduled strictly after today's UTC window.
+- **Section Breakdown**: Problem counts by status (`Solved`, `Attempted`, `Not Started`) segmented across **College DSA** and **Personal DSA**.
+- **Recall & Accuracy**: Success rate percentage ($\frac{\text{EASY} + \text{STRUGGLED}}{\text{Total Reviews}} \times 100$), outcome breakdown, and total independent cold solves.
+- **Retention Distribution**: Problem counts across `Learning`, `Familiar`, `Independent`, and `Strong`.
+- **Calendar Timing Distribution**: Counts for `On Time`, `Late`, and `Early`, along with mean `averageLatenessDays`.
+- **Practice Activity Heatmap (365 Days)**: Sliding 365-day UTC grid mapping daily review intensity:
+  - `Level 0`: 0 reviews
+  - `Level 1`: 1 review
+  - `Level 2`: 2–3 reviews
+  - `Level 3`: 4–6 reviews
+  - `Level 4`: 7+ reviews
+- **Streak Calculation**:
+  - Active day: Any UTC calendar day with $\ge 1$ logged review.
+  - Active today: Streak increments consecutively backwards from today.
+  - Active yesterday (Grace period): If 0 reviews logged today but $\ge 1$ review logged yesterday, current streak remains intact counting backwards from yesterday.
+  - Reset: If 0 reviews logged today and 0 logged yesterday, current streak resets to 0.
+  - Longest streak: Maximum unbroken run of active days across all historical records.
+- **Pattern Insights**: Identifies Top 3 **Strongest Patterns** (highest score) and Top 3 **Needs Practice Patterns** (prioritized by tier: `Learning` → `Familiar` → `Independent` → `Strong`).
+- **Recent Activity Feed**: The 10 most recent review sessions populated with problem title, difficulty, section, recall outcome, and primary pattern tags.
+
+---
+
+## 9. Security & Hardening Controls
+
+### Authentication & Authorization
+- **HTTP-Only Cookies**: JWT tokens are transmitted exclusively via `SameSite: 'lax'` (or `'strict'`), `httpOnly: true`, and `secure: true` (in production) cookies, mitigating XSS token theft.
+- **Bcrypt Password Hashing**: Passwords hashed using bcrypt with salt work factor 10. Default queries exclude `passwordHash`.
+- **Multi-Tenant Scoping**: Every database read, mutation, aggregation, and deletion scopes queries to `req.user.userId` obtained from the verified JWT payload. Client-provided `userId` parameters are strictly ignored.
+- **IDOR Protection**: Accessing an unowned or cross-tenant resource returns a generic `404 NOT_FOUND` to prevent ID enumeration.
+
+### Input Validation & Defensive Engineering
+- **Strict Zod Schemas**: Request bodies and query parameters are parsed through Zod validators that strip undeclared fields, preventing mass assignment.
+- **Server-Controlled Fields**: Critical fields (`sNo`, `userId`, `repetitionStage`, `intervalDays`, `nextReviewDate`, `masteryStatus`, `lockVersion`) cannot be modified via update endpoints.
+- **ReDoS Defense**: User search inputs and filter queries pass through `escapeRegex()` before being applied in MongoDB queries, mitigating regular expression denial-of-service.
+- **Query Length Caps**: Search strings and topic filters are strictly bounded to a maximum of 200 characters.
+- **Safe URL Sanitization**: Problem URLs (`collegeLink`, `leetcodeLink`) require valid `http:` or `https:` protocols on the backend. The frontend applies `getSafeUrl()` defense-in-depth to neutralize `javascript:` or malicious URI schemes.
+
+### Abuse Protection & Headers
+- **Rate Limiting**:
+  - `authRateLimiter`: Enforces 20 requests per 15-minute window on `/api/v1/auth/register` and `/api/v1/auth/login`.
+  - `dashboardRateLimiter`: Enforces 60 requests per minute on `/api/v1/dashboard`.
+- **Security Headers (Helmet)**: Sets standard protection headers including `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and strict CSP policies in production.
+- **CORS Configuration**: Origin strictly restricted to `env.CLIENT_URL` with `credentials: true`.
+- **Request Body Limits**: JSON and urlencoded parsers capped at `1mb` to prevent payload memory exhaustion.
+
+---
+
+## 10. Complete API Reference (`/api/v1`)
+
+### Health Check
+- `GET /api/v1/health`
+  - Auth: None (Public)
+  - Description: Returns API uptime, timestamp, environment, and MongoDB connection status.
 
 ### Authentication (`/api/v1/auth`)
-- `POST /api/v1/auth/register` — Register account & set HTTP-only cookie.
-- `POST /api/v1/auth/login` — Sign in & set HTTP-only cookie.
-- `POST /api/v1/auth/logout` — Clear session cookie.
-- `GET /api/v1/auth/me` — Return current authenticated user profile.
+- `POST /api/v1/auth/register`
+  - Auth: None (Rate limited: 20/15m)
+  - Body: `{ name: string (2-50 chars), email: string, password: string (min 6 chars) }`
+  - Sets: HTTP-only session cookie (`dsa_auth_token`).
+- `POST /api/v1/auth/login`
+  - Auth: None (Rate limited: 20/15m)
+  - Body: `{ email: string, password: string }`
+  - Sets: HTTP-only session cookie (`dsa_auth_token`).
+- `POST /api/v1/auth/logout`
+  - Auth: None
+  - Clears: Session cookie.
+- `GET /api/v1/auth/me`
+  - Auth: Required (`requireAuth`)
+  - Returns: Current authenticated user profile (`id`, `name`, `email`).
 
-### Problem Management (`/api/v1/problems`) *(All require authentication)*
-- `POST /api/v1/problems` — Create problem with atomic S.No assignment, Day 0 spaced repetition state, and dual links.
-- `GET /api/v1/problems` — Filtered, paginated list of problems (supports `section`, `topic`, `difficulty`, `source`, `status`, `retentionLevel`, `search`, `sortBy`, `sortOrder`, `page`, `limit`).
-- `GET /api/v1/problems/:id` — Get problem details (scoped to owner).
-- `PATCH /api/v1/problems/:id` — Update problem fields (strictly prohibits modifying `section`, `sNo`, `userId`, or `_id`).
-- `DELETE /api/v1/problems/:id` — Delete problem (scoped to owner, preserves numbering gaps).
+### Problem Management (`/api/v1/problems`)
+- `POST /api/v1/problems`
+  - Auth: Required
+  - Body: `{ title, section ('COLLEGE'|'PERSONAL'), topic, difficulty ('Easy'|'Medium'|'Hard'), source, status?, notes?, dateLearned?, collegeLink?, leetcodeLink?, leetcodeNumber? }`
+  - Behavior: Allocates next atomic `sNo`, creates initial Day 0 SRS state, returns created problem.
+- `GET /api/v1/problems`
+  - Auth: Required
+  - Query: `section`, `topic`, `difficulty`, `source`, `status`, `retentionLevel`, `search`, `sortBy`, `sortOrder`, `page`, `limit` (max 100).
+  - Returns: Paginated problem list with metadata.
+- `GET /api/v1/problems/:id`
+  - Auth: Required
+  - Returns: Problem details scoped to authenticated user.
+- `PATCH /api/v1/problems/:id`
+  - Auth: Required
+  - Body: Partial problem fields (immutable fields like `_id`, `userId`, `section`, `sNo` are rejected/stripped).
+- `DELETE /api/v1/problems/:id`
+  - Auth: Required
+  - Behavior: Scoped deletion. Sequential S.No. gaps are preserved.
 
-### Problem Mastery (`/api/v1/problems/:problemId/mastery`) *(All require authentication)*
-- `GET /api/v1/problems/:problemId/mastery` — Retrieve mastery status (`UNLOCKED` | `LOCKED`), lock version, timestamps, and full 5-gate qualification breakdown.
-- `POST /api/v1/problems/:problemId/mastery/evaluate` — Evaluates all 5 qualification gates server-side and atomically transitions eligible problems from `UNLOCKED` to `LOCKED`.
+### Problem Patterns (`/api/v1/problems/:problemId/patterns`)
+- `GET /api/v1/problems/:problemId/patterns`
+  - Auth: Required
+  - Returns: List of patterns associated with the specified problem.
+- `POST /api/v1/problems/:problemId/patterns`
+  - Auth: Required
+  - Body: `{ patternId: string, confidence?: 'LOW'|'MEDIUM'|'HIGH', isPrimary?: boolean }`
+  - Behavior: Attaches pattern to user problem.
+- `DELETE /api/v1/problems/:problemId/patterns/:patternId`
+  - Auth: Required
+  - Behavior: Detaches pattern from user problem.
+- `PUT /api/v1/problems/:problemId/patterns/sync`
+  - Auth: Required
+  - Body: `{ patterns: Array<{ patternId: string, confidence: string, isPrimary: boolean }> }`
+  - Behavior: Atomically synchronizes all pattern associations for the problem.
 
-### Spaced Repetition & Reviews (`/api/v1/reviews`) *(All require authentication)*
-- `POST /api/v1/reviews` — Submit revision result (`problemId`, `recallResult`, `timeSpentSeconds?`, `coldSolve?`). Backend calculates adaptive schedule and appends history.
-- `GET /api/v1/reviews/due` — Retrieve due problems where `nextReviewDate <= now`, ordered by most overdue first with section filtering.
-- `GET /api/v1/reviews/problem/:problemId` — Retrieve chronologically ordered revision history for a problem.
+### Problem Mastery (`/api/v1/problems/:problemId/mastery`)
+- `GET /api/v1/problems/:problemId/mastery`
+  - Auth: Required
+  - Returns: Current mastery state (`masteryStatus: 'UNLOCKED'|'LOCKED'`, `lockVersion`, `lockedAt`, `unlockedAt`) and detailed 4-gate breakdown (`solved`, `srsEvidence`, `coldRecall`, `recentSuccess`).
+- `POST /api/v1/problems/:problemId/mastery/evaluate`
+  - Auth: Required
+  - Behavior: Server-side evaluation of all 4 gates. If eligible, atomically locks problem and records a `MasteryEvent`.
 
-### Pattern Library & Mastery (`/api/v1/patterns`) *(All require authentication)*
-- `GET /api/v1/patterns` — Retrieve all 30 foundational DSA patterns with user-specific 5-factor mastery scores and difficulty breakdowns.
-- `GET /api/v1/patterns/:id` — Retrieve pattern details, recognition signals, pitfalls, and user's associated problems.
-- `POST /api/v1/patterns/attach` — Attach a pattern to a user problem with confidence (`LOW`, `MEDIUM`, `HIGH`) and primary flag.
-- `POST /api/v1/patterns/detach` — Detach a pattern from a user problem.
-- `POST /api/v1/patterns/sync` — Atomically sync patterns associated with a user problem.
-- `GET /api/v1/patterns/problem/:problemId` — List all patterns attached to a problem.
+### Mastery Overview (`/api/v1/mastery`)
+- `GET /api/v1/mastery/overview`
+  - Auth: Required
+  - Returns: Bulk 4-gate mastery evaluation across all problems owned by the user (optimized batch query with zero N+1 overhead).
 
-### Command Center Dashboard (`/api/v1/dashboard`) *(Requires authentication)*
-- `GET /api/v1/dashboard` — Unified derived read-model returning review queue metrics, problem & section stats, recall performance, retention distribution, calendar-day timing, 365-day UTC heatmap, streaks, Phase 5 pattern mastery summaries, and recent activity feed.
+### Global Pattern Catalog (`/api/v1/patterns`)
+- `GET /api/v1/patterns`
+  - Auth: Required
+  - Returns: All 30 foundational DSA patterns with user-specific 5-factor mastery scores and difficulty counts.
+- `GET /api/v1/patterns/:id`
+  - Auth: Required
+  - Returns: Pattern details (description, recognition signals, pitfalls, prerequisites) and associated user problems.
+
+### Spaced Repetition Reviews (`/api/v1/reviews`)
+- `POST /api/v1/reviews`
+  - Auth: Required
+  - Body: `{ problemId: string, recallResult: 'EASY'|'STRUGGLED'|'HINT'|'FORGOT', timeSpentSeconds?: number, coldSolve?: boolean }`
+  - Behavior: Computes deterministic schedule, updates problem SRS state, checks mastery triggers/demotions, and appends immutable `RevisionHistory`.
+- `GET /api/v1/reviews/due`
+  - Auth: Required
+  - Query: `section?` ('COLLEGE' | 'PERSONAL')
+  - Returns: Problems due for revision (`nextReviewDate <= now`), ordered by most overdue first.
+- `GET /api/v1/reviews/history`
+  - Auth: Required
+  - Query: `page?`, `limit?`
+  - Returns: Paginated user-wide revision history log.
+- `GET /api/v1/reviews/problem/:problemId`
+  - Auth: Required
+  - Returns: Chronological revision history for a specific problem.
+
+### Command Center Dashboard (`/api/v1/dashboard`)
+- `GET /api/v1/dashboard`
+  - Auth: Required (Rate limited: 60/1m)
+  - Returns: Unified derived read-model containing review queue, problem stats, recall accuracy, retention distribution, timing stats, 365-day heatmap, streaks, pattern mastery summaries, and recent activity feed.
 
 ---
 
-## 8. Technology Stack
+## 11. Environment Configuration
 
-- **Frontend**: React.js 18+, TypeScript, Vite 6+, React Router 6+, Axios
-- **Styling**: CSS Modules + Custom Design Tokens (Dark-first glassmorphism, glowing badges, amber mastery aesthetics)
-- **Backend**: Node.js LTS, Express.js 4+, TypeScript, Mongoose 8+
-- **Database**: MongoDB (Multi-tenant indexing, atomic concurrency locks, transaction-safe sequences)
-- **Testing**: Vitest, Supertest, MongoMemoryServer
+### Backend (`backend/.env.example`)
+```env
+# Node Environment ('development' | 'production' | 'test')
+NODE_ENV=development
+
+# Server Port
+PORT=5001
+
+# Frontend Client Origin (Strict CORS & Cookie Domain)
+CLIENT_URL=http://localhost:5173
+
+# MongoDB Connection URI
+MONGODB_URI=mongodb://localhost:27017/dsa_tracker
+
+# JWT Authentication Secret (Minimum 16 characters, recommended 32+)
+JWT_SECRET=dsa_tracker_development_secret_key_minimum_32_chars_long
+
+# JWT Token Expiration Window
+JWT_EXPIRES_IN=7d
+
+# Authentication Rate Limiting
+AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_MAX=20
+```
+
+### Frontend (`frontend/.env.example`)
+```env
+# Backend REST API Base URL (must end with /api/v1)
+VITE_API_URL=http://localhost:5001/api/v1
+```
 
 ---
 
-## 9. Development & Verification Guide
+## 12. Local Development Guide
 
 ### Prerequisites
-- Node.js 18+ & npm
-- Local MongoDB instance or Docker MongoDB
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+- **MongoDB**: Local MongoDB instance (`mongod`) or Docker MongoDB
 
-### Backend Setup & Test Execution
+### Initial Setup
 ```bash
-cd backend
-npm install
-npm run build
-npm test
+# 1. Clone repository
+git clone https://github.com/your-username/dsa-tracker.git
+cd dsa-tracker
+
+# 2. Install workspace dependencies
+cd backend && npm install
+cd ../frontend && npm install
+cd ..
+
+# 3. Configure environment variables
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
 
-### Frontend Setup & Build
+### Starting Development Servers
+Run the servers from the root workspace using configured scripts:
+
 ```bash
-cd frontend
-npm install
-npm run build
+# Start backend API (tsx watch on http://localhost:5001)
+npm run dev:backend
+
+# Start frontend application (Vite on http://localhost:5173)
+npm run dev:frontend
 ```
 
 ---
 
-## 10. Development Phases Roadmap
+## 13. Verified Testing Architecture
 
-| Phase | Description | Status |
-| :--- | :--- | :--- |
-| **Phase 1** | **MERN Foundation, Routing, Health Check & Error Handling** | ✅ **Complete** |
-| **Phase 2** | **Authentication & Security (JWT, HTTP-only Cookies, Route Guards)** | ✅ **Complete** |
-| **Phase 3** | **Problem Management (College & Personal DSA, Atomic S.No., CRUD, Filtering)** | ✅ **Complete** |
-| **Phase 3.1** | **Dual Problem Links & LeetCode Number Decoupling (Non-destructive Migration & UI)** | ✅ **Complete** |
-| **Phase 4** | **Spaced Repetition Engine & Revision History (Active Recall UI, Calendar-Day Timing)** | ✅ **Complete** |
-| **Phase 5** | **DSA Pattern Library & Multi-Factor Mastery Engine (30 Patterns, 5-Factor Score, UI)** | ✅ **Complete** |
-| **Phase 6** | **Command Center Dashboard, Analytics, Streaks & Activity Heatmaps** | ✅ **Complete** |
-| **Phase 7** | **Random Recall Chamber & Pattern Transfer Testing** | ✅ **Complete** |
-| **Phase 8** | **Problem-Level Locked Mastery, Multi-Gate Qualification & Completion System** | ✅ **Complete** |
+The platform maintains a comprehensive automated testing pipeline across unit, integration, and end-to-end boundaries.
 
----
+### Current Verified Automated Test Baseline:
+- **Backend**: **199 / 199 tests passing** (13 test suites)
+- **Frontend**: **109 / 109 tests passing** (13 test suites)
+- **Playwright E2E**: **4 / 4 specs passing**
+- **TypeScript & Vite Builds**: Clean exit code 0 (`tsc` backend, `tsc && vite build` frontend)
+- **Circular Dependencies**: **0** backend, **0** frontend
+- **TypeScript Directive Violations**: **0** `@ts-ignore`, **0** `@ts-expect-error`
 
-## 11. Phase 5 Architecture — Pattern Library & Mastery Engine
+### Testing Layers:
+1. **Unit Tests**:
+   - Algorithmic verification of deterministic Spaced Repetition calculations (`backend/tests/scheduler.test.ts`).
+   - 5-factor pattern mastery calculation and weighting (`backend/tests/patternMastery.test.ts`).
+   - 4-gate locked mastery evaluation logic (`backend/tests/mastery.test.ts`).
+   - Frontend utilities: UTC date normalization, error formatting, and URL sanitization matrix (`frontend/tests/unit/`).
+2. **Component & Integration Tests**:
+   - Reusable UI component testing using React Testing Library (`frontend/tests/components/`).
+   - Integration tests verifying `useProblems` hook behavior and full authentication routing flows (`frontend/tests/integration/`).
+3. **Backend Integration Tests**:
+   - Supertest HTTP assertions executing against an in-memory MongoDB instance (`MongoMemoryServer`).
+   - Verifies end-to-end API contracts, auth cookie lifecycle, problem CRUD, reviews, patterns, and dashboard aggregation.
+4. **Adversarial Security Suite (`backend/tests/securityAudit.test.ts`)**:
+   - 25 dedicated adversarial test cases validating HTTP/HTTPS protocol validation, schema strictness, mass assignment resistance, search ReDoS immunity, query length boundaries, IDOR cross-tenant isolation, and rate limiter enforcement.
+5. **Playwright E2E Specifications (`frontend/e2e/`)**:
+   - Complete browser journeys in headless Chromium verifying authentication, College DSA CRUD, Personal DSA CRUD with LeetCode numbering, and full active recall review cycles.
 
-### 1. Global Pattern Catalog (30 Foundational DSA Patterns)
-- Seeded idempotently via `bulkWrite` on backend startup (`slug` unique index).
-- Includes comprehensive educational metadata: recognition signals, common pitfalls/mistakes, and prerequisites.
+### Executing Tests
+```bash
+# Run backend test suite (Vitest + MongoMemoryServer)
+npm run test:backend
 
-### 2. User-Scoped ProblemPattern Associations
-- Many-to-many relationship tracked in dedicated `ProblemPattern` collection (`userId`, `problemId`, `patternId`, `confidence`, `isPrimary`).
-- Strict user data isolation: pattern documents never store mutable user state; mastery is calculated purely on-the-fly from the user's problems and revision history.
+# Run frontend test suite (Vitest + React Testing Library)
+npm run test:frontend
 
-### 3. Deterministic 5-Factor Mastery Calculator
-$$\text{Score} = 0.25 \times \text{Coverage} + 0.25 \times \text{IndependentRecall} + 0.20 \times \text{RecallQuality} + 0.15 \times \text{RecentConsistency} + 0.15 \times \text{TransferEvidence}$$
-- **Coverage (25%)**: Breadth-oriented formula: $60\% \times \min(100, (\text{solvedCount}/10)\times 100) + 40\% \times \min(100, (\text{totalCount}/15)\times 100)$.
-- **Independent Recall (25%)**: Cold-solve reproduction rate strictly on sessions where `coldSolve === true`.
-- **Recall Quality (20%)**: Overall revision performance across all scheduled reviews.
-- **Recent Consistency (15%)**: Weighted recency of the last 5 sessions with weights `[5, 4, 3, 2, 1]`.
-- **Transfer Evidence (15%)**: Distinct problem variants solved independently ($\min(100, (\text{distinctCount}/8)\times 100)$).
-- **Mastery Thresholds**: `Strong` ($\ge 85$), `Independent` ($65-84$), `Familiar` ($35-64$), `Learning` ($< 35$).
+# Run Playwright E2E test suite (Headless browser automation)
+npm run test:e2e
 
----
-
-## 12. Phase 6 Architecture — Command Center Dashboard & Activity Heatmaps
-
-### 1. Unified Derived Read-Model Principle
-- **Single Authoritative Endpoint**: `GET /api/v1/dashboard` supplies the entire command center in a single authenticated HTTP request.
-- **Zero Database State Duplication**: No redundant mutable counters (e.g. `user.totalSolved` or `user.currentStreak`). All statistics are computed on-the-fly from authoritative collections (`Problem`, `RevisionHistory`, `ProblemPattern`, `Pattern`) using parallel MongoDB `$facet` aggregation pipelines.
-
-### 2. Dashboard Analytics & Metric Definitions
-- **Review Queue Hero**:
-  - `dueNow`: Problems with `nextReviewDate <= now`.
-  - `overdue`: Problems with `nextReviewDate < startOfTodayUTC`.
-  - `dueToday`: Problems scheduled within `startOfTodayUTC` to `endOfTodayUTC`.
-  - `upcoming`: Problems scheduled strictly after `endOfTodayUTC`.
-- **Problem & Section Statistics**:
-  - `Total`, `Solved`, `Attempted`, `Not Started`.
-  - Independent breakdown for **College DSA** and **Personal DSA**.
-- **Review Performance & Recall Accuracy**:
-  - Outcome counts for `EASY`, `STRUGGLED`, `HINT`, `FORGOT`.
-  - `Independent Cold Solves`: Total revision sessions where `coldSolve === true`.
-  - `Success Rate`: $\frac{\text{EASY} + \text{STRUGGLED}}{\text{Total Reviews}} \times 100$.
-- **Retention Distribution**:
-  - Problem counts across retention tiers: `Learning`, `Familiar`, `Independent`, `Strong`.
-- **Calendar-Day Revision Timing**:
-  - Counts for `On Time`, `Late`, `Early`.
-  - `averageLatenessDays`: Mean calendar days late across overdue revisions (always non-negative whole integer days; never displayed in hours/minutes).
-
-### 3. UTC Date Policy & Practice Activity Heatmap
-- **Strict UTC Calendar Alignment**: All daily grouping and streak boundaries use UTC `YYYY-MM-DD`.
-- **365-Day Sliding Window**: Returns complete 365 days up to today, filling missing dates with `{ count: 0, level: 0 }`.
-- **Intensity Buckets**: `Level 0` (0), `Level 1` (1), `Level 2` (2–3), `Level 3` (4–6), `Level 4` (7+ reviews).
-- **Interactive UI**: Fully accessible SVG/HTML 52-week grid with month/day headers, keyboard focus, ARIA labels, and breakdown tooltips.
-
-### 4. Streak Calculation Algorithm
-- **Active Day Definition**: Any UTC calendar day with $\ge 1$ logged review in `RevisionHistory`. Multiple reviews on the same day count as one active day.
-- **Active Today**: Current streak counts consecutively backwards from today.
-- **Active Yesterday (Preserved)**: If 0 reviews logged today but $\ge 1$ review logged yesterday, the streak remains intact and counts consecutively backwards from yesterday.
-- **Broken Streak**: If 0 reviews logged today and 0 reviews logged yesterday, current streak resets to `0`.
-- **Longest Streak**: Maximum unbroken sequence of consecutive active calendar days across all historical records.
-
-### 5. Phase 5 Pattern Mastery Integration
-- **Direct Calculator Reuse**: Delegates directly to Phase 5's `PatternMasteryCalculator` with identical 5-factor scoring and thresholds.
-- **Strongest Patterns**: Top 3 patterns with highest mastery score (descending score, then name ascending).
-- **Needs Practice Patterns**: Top 3 patterns prioritized strictly by mastery tier:
-  1. `Learning` (Priority 1)
-  2. `Familiar` (Priority 2)
-  3. `Independent` (Priority 3)
-  4. `Strong` (Priority 4)
-  *(Within the same tier, sorted by lower score first, then name ascending)*.
-
-### 6. Recent Activity Feed
-- Returns latest 10 `RevisionHistory` entries with populated problem titles, difficulty badges, section, recall outcome pills, cold-solve badges, primary pattern tags, and formatted dates.
-
-### 7. User Privacy & Security
-- All aggregations and queries are strictly scoped to `req.user.userId` from the verified JWT cookie.
-- Client attempts to supply `userId` in query parameters or request bodies are ignored.
-- User A can never observe or infer User B's metrics, streaks, problems, or reviews.
+# Run production builds
+npm run build:backend
+npm run build:frontend
+```
 
 ---
 
-## 13. Phase 8 Architecture — Problem-Level Locked Mastery & 4-Gate Completion System
+## 14. Deployment Topology
 
-### 1. Proof-of-Learning Philosophy
-A problem should **not** become locked merely because it was solved once, has a high retention score, or was answered correctly once in a review. **Locked Mastery** represents verifiable proof of durable, long-term conceptual understanding across independent solving, spaced repetition, cold reproduction, and recent review success.
+The application is structured for independent service deployment:
 
-`masteryStatus` is **orthogonal** to `retentionLevel`:
-- `retentionLevel` (`Learning` → `Familiar` → `Independent` → `Strong`) tracks the continuous Spaced Repetition maturity curve.
-- `masteryStatus` (`UNLOCKED` | `LOCKED`) is a binary, evidence-based completion seal that unlocks only when all 4 qualification gates are satisfied simultaneously.
+```
+┌─────────────────────────────────┐
+│     Netlify (Static SPA)        │
+│   React 18 + Vite Production    │
+└────────────────┬────────────────┘
+                 │ API calls (HTTPS with credentials)
+┌────────────────▼────────────────┐
+│     Render (Node.js Web Service)│
+│   Express REST API + Middleware │
+└────────────────┬────────────────┘
+                 │ MONGODB_URI (TLS)
+┌────────────────▼────────────────┐
+│       MongoDB Atlas Cluster     │
+│   Multi-tenant Indexed Database │
+└─────────────────────────────────┘
+```
 
-### 2. The 4 Qualification Gates
-
-| Gate | Name | Requirement | Evaluation Criteria |
-| :--- | :--- | :--- | :--- |
-| **Gate A** | **Solved Status** | Problem Status must be `Solved` | `problem.status === 'Solved'` |
-| **Gate B** | **Spaced Repetition Evidence** | $\ge 3$ successful reviews & Stage $\ge 3$ reached | Total reviews with `EASY` or `STRUGGLED` $\ge 3$ AND at least one review reached `newStage >= 3` (7-day interval or higher). |
-| **Gate C** | **Independent Cold Recall** | $\ge 2$ successful cold solves | $\ge 2$ `RevisionHistory` entries with `coldSolve === true` and outcome `EASY` or `STRUGGLED`. |
-| **Gate D** | **Recent Review Success** | Most recent review was a success | The most recent `RevisionHistory` review outcome must be `EASY` or `STRUGGLED`. |
-
-### 3. Gate D Deterministic Tie-Breaker
-When multiple reviews share identical millisecond timestamps:
-1. Sort by `reviewedAt DESC`.
-2. Tie-breaker: sort by MongoDB `_id` string descending (`_id DESC`).
-
-### 4. Server-Authoritative Lock & Unlock Transitions
-- **`UNLOCKED → LOCKED`**: Occurs when all 4 gates are satisfied and the user triggers evaluation or successfully completes a qualifying review. Increments `lockVersion` by $+1$, sets `lockedAt = now`, and records an immutable `MasteryEvent` with `reason: 'QUALIFICATION_MET'`.
-- **`LOCKED → UNLOCKED`**: Occurs automatically upon a genuine failure (`SRS HINT/FORGOT`). Increments `lockVersion` by $+1$, sets `unlockedAt = now`, and records an immutable `MasteryEvent` with `reason: 'SRS_FAILURE'`.
-- **No Manual Unlock**: The client cannot manually downgrade or unlock a problem. There is no `/unlock` endpoint, no manual unlock service, and no frontend unlock button.
-- **Idempotency**: Repeated evaluation of an already locked or ineligible problem produces **zero** state mutations, zero version increments, and zero duplicate events.
-
-### 5. Safe Post-Event Mastery Hooks
-Mastery hooks in `ReviewService` execute after authoritative core data is persisted:
-- If a post-event hook unexpectedly fails, it logs an observable error and **never rolls back** the already-persisted review or corrupts SRS state.
-
-### 6. Concurrency Guarantees
-- **Atomic Optimistic Locking**: Transitions use `Problem.findOneAndUpdate({ _id, userId, masteryStatus: 'UNLOCKED' }, { $set: { masteryStatus: 'LOCKED' }, $inc: { lockVersion: 1 } })` (and vice-versa).
-- Under concurrent evaluation or failure requests, **exactly one** transition succeeds, `lockVersion` increments by exactly 1, and exactly one `MasteryEvent` is recorded.
+- **Frontend**: Hosted on Netlify as a single-page application with SPA client-side routing redirects configured through the Netlify deployment configuration.
+- **Backend**: Hosted as a Node.js web service on Render, with environment variables configured through the platform dashboard.
+- **Database**: Managed MongoDB Atlas replica set with TLS encryption.
+- *Note*: Production environment verification and live deployment audit were completed in Phase 9.
 
 ---
 
-> [!NOTE]
-> **Implementation Status**: Core SRS-centric architecture is complete and fully verified with **106/106 passing backend tests**, clean TypeScript/Vite builds, and complete cross-user security isolation.
+## 15. Known Engineering Limitations & Design Decisions
 
-
+1. **UTC Calendar Day Boundaries**: All daily review scheduling, streak calculations, and activity heatmaps use UTC midnight calendar boundaries. Timezone offsets are not dynamically mapped per user's local operating system clock.
+2. **In-Memory Rate Limiting**: The current rate limiters (`express-rate-limit`) operate in-memory on the Node.js process. In a horizontally scaled multi-instance production environment (Phase 9), backing the limiter with a shared Redis store would be appropriate.
+3. **Legacy Schema Compatibility Mapping**: To preserve backward compatibility with legacy documents that used a single `problemLink`, the `Problem` schema's JSON transform dynamically maps historical links containing `leetcode.com` to `leetcodeLink` and others to `collegeLink` without performing destructive database mutations.
+4. **Terminal SRS Stage**: Stage 9 (365 days) is the terminal cap for reviews. Problems that have reached Stage 9 continue to be scheduled at 365-day intervals upon subsequent successful recall.
+5. **Zero Fictitious Features**: Feature suggestions from earlier roadmaps (such as an unbuilt "Random Recall Chamber") have been removed from documentation to ensure 100% agreement between documented capabilities and the verified codebase.

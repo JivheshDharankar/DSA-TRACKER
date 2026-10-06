@@ -22,6 +22,7 @@ import {
   syncProblemPatterns,
 } from '../api/patterns.api';
 import { fetchProblemMastery } from '../api/mastery.api';
+import { getSafeUrl } from '../utils/url.util';
 import {
   Problem,
   UpdateProblemInput,
@@ -40,6 +41,7 @@ import { RevisionHistoryList } from '../components/reviews/RevisionHistoryList';
 import { SrsProgressionStepper } from '../components/reviews/SrsProgressionStepper';
 import { PatternPickerModal } from '../components/patterns/PatternPickerModal';
 import { formatCalendarDate } from '../utils/date.utils';
+import { getErrorMessage } from '../utils/error.utils';
 import styles from '../styles/ProblemDetail.module.css';
 
 export const ProblemDetailPage: React.FC = () => {
@@ -102,8 +104,7 @@ export const ProblemDetailPage: React.FC = () => {
       loadPatterns();
       loadMastery();
     } catch (err: unknown) {
-      const errObj = err as { message?: string };
-      setError(errObj.message || 'Problem not found or access denied.');
+      setError(getErrorMessage(err, 'Problem not found or access denied.'));
     } finally {
       setIsLoading(false);
     }
@@ -206,11 +207,11 @@ export const ProblemDetailPage: React.FC = () => {
             <h2 className={styles.title}>{problem.title}</h2>
           </div>
 
-          {(problem.collegeLink || problem.leetcodeLink) && (
+          {(getSafeUrl(problem.collegeLink) || getSafeUrl(problem.leetcodeLink)) && (
             <div className={styles.linkGroup}>
-              {problem.collegeLink && (
+              {getSafeUrl(problem.collegeLink) && (
                 <a
-                  href={problem.collegeLink}
+                  href={getSafeUrl(problem.collegeLink)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.linkBtn} ${styles.collegeLinkBtn}`}
@@ -220,9 +221,9 @@ export const ProblemDetailPage: React.FC = () => {
                   <span>College Link ↗</span>
                 </a>
               )}
-              {problem.leetcodeLink && (
+              {getSafeUrl(problem.leetcodeLink) && (
                 <a
-                  href={problem.leetcodeLink}
+                  href={getSafeUrl(problem.leetcodeLink)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.linkBtn} ${styles.leetcodeLinkBtn}`}

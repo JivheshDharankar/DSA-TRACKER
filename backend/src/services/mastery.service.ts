@@ -1,10 +1,15 @@
 import mongoose from 'mongoose';
 import { Problem, IProblemDocument, MasteryStatus } from '../models/Problem.model.js';
-import { RevisionHistory, IRevisionHistoryDocument } from '../models/RevisionHistory.model.js';
-import { MasteryEvent, IMasteryEventDocument, MasteryTransitionReason } from '../models/MasteryEvent.model.js';
+import { RevisionHistory } from '../models/RevisionHistory.model.js';
+import { IMasteryEventDocument, MasteryTransitionReason } from '../models/MasteryEvent.model.js';
+import {
+  masteryEventRepository,
+  IMasteryEventRepository,
+} from '../repositories/masteryEvent.repository.js';
 import {
   LockedMasteryEvaluator,
   MasteryEvaluationBreakdown,
+  EvaluatorReviewInput,
 } from './mastery.evaluator.js';
 import { AppError } from '../middleware/error.middleware.js';
 
@@ -45,6 +50,9 @@ export interface MasteryEvaluationResult {
 }
 
 export class MasteryService {
+  constructor(
+    private readonly masteryEventRepo: IMasteryEventRepository = masteryEventRepository
+  ) {}
   /**
    * Retrieves all user problems with their 4-gate mastery qualification status in bulk (2 queries, NO N+1).
    */
@@ -52,10 +60,13 @@ export class MasteryService {
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const [problems, allReviews] = await Promise.all([
       Problem.find({ userId: userObjectId }).sort({ sNo: 1 }),
-      RevisionHistory.find({ userId: userObjectId }).sort({ reviewedAt: -1 }),
+      RevisionHistory.find({ userId: userObjectId })
+        .select('_id problemId reviewedAt recallResult newStage previousStage coldSolve')
+        .sort({ reviewedAt: -1 })
+        .lean(),
     ]);
 
-    const reviewsByProblem = new Map<string, IRevisionHistoryDocument[]>();
+    const reviewsByProblem = new Map<string, EvaluatorReviewInput[]>();
     for (const rev of allReviews) {
       const pid = rev.problemId.toString();
       if (!reviewsByProblem.has(pid)) {
@@ -178,7 +189,7 @@ export class MasteryService {
       );
 
       if (updatedProblem) {
-        const eventDoc = await MasteryEvent.create({
+        const eventDoc = await this.masteryEventRepo.create({
           userId: userObjectId,
           problemId: problemObjectId,
           eventType: 'LOCKED',
@@ -238,7 +249,7 @@ export class MasteryService {
     );
 
     if (updatedProblem) {
-      const eventDoc = await MasteryEvent.create({
+      const eventDoc = await this.masteryEventRepo.create({
         userId: userObjectId,
         problemId: problemObjectId,
         eventType: 'UNLOCKED',
@@ -278,13 +289,7 @@ export class MasteryService {
       if (recallResult === 'HINT' || recallResult === 'FORGOT') {
         await this.unlockProblemIfLocked(userId, problemId, 'SRS_FAILURE');
       } else if (recallResult === 'EASY' || recallResult === 'STRUGGLED') {
-        const problem = await Problem.findOne({
-          _id: new mongoose.Types.ObjectId(problemId),
-          userId: new mongoose.Types.ObjectId(userId),
-        });
-        if (problem && problem.masteryStatus === 'UNLOCKED') {
-          await this.evaluateAndTransition(userId, problemId, 'QUALIFICATION_MET');
-        }
+        await this.evaluateAndTransition(userId, problemId, 'QUALIFICATION_MET');
       }
     } catch (err) {
       console.error(`[MASTERY_POST_REVIEW_ERROR] User: ${userId}, Problem: ${problemId}:`, err);

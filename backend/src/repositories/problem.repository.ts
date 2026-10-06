@@ -2,7 +2,7 @@ import mongoose, { FilterQuery } from 'mongoose';
 import { Problem, IProblem, IProblemDocument } from '../models/Problem.model.js';
 
 export interface IProblemRepository {
-  create(data: Partial<IProblem>): Promise<IProblemDocument>;
+  create(data: Partial<IProblem>, session?: mongoose.ClientSession): Promise<IProblemDocument>;
   findById(id: string, userId: string): Promise<IProblemDocument | null>;
   find(
     filter: FilterQuery<IProblemDocument>,
@@ -29,11 +29,15 @@ export interface IProblemRepository {
     limit?: number
   ): Promise<IProblemDocument[]>;
   countDue(userId: string, section?: string): Promise<number>;
-  delete(id: string, userId: string): Promise<boolean>;
+  delete(id: string, userId: string, session?: mongoose.ClientSession): Promise<boolean>;
 }
 
 export class ProblemRepository implements IProblemRepository {
-  async create(data: Partial<IProblem>): Promise<IProblemDocument> {
+  async create(data: Partial<IProblem>, session?: mongoose.ClientSession): Promise<IProblemDocument> {
+    if (session) {
+      const [created] = await Problem.create([data], { session });
+      return created!;
+    }
     return Problem.create(data);
   }
 
@@ -129,14 +133,17 @@ export class ProblemRepository implements IProblemRepository {
     return Problem.countDocuments(filter);
   }
 
-  async delete(id: string, userId: string): Promise<boolean> {
+  async delete(id: string, userId: string, session?: mongoose.ClientSession): Promise<boolean> {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return false;
     }
-    const result = await Problem.deleteOne({
-      _id: new mongoose.Types.ObjectId(id),
-      userId: new mongoose.Types.ObjectId(userId),
-    });
+    const result = await Problem.deleteOne(
+      {
+        _id: new mongoose.Types.ObjectId(id),
+        userId: new mongoose.Types.ObjectId(userId),
+      },
+      { session }
+    );
     return result.deletedCount === 1;
   }
 }

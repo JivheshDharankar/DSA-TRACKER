@@ -8,7 +8,9 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "build:backend": "npm --prefix backend run build",
     "build:frontend": "npm --prefix frontend run build",
-    "test:backend": "npm --prefix backend test"
+    "test:backend": "npm --prefix backend test",
+    "test:frontend": "npm --prefix frontend test",
+    "test:e2e": "npm --prefix frontend run test:e2e"
   },
   "keywords": ["dsa", "spaced-repetition", "anki", "leetcode", "react", "node", "mongodb", "express", "typescript"],
   "author": "DSA Tracker Team",

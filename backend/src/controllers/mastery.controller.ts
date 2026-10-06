@@ -7,7 +7,7 @@ export class MasteryController {
 
   /**
    * GET /api/v1/problems/:problemId/mastery
-   * Pure read inspection of mastery status and 5-gate qualification breakdown.
+   * Pure read inspection of mastery status and 4-gate qualification breakdown.
    */
   getMastery = async (
     req: Request,
@@ -31,7 +31,7 @@ export class MasteryController {
 
   /**
    * POST /api/v1/problems/:problemId/mastery/evaluate
-   * Evaluates all 5 gates server-side. If eligible and UNLOCKED, transitions to LOCKED.
+   * Evaluates all 4 gates server-side. If eligible and UNLOCKED, transitions to LOCKED.
    */
   evaluateMastery = async (
     req: Request,

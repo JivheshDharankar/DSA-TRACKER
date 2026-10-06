@@ -62,8 +62,24 @@ export const formatCalendarDate = (dateStr: string): string => {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
+      timeZone: 'UTC',
     });
   } catch {
     return dateStr;
+  }
+};
+
+/**
+ * Formats a Date instance or ISO date string into an HTML date input format: "YYYY-MM-DD"
+ */
+export const toInputDateString = (date: Date | string = new Date()): string => {
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) {
+      return new Date().toISOString().slice(0, 10);
+    }
+    return d.toISOString().slice(0, 10);
+  } catch {
+    return new Date().toISOString().slice(0, 10);
   }
 };

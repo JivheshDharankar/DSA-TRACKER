@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getErrorMessage } from '../utils/error.utils';
 import styles from '../styles/Auth.module.css';
 
 export const LoginPage: React.FC = () => {
@@ -14,8 +15,8 @@ export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,12 +28,12 @@ export const LoginPage: React.FC = () => {
     }
 
     setIsSubmitting(true);
+
     try {
       await login({ email: email.trim(), password });
       navigate(from, { replace: true });
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      setErrorMessage(error.message || 'Invalid email or password. Please try again.');
+      setErrorMessage(getErrorMessage(err, 'Invalid email or password. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

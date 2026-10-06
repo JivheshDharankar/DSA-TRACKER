@@ -13,6 +13,9 @@ import {
   PatternWithMastery,
 } from '../../types';
 import { fetchPatterns, fetchProblemPatterns, syncProblemPatterns } from '../../api/patterns.api';
+import { getErrorMessage } from '../../utils/error.utils';
+import { toInputDateString } from '../../utils/date.utils';
+import { getSafeUrl } from '../../utils/url.util';
 import styles from './ProblemModal.module.css';
 
 interface ProblemModalProps {
@@ -43,9 +46,7 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
   const [availablePatterns, setAvailablePatterns] = useState<PatternWithMastery[]>([]);
   const [difficulty, setDifficulty] = useState<DifficultyType>('Easy');
   const [source, setSource] = useState<string>('');
-  const [dateLearned, setDateLearned] = useState<string>(
-    new Date().toISOString().split('T')[0]!
-  );
+  const [dateLearned, setDateLearned] = useState<string>(toInputDateString());
   const [status, setStatus] = useState<StatusType>('Not Started');
   const [retentionLevel, setRetentionLevel] = useState<RetentionType>('Learning');
   const [notes, setNotes] = useState('');
@@ -72,7 +73,7 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
       setTopic(problemToEdit.topic);
       setDifficulty(problemToEdit.difficulty);
       setSource(problemToEdit.source);
-      setDateLearned(new Date(problemToEdit.dateLearned).toISOString().split('T')[0]!);
+      setDateLearned(toInputDateString(problemToEdit.dateLearned));
       setStatus(problemToEdit.status);
       setRetentionLevel(problemToEdit.retentionLevel);
       setNotes(problemToEdit.notes || '');
@@ -97,7 +98,7 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
       setSelectedPatternId('');
       setDifficulty('Easy');
       setSource(section === 'COLLEGE' ? 'Lecture' : 'LeetCode');
-      setDateLearned(new Date().toISOString().split('T')[0]!);
+      setDateLearned(toInputDateString());
       setStatus('Not Started');
       setRetentionLevel('Learning');
       setNotes('');
@@ -187,8 +188,7 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
       }
       onClose();
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      setErrorMessage(error.message || 'Operation failed. Please try again.');
+      setErrorMessage(getErrorMessage(err, 'Operation failed. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -273,8 +273,12 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Primary Pattern (Optional)</label>
+              <label htmlFor="primary-pattern-select" className={styles.label}>
+                Primary Pattern (Optional)
+              </label>
               <select
+                id="primary-pattern-select"
+                aria-label="Primary Pattern (Optional)"
                 value={selectedPatternId}
                 onChange={(e) => setSelectedPatternId(e.target.value)}
                 className={styles.select}
@@ -296,9 +300,9 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
                 <div className={styles.field}>
                   <label className={styles.label}>
                     LeetCode Link (Optional)
-                    {leetcodeLink.trim() && (
+                    {getSafeUrl(leetcodeLink) && (
                       <a
-                        href={leetcodeLink}
+                        href={getSafeUrl(leetcodeLink)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}
@@ -333,9 +337,9 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
               <div className={styles.field}>
                 <label className={styles.label}>
                   College Link (Optional Dual Link)
-                  {collegeLink.trim() && (
+                  {getSafeUrl(collegeLink) && (
                     <a
-                      href={collegeLink}
+                      href={getSafeUrl(collegeLink)}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}
@@ -358,9 +362,9 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
               <div className={styles.field}>
                 <label className={styles.label}>
                   College Link (Optional)
-                  {collegeLink.trim() && (
+                  {getSafeUrl(collegeLink) && (
                     <a
-                      href={collegeLink}
+                      href={getSafeUrl(collegeLink)}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}
@@ -381,9 +385,9 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
               <div className={styles.field}>
                 <label className={styles.label}>
                   LeetCode Link (Optional Dual Link)
-                  {leetcodeLink.trim() && (
+                  {getSafeUrl(leetcodeLink) && (
                     <a
-                      href={leetcodeLink}
+                      href={getSafeUrl(leetcodeLink)}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}

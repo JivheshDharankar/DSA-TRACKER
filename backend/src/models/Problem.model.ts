@@ -60,7 +60,6 @@ const problemSchema = new Schema<IProblemDocument>(
         message: '{VALUE} is not a valid problem section',
       },
       required: [true, 'Section is required'],
-      index: true,
     },
     sNo: {
       type: Number,
@@ -161,7 +160,6 @@ const problemSchema = new Schema<IProblemDocument>(
       type: Date,
       required: [true, 'Next review date is required'],
       default: Date.now,
-      index: true,
     },
     lastReviewedAt: {
       type: Date,
@@ -180,7 +178,6 @@ const problemSchema = new Schema<IProblemDocument>(
         message: '{VALUE} is not a valid mastery status',
       },
       default: 'UNLOCKED',
-      index: true,
     },
     lockedAt: {
       type: Date,
@@ -225,6 +222,8 @@ const problemSchema = new Schema<IProblemDocument>(
 // Compound indexes for user privacy and ultra-fast scoped queries
 problemSchema.index({ userId: 1, section: 1, sNo: 1 }, { unique: true });
 problemSchema.index({ userId: 1, section: 1, nextReviewDate: 1 });
+problemSchema.index({ userId: 1, nextReviewDate: 1, sNo: 1 });
+problemSchema.index({ userId: 1, sNo: 1 });
 problemSchema.index({ userId: 1, section: 1, status: 1 });
 problemSchema.index({ userId: 1, section: 1, difficulty: 1 });
 problemSchema.index({ userId: 1, section: 1, dateLearned: -1 });

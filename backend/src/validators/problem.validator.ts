@@ -18,11 +18,23 @@ const sectionEnum = z.enum(['COLLEGE', 'PERSONAL'], {
   errorMap: () => ({ message: 'Section must be either COLLEGE or PERSONAL' }),
 });
 
-// Helper for optional URLs that can be undefined, null, or empty string
+// Helper for optional URLs that can be undefined, null, or empty string.
+// Strictly requires valid web URLs with http:// or https:// protocol, rejecting javascript:, data:, and other executable schemes.
 const optionalUrlSchema = z
   .string()
   .trim()
-  .url('Must be a valid URL (starting with http:// or https://)')
+  .refine(
+    (val) => {
+      if (!val || val === '') return true;
+      try {
+        const parsed = new URL(val);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    },
+    { message: 'Must be a valid web URL starting with http:// or https://' }
+  )
   .optional()
   .nullable()
   .or(z.literal(''))
@@ -93,12 +105,17 @@ export const updateProblemSchema = z
     status: statusEnum.optional(),
     retentionLevel: retentionEnum.optional(),
     notes: z.string().max(10000, 'Notes cannot exceed 10,000 characters').optional(),
-    // Explicitly reject system-controlled and immutable fields
+    // Explicitly reject system-controlled, ownership, and immutable fields
     section: z.never({ invalid_type_error: 'Changing problem section after creation is prohibited' }).optional(),
     userId: z.never({ invalid_type_error: 'userId cannot be supplied by client' }).optional(),
     _id: z.never({ invalid_type_error: '_id cannot be modified' }).optional(),
     sNo: z.never({ invalid_type_error: 'sNo is system-generated and cannot be modified' }).optional(),
     problemLink: z.never({ invalid_type_error: 'problemLink is deprecated; use collegeLink or leetcodeLink' }).optional(),
+    repetitionStage: z.never({ invalid_type_error: 'repetitionStage is server-controlled' }).optional(),
+    intervalDays: z.never({ invalid_type_error: 'intervalDays is server-controlled' }).optional(),
+    nextReviewDate: z.never({ invalid_type_error: 'nextReviewDate is server-controlled' }).optional(),
+    lastReviewedAt: z.never({ invalid_type_error: 'lastReviewedAt is server-controlled' }).optional(),
+    recoveryStage: z.never({ invalid_type_error: 'recoveryStage is server-controlled' }).optional(),
     masteryStatus: z.never({ invalid_type_error: 'masteryStatus is server-evaluated and cannot be modified via problem update' }).optional(),
     lockedAt: z.never({ invalid_type_error: 'lockedAt is server-controlled' }).optional(),
     unlockedAt: z.never({ invalid_type_error: 'unlockedAt is server-controlled' }).optional(),
@@ -108,13 +125,13 @@ export const updateProblemSchema = z
 
 export const listProblemsQuerySchema = z.object({
   section: sectionEnum.optional(),
-  topic: z.string().trim().optional(),
+  topic: z.string().trim().max(200, 'Topic filter cannot exceed 200 characters').optional(),
   difficulty: difficultyEnum.optional(),
-  source: z.string().trim().optional(),
+  source: z.string().trim().max(200, 'Source filter cannot exceed 200 characters').optional(),
   status: statusEnum.optional(),
   retentionLevel: retentionEnum.optional(),
   masteryStatus: z.enum(['UNLOCKED', 'LOCKED']).optional(),
-  search: z.string().trim().optional(),
+  search: z.string().trim().max(200, 'Search query cannot exceed 200 characters').optional(),
   sortBy: z
     .enum(['dateLearned', 'sNo', 'createdAt', 'title', 'difficulty', 'status'])
     .default('sNo'),

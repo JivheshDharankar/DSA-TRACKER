@@ -18,7 +18,6 @@ const problemSequenceSchema = new Schema<IProblemSequenceDocument>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User ID is required'],
-      index: true,
     },
     section: {
       type: String,

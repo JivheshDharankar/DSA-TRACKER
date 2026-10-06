@@ -6,11 +6,21 @@ import {
   IProblemSequenceRepository,
 } from '../repositories/problemSequence.repository.js';
 import {
+  problemPatternRepository,
+  IProblemPatternRepository,
+} from '../repositories/problemPattern.repository.js';
+import { reviewRepository, IReviewRepository } from '../repositories/review.repository.js';
+import {
+  masteryEventRepository,
+  IMasteryEventRepository,
+} from '../repositories/masteryEvent.repository.js';
+import {
   CreateProblemInput,
   UpdateProblemInput,
   ListProblemsQuery,
 } from '../validators/problem.validator.js';
 import { AppError } from '../middleware/error.middleware.js';
+import { escapeRegex } from '../utils/regex.util.js';
 
 export interface PaginatedProblemsResponse {
   items: IProblemDocument[];
@@ -22,23 +32,46 @@ export interface PaginatedProblemsResponse {
   };
 }
 
+interface MongoTopologyDescription {
+  type?: string;
+  setName?: string;
+}
+
+interface MongoConnectionWithTopology {
+  client?: {
+    topology?: {
+      description?: MongoTopologyDescription;
+    };
+  };
+}
+
+export function supportsTransactions(): boolean {
+  const conn = mongoose.connection as unknown as MongoConnectionWithTopology;
+  const topology = conn?.client?.topology;
+  const desc = topology?.description;
+  if (!desc) return false;
+  return desc.type === 'ReplicaSetWithPrimary' || desc.type === 'Sharded' || Boolean(desc.setName);
+}
+
 export class ProblemService {
   constructor(
     private readonly problemRepo: IProblemRepository = problemRepository,
-    private readonly seqRepo: IProblemSequenceRepository = problemSequenceRepository
+    private readonly seqRepo: IProblemSequenceRepository = problemSequenceRepository,
+    private readonly patternRepo: IProblemPatternRepository = problemPatternRepository,
+    private readonly reviewRepo: IReviewRepository = reviewRepository,
+    private readonly masteryEventRepo: IMasteryEventRepository = masteryEventRepository
   ) {}
 
   /**
    * Creates a new problem with an atomically allocated S.No., optional dual links, and Day 0 spaced repetition state.
+   * Uses native MongoDB replica-set transactions when available. In standalone environments, uses atomic sequence
+   * allocation with conditional rollback on creation failure.
    */
   async createProblem(userId: string, input: CreateProblemInput): Promise<IProblemDocument> {
-    const sNo = await this.seqRepo.getNextSNo(userId, input.section);
     const creationTime = new Date();
-
-    const problem = await this.problemRepo.create({
+    const problemData = {
       userId: new mongoose.Types.ObjectId(userId),
       section: input.section,
-      sNo,
       title: input.title,
       collegeLink: input.collegeLink ?? null,
       leetcodeLink: input.leetcodeLink ?? null,
@@ -55,9 +88,35 @@ export class ProblemService {
       nextReviewDate: creationTime,
       lastReviewedAt: null,
       recoveryStage: null,
-    });
+    };
 
-    return problem;
+    if (supportsTransactions()) {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        const sNo = await this.seqRepo.getNextSNo(userId, input.section, session);
+        const problem = await this.problemRepo.create({ ...problemData, sNo }, session);
+        await session.commitTransaction();
+        return problem;
+      } catch (error) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        await session.endSession();
+      }
+    }
+
+    // Standalone fallback: atomic $inc + conditional rollback
+    const sNo = await this.seqRepo.getNextSNo(userId, input.section);
+    try {
+      const problem = await this.problemRepo.create({ ...problemData, sNo });
+      return problem;
+    } catch (error) {
+      await this.seqRepo.rollbackIfLatest(userId, input.section, sNo).catch(() => {
+        // Suppress rollback failure to preserve root problem creation error
+      });
+      throw error;
+    }
   }
 
   /**
@@ -73,7 +132,8 @@ export class ProblemService {
     }
 
     if (query.topic) {
-      filter.topic = { $regex: query.topic, $options: 'i' };
+      const escapedTopic = escapeRegex(query.topic);
+      filter.topic = { $regex: escapedTopic, $options: 'i' };
     }
 
     if (query.difficulty) {
@@ -97,7 +157,7 @@ export class ProblemService {
     }
 
     if (query.search) {
-      const escapedSearch = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedSearch = escapeRegex(query.search);
       filter.$or = [
         { title: { $regex: escapedSearch, $options: 'i' } },
         { topic: { $regex: escapedSearch, $options: 'i' } },
@@ -162,16 +222,45 @@ export class ProblemService {
   }
 
   /**
-   * Deletes a problem without renumbering existing problems or decrementing sequences.
+   * Deletes a problem and cascades cleanup of all related ProblemPattern,
+   * RevisionHistory, and MasteryEvent records scoped strictly by userId and problemId.
    */
   async deleteProblem(userId: string, problemId: string): Promise<void> {
+    // 1. Verify existence and ownership strictly first
+    const problem = await this.problemRepo.findById(problemId, userId);
+    if (!problem) {
+      throw new AppError('Problem not found.', 404, 'NOT_FOUND');
+    }
+
+    if (supportsTransactions()) {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        await this.patternRepo.deleteByProblem(userId, problemId, session);
+        await this.reviewRepo.deleteByProblem(userId, problemId, session);
+        await this.masteryEventRepo.deleteByProblem(userId, problemId, session);
+        const deleted = await this.problemRepo.delete(problemId, userId, session);
+        if (!deleted) {
+          throw new AppError('Problem not found.', 404, 'NOT_FOUND');
+        }
+        await session.commitTransaction();
+      } catch (error) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        await session.endSession();
+      }
+      return;
+    }
+
+    // Standalone fallback: Reliable ordered cleanup (child dependencies first, then parent)
+    await this.patternRepo.deleteByProblem(userId, problemId);
+    await this.reviewRepo.deleteByProblem(userId, problemId);
+    await this.masteryEventRepo.deleteByProblem(userId, problemId);
     const deleted = await this.problemRepo.delete(problemId, userId);
     if (!deleted) {
       throw new AppError('Problem not found.', 404, 'NOT_FOUND');
     }
-    // Also clean up any pattern associations
-    const { problemPatternRepository } = await import('../repositories/problemPattern.repository.js');
-    await problemPatternRepository.deleteByProblem(userId, problemId);
   }
 }
 

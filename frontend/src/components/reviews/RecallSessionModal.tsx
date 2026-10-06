@@ -17,6 +17,8 @@ import { RetentionBadge } from '../problems/RetentionBadge';
 import { RecallResultBadge } from './RecallResultBadge';
 import { SrsProgressionStepper } from './SrsProgressionStepper';
 import { formatTiming, formatCalendarDate } from '../../utils/date.utils';
+import { getErrorMessage } from '../../utils/error.utils';
+import { getSafeUrl } from '../../utils/url.util';
 import styles from './RecallSessionModal.module.css';
 
 interface RecallSessionModalProps {
@@ -96,8 +98,7 @@ export const RecallSessionModal: React.FC<RecallSessionModalProps> = ({
       setStep('RESULT');
       onSuccess(result);
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      setErrorMessage(error.message || 'Failed to record revision. Please try again.');
+      setErrorMessage(getErrorMessage(err, 'Failed to record revision. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -155,9 +156,9 @@ export const RecallSessionModal: React.FC<RecallSessionModalProps> = ({
             </span>
 
             <div className={styles.linkGroup} style={{ marginLeft: 'auto' }}>
-              {problem.collegeLink && (
+              {getSafeUrl(problem.collegeLink) && (
                 <a
-                  href={problem.collegeLink}
+                  href={getSafeUrl(problem.collegeLink)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.linkBtn} ${styles.collegeLink}`}
@@ -166,9 +167,9 @@ export const RecallSessionModal: React.FC<RecallSessionModalProps> = ({
                   <ExternalLink size={12} />
                 </a>
               )}
-              {problem.leetcodeLink && (
+              {getSafeUrl(problem.leetcodeLink) && (
                 <a
-                  href={problem.leetcodeLink}
+                  href={getSafeUrl(problem.leetcodeLink)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.linkBtn} ${styles.leetcodeLink}`}

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, CheckCircle2, Loader2, Sparkles, BookOpen } from 'lucide-react';
+import { Play, CheckCircle2, Loader2, Sparkles, BookOpen, AlertCircle } from 'lucide-react';
 import { Problem, SectionType } from '../types';
 import { fetchDueReviews } from '../api/reviews.api';
 import { DifficultyBadge } from '../components/problems/DifficultyBadge';
 import { RetentionBadge } from '../components/problems/RetentionBadge';
 import { RecallSessionModal } from '../components/reviews/RecallSessionModal';
 import { getDueBadgeInfo } from '../utils/date.utils';
+import { getErrorMessage } from '../utils/error.utils';
 import styles from './ReviewPage.module.css';
 
 export const ReviewPage: React.FC = () => {
@@ -14,18 +15,20 @@ export const ReviewPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [selectedSection, setSelectedSection] = useState<SectionType | 'ALL'>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeProblem, setActiveProblem] = useState<Problem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const loadDueProblems = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const params = selectedSection === 'ALL' ? {} : { section: selectedSection };
       const data = await fetchDueReviews(params);
       setDueProblems(data.items);
       setTotalCount(data.pagination.total);
-    } catch (err) {
-      console.error('Failed to fetch due reviews:', err);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to fetch due reviews.'));
     } finally {
       setIsLoading(false);
     }
@@ -73,6 +76,13 @@ export const ReviewPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className={styles.errorBanner} role="alert">
+          <AlertCircle size={18} />
+          <span>{error}</span>
+        </div>
+      )}
 
       {isLoading ? (
         <div
