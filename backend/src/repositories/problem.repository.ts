@@ -1,5 +1,20 @@
 import mongoose, { FilterQuery } from 'mongoose';
 import { Problem, IProblem, IProblemDocument } from '../models/Problem.model.js';
+import { startOfNextUtcDay } from '../utils/date.util.js';
+import { escapeRegex } from '../utils/regex.util.js';
+
+/**
+ * A problem is due when its scheduled UTC calendar day has arrived, i.e. its
+ * nextReviewDate is before the start of the NEXT UTC calendar day.
+ *
+ * This is a calendar-day comparison, not an instant comparison (`nextReviewDate <= now`):
+ * scheduling anchors every nextReviewDate to 00:00:00.000 UTC, and rows written before that
+ * normalisation may still carry a time-of-day. Comparing against the day boundary keeps both
+ * shapes eligible for the whole of their due calendar day, so no bulk rescheduling is needed.
+ */
+const buildDuePredicate = (): FilterQuery<IProblemDocument> => ({
+  nextReviewDate: { $lt: startOfNextUtcDay(new Date()) },
+});
 
 export interface IProblemRepository {
   create(data: Partial<IProblem>, session?: mongoose.ClientSession): Promise<IProblemDocument>;
@@ -11,6 +26,12 @@ export interface IProblemRepository {
     limit: number
   ): Promise<IProblemDocument[]>;
   count(filter: FilterQuery<IProblemDocument>): Promise<number>;
+  /**
+   * Finds a user's problem whose LeetCode link points at `slug`, regardless of how the
+   * stored URL was formatted (trailing slash, `description` suffix, query string).
+   * Used only to warn about duplicate imports; it creates no uniqueness constraint.
+   */
+  findByLeetcodeSlug(userId: string, slug: string): Promise<IProblemDocument | null>;
   update(
     id: string,
     userId: string,
@@ -64,6 +85,16 @@ export class ProblemRepository implements IProblemRepository {
     return Problem.countDocuments(filter);
   }
 
+  async findByLeetcodeSlug(userId: string, slug: string): Promise<IProblemDocument | null> {
+    // The slug is produced by `parseLeetcodeProblemUrl` (lower-case [a-z0-9-] only);
+    // escaping keeps the regex literal regardless of future callers.
+    const escapedSlug = escapeRegex(slug);
+    return Problem.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      leetcodeLink: { $regex: `/problems/${escapedSlug}(?:[/?#]|$)`, $options: 'i' },
+    }).sort({ createdAt: 1 });
+  }
+
   async update(
     id: string,
     userId: string,
@@ -110,7 +141,7 @@ export class ProblemRepository implements IProblemRepository {
   ): Promise<IProblemDocument[]> {
     const filter: FilterQuery<IProblemDocument> = {
       userId: new mongoose.Types.ObjectId(userId),
-      nextReviewDate: { $lte: new Date() },
+      ...buildDuePredicate(),
     };
     if (section) {
       filter.section = section;
@@ -125,7 +156,7 @@ export class ProblemRepository implements IProblemRepository {
   async countDue(userId: string, section?: string): Promise<number> {
     const filter: FilterQuery<IProblemDocument> = {
       userId: new mongoose.Types.ObjectId(userId),
-      nextReviewDate: { $lte: new Date() },
+      ...buildDuePredicate(),
     };
     if (section) {
       filter.section = section;

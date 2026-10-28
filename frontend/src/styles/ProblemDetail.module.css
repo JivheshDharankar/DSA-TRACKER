@@ -1,444 +1,527 @@
-.detailContainer {
+/**
+ * DSA Tracker — Problem Detail styles (Phase 7)
+ * ============================================
+ * Layout rule (readable at every width, nothing clipped):
+ *
+ *   < 640px      single column · actions stretch across the row for touch · metadata 1-up
+ *   640–1023px   header becomes back-left / actions-right · metadata 2-up
+ *   >= 1024px    metadata 3-up · page constrained to `--layout-content-max`
+ *
+ * The identity block stacks on small screens and becomes title-left / links-right from
+ * 768px, so a long title and a long link label never fight for the same line.
+ *
+ * Every value comes from `styles/tokens.css`. The legacy cyan accents, tinted status
+ * colours, glass hover and inline `var(--…)` styles the page used before are gone;
+ * pills come from the Phase 2 `Badge` primitive and buttons from `Button`.
+ */
+
+.page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
-  max-width: 900px;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: var(--layout-content-max);
   margin: 0 auto;
+  min-width: 0;
 }
+
+/* ------------------------------------------------------------------ header */
 
 .topBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
-.backBtn {
+.backLink {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: color var(--transition-fast);
+  gap: var(--space-2);
+  align-self: flex-start;
+  min-height: var(--layout-touch-target);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--duration-fast) var(--ease-standard);
 }
 
-.backBtn:hover {
-  color: var(--text-main);
+.backLink:hover {
+  color: var(--color-text-primary);
 }
 
-.actionButtons {
+.backLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.actions {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
-.editBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all var(--transition-fast);
+/* Small screens: the two actions share the row and keep a comfortable hit area. */
+.actions > * {
+  flex: 1 1 auto;
 }
 
-.editBtn:hover {
-  border-color: var(--accent-cyan);
-  background: var(--bg-glass-hover);
+@media (min-width: 640px) {
+  .topBar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .backLink {
+    align-self: center;
+    padding: 0;
+  }
+
+  .actions {
+    flex: 0 0 auto;
+  }
+
+  .actions > * {
+    flex: 0 0 auto;
+  }
 }
 
-.deleteBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  background: var(--color-hard-bg);
-  border: 1px solid var(--color-hard-border);
-  color: var(--color-hard);
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-}
+/* ---------------------------------------------------------------- identity */
 
-.deleteBtn:hover {
-  background: var(--color-hard);
-  color: #fff;
-}
-
-.mainCard {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2xl);
-  box-shadow: var(--shadow-card);
+.identity {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
-.titleArea {
+.identityMain {
+  min-width: 0;
+}
+
+.identityTags {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: var(--space-lg);
-}
-
-.titleHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-md);
-}
-
-.sNoTag {
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.12);
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  display: inline-block;
-  margin-bottom: var(--space-xs);
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
 }
 
 .title {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
-  line-height: 1.3;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-6);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--tracking-tight);
+  overflow-wrap: anywhere;
 }
 
-.linkGroup {
+.links {
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
   flex-wrap: wrap;
-  margin-top: 6px;
+  gap: var(--space-2);
 }
 
-.linkBtn {
+.link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  transition: all var(--transition-fast);
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-3);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
-.collegeLinkBtn {
-  background: rgba(168, 85, 247, 0.12);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+.link:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-accent);
 }
 
-.collegeLinkBtn:hover {
-  background: rgba(168, 85, 247, 0.22);
-  color: #f3e8ff;
-  border-color: rgba(168, 85, 247, 0.4);
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.leetcodeLinkBtn {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+@media (min-width: 768px) {
+  .identity {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-5);
+  }
+
+  .identityMain {
+    flex: 1 1 auto;
+  }
+
+  .links {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
 }
 
-.leetcodeLinkBtn:hover {
-  background: rgba(245, 158, 11, 0.22);
-  color: #fef08a;
-  border-color: rgba(245, 158, 11, 0.4);
+/* ----------------------------------------------------------------- sections */
+
+/* Sections live inside the body card and are separated by hairlines. Using the
+   adjacent-sibling rule keeps the divider correct no matter which sections render. */
+.identityCard,
+.bodyCard {
+  /* `Card` owns the surface, border and radius; these classes only carry layout. */
+  min-width: 0;
 }
 
+.bodyCard > * + * {
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
+  padding-top: var(--space-5);
+}
 
-.grid {
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* A heading that carries a trailing action (patterns): stacked on small screens so the
+   action cannot be pushed off the edge, side-by-side from 640px. */
+.sectionHeadingRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sectionHeadingRow > *:last-child {
+  align-self: flex-start;
+}
+
+@media (min-width: 640px) {
+  .sectionHeadingRow {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .sectionHeadingRow > *:last-child {
+    align-self: auto;
+  }
+}
+
+/* ----------------------------------------------------------- metadata grid */
+
+.metaGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  margin: 0;
 }
 
-.gridItem {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
+@media (min-width: 640px) {
+  .metaGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .metaGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.metaItem {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
 }
 
-.gridLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
+.metaLabel {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
+  letter-spacing: var(--tracking-caps);
 }
 
-.gridValue {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.notesSection {
+.metaValue {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
 }
 
-.notesHeading {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.metaValueMono {
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-variant-numeric: var(--font-variant-numeric);
 }
 
-.notesBox {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-lg);
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  min-height: 100px;
+.metaValueAccent {
+  color: var(--color-info);
 }
 
-.historySection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--space-xl);
+.metaValueMuted {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-regular);
 }
 
-.historyHeading {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.masteryLockedNote {
+  color: var(--color-warning);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-medium);
 }
 
-/* Patterns Section */
-.patternsSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--space-xl);
-}
-
-.patternsHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.patternsHeading {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.managePatternsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  color: var(--accent-cyan);
-  border-radius: var(--radius-md);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.managePatternsBtn:hover {
-  background: rgba(56, 189, 248, 0.2);
-}
-
-.patternPillsContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
-.patternPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  text-decoration: none;
-  transition: all var(--transition-fast);
-}
-
-.patternPill:hover {
-  border-color: var(--accent-cyan);
-  background: var(--bg-glass-hover);
-}
-
-.patternName {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.confidenceTag {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: var(--radius-full);
-}
-
-.confidenceTagHigh {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-}
-
-.confidenceTagMedium {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-}
-
-.confidenceTagLow {
-  background: rgba(148, 163, 184, 0.2);
-  color: #94a3b8;
-}
-
-.primaryBadge {
-  font-size: 0.65rem;
-  background: rgba(168, 85, 247, 0.2);
-  color: var(--accent-violet);
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  font-weight: 700;
-}
-
-/* Phase 8: Mastery & Qualification Panel */
-.masterySection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--space-xl);
-}
+/* ------------------------------------------------------------------ mastery */
 
 .masteryCard {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
 }
 
 .masteryCardLocked {
-  border-color: rgba(245, 158, 11, 0.4);
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-surface-elevated) 100%);
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.08);
-}
-
-.masteryTopRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
+  border-color: var(--color-warning);
+  background: linear-gradient(180deg, var(--color-warning-subtle) 0%, var(--color-bg-raised) 100%);
 }
 
 .masteryHeading {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-main);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.gatesGrid {
+.masteryIcon {
+  color: var(--color-accent);
+}
+
+.masteryIconLocked {
+  color: var(--color-warning);
+}
+
+.masterySummary {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-body);
+}
+
+.masterySummaryLocked {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
+.masterySummaryEligible {
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
+}
+
+.gates {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-sm);
-  margin-top: 4px;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.gateItem {
+@media (min-width: 768px) {
+  .gates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.gate {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 14px;
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3);
+  /* Default (not yet passed) is deliberately neutral: the ✗ icon and the screen-reader
+     status carry the state, so a failed gate is never signalled by colour alone. */
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
 }
 
 .gatePassed {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.gateFailed {
-  border-color: rgba(248, 113, 113, 0.2);
-  background: rgba(248, 113, 113, 0.03);
+  background: var(--color-success-subtle);
+  border-color: var(--color-success);
 }
 
 .gateIconPass {
-  color: #34d399;
-  font-weight: 700;
-  font-size: 1rem;
+  flex: 0 0 auto;
   margin-top: 2px;
+  color: var(--color-success);
 }
 
 .gateIconFail {
-  color: #f87171;
-  font-weight: 700;
-  font-size: 1rem;
+  flex: 0 0 auto;
   margin-top: 2px;
+  color: var(--color-danger);
 }
 
 .gateContent {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .gateTitle {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-main);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
 }
 
 .gateSubtitle {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
+  overflow-wrap: anywhere;
 }
 
+/* ----------------------------------------------------------------- patterns */
 
+.patternList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.patternPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-pill);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.patternPill:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-accent);
+}
+
+.patternPill:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.patternName {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+}
+
+.patternEmpty {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-2);
+  font-style: italic;
+}
+
+.patternEmptyAction {
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-1);
+  background: none;
+  color: var(--color-text-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.patternEmptyAction:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* -------------------------------------------------------------------- notes */
+
+.notes {
+  min-height: 88px;
+  padding: var(--space-4);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-loose);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notesEmpty {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* ---------------------------------------------------------------- preload */
+
+.skeletonTopBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Only adds the vertical rhythm `Card` does not set; it never touches its padding. */
+.skeletonStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backLink,
+  .link,
+  .patternPill {
+    transition: none;
+  }
+}

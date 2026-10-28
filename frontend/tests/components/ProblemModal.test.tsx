@@ -241,6 +241,32 @@ describe('ProblemModal component', () => {
     });
   });
 
+  it('renders as a modal dialog, moves focus inside and closes on Escape', async () => {
+    const user = userEvent.setup();
+    const handleClose = vi.fn();
+
+    render(
+      <ProblemModal
+        isOpen={true}
+        section="COLLEGE"
+        onClose={handleClose}
+        onSubmitCreate={async () => {}}
+        onSubmitUpdate={async () => {}}
+      />
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Add College DSA Problem' });
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(dialog).toHaveAccessibleDescription('COLLEGE DSA');
+
+    await waitFor(() => {
+      expect(dialog.contains(document.activeElement)).toBe(true);
+    });
+
+    await user.keyboard('{Escape}');
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
   it('calls onClose when close button is clicked', async () => {
     const user = userEvent.setup();
     const handleClose = vi.fn();
@@ -255,7 +281,8 @@ describe('ProblemModal component', () => {
       />
     );
 
-    await user.click(screen.getByTitle('Close modal'));
+    // The overlay is the shared Dialog now, whose close control is named "Close dialog".
+    await user.click(screen.getByRole('button', { name: /close dialog/i }));
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 

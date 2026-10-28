@@ -1,186 +1,135 @@
+/**
+ * DSA Tracker — Auth pages (Phase 4)
+ * Shared presentation for LoginPage + RegisterPage. The Phase 2 primitives
+ * (Button / Input / Field / Alert) own the controls end to end; this module owns
+ * the page shell, the card, and the password-toggle placement.
+ *
+ * Phase 4 notes:
+ *   - glass (backdrop-filter) and the decorative .cardGlow are gone, matching the
+ *     shell chrome direction from Phase 3;
+ *   - every value comes from styles/tokens.css — no legacy tokens, no hard-coded
+ *     colours, no glow shadows;
+ *   - first responsive rules in this module: tighter card padding on small
+ *     screens. (The 16px control font below 640px is handled by the Input
+ *     primitive itself.)
+ */
+
 .authContainer {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Same vertical math as before (100vh - 160px), now viewport-dynamic; the vh
+     line is the fallback for engines without dvh support. */
   min-height: calc(100vh - 160px);
-  padding: var(--space-lg);
+  min-height: calc(100dvh - 160px);
+  padding: var(--space-5);
 }
 
 .authCard {
   width: 100%;
   max-width: 440px;
-  background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2xl);
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-card);
-  position: relative;
-  overflow: hidden;
-  transition: border-color var(--transition-normal);
-}
-
-.authCard:hover {
-  border-color: var(--border-glow);
-}
-
-.cardGlow {
-  position: absolute;
-  top: -80px;
-  right: -80px;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, var(--accent-cyan-glow) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
+  padding: var(--space-6);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-2);
 }
 
 .header {
+  margin-bottom: var(--space-5);
   text-align: center;
-  margin-bottom: var(--space-xl);
 }
 
 .iconWrapper {
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-md);
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-cyan);
-  margin: 0 auto var(--space-md);
+  width: 52px;
+  height: 52px;
+  margin: 0 auto var(--space-3);
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  border: var(--border-width-hairline) solid var(--color-border-accent);
+  border-radius: var(--radius-4);
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-1);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-6);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-tight);
 }
 
 .subtitle {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-body);
+}
+
+.formAlert {
+  margin-bottom: var(--space-4);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-4);
 }
 
-.inputGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.inputWrapper {
+/*
+ * The relative row hosting the password Input and its visibility toggle. The
+ * toggle anchors to the row's bottom edge, which is always the control itself:
+ * the auth forms never render field-level hints or errors below it (form-level
+ * errors use the Alert above the form).
+ */
+.controlRow {
   position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input {
-  width: 100%;
-  height: 44px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0 var(--space-md);
-  color: var(--text-main);
-  font-size: 0.95rem;
-  font-family: inherit;
-  transition: all var(--transition-fast);
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px var(--accent-cyan-glow);
 }
 
 .inputWithToggle {
-  padding-right: 44px;
+  padding-right: calc(var(--control-height-sm) + var(--space-4)); /* 48px */
 }
 
-.passwordToggle {
+/* Two-class selector so the offsets win deterministically over the Button
+   primitive's `position: relative`. */
+.controlRow .passwordToggle {
   position: absolute;
-  right: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-dim);
-  transition: color var(--transition-fast);
-}
-
-.passwordToggle:hover {
-  color: var(--text-main);
-}
-
-.errorBanner {
-  background: var(--color-hard-bg);
-  border: 1px solid var(--color-hard-border);
-  color: var(--color-hard);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+  right: var(--space-2);
+  /* (40 - 32) / 2 — vertically centred on the 40px control row. */
+  bottom: calc((var(--control-height-md) - var(--control-height-sm)) / 2);
 }
 
 .submitBtn {
-  margin-top: var(--space-sm);
-  height: 44px;
-  background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-  color: #04101e;
-  font-weight: 700;
-  font-size: 0.95rem;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
-}
-
-.submitBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
-  background: linear-gradient(135deg, #38bdf8, #38bdf8);
-}
-
-.submitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  margin-top: var(--space-2);
 }
 
 .footer {
-  margin-top: var(--space-lg);
+  margin-top: var(--space-5);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-2);
   text-align: center;
-  font-size: 0.85rem;
-  color: var(--text-muted);
 }
 
 .footerLink {
-  color: var(--accent-cyan);
-  font-weight: 600;
-  margin-left: var(--space-xs);
-  transition: underline var(--transition-fast);
+  margin-left: var(--space-1);
+  color: var(--color-text-link);
+  font-weight: var(--font-weight-semibold);
 }
 
 .footerLink:hover {
   text-decoration: underline;
+}
+
+/* Small screens: tighten the card and page gutters; content order and controls
+   are unchanged. */
+@media (max-width: 479px) {
+  .authContainer {
+    padding: var(--space-4);
+  }
+
+  .authCard {
+    padding: var(--space-5);
+  }
 }

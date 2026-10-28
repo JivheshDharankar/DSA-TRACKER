@@ -1,0 +1,69 @@
+/**
+ * DSA Tracker — ErrorState primitive styles (Phase 2)
+ * Restrained failure surface: hairline border, no glow, tone carried by the icon.
+ * All values come from `styles/tokens.css`.
+ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-2);
+  min-width: 0;
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+}
+
+.section {
+  padding: var(--space-6) var(--space-5);
+}
+
+.compact {
+  padding: var(--space-4);
+}
+
+/* "full" reserves roughly a viewport third (5 × 64px) without a magic height. */
+.full {
+  padding: var(--space-8) var(--space-5);
+  min-height: calc(var(--space-8) * 5);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  margin-bottom: var(--space-2);
+  background: var(--color-danger-subtle);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+  color: var(--color-danger);
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--tracking-tight);
+}
+
+.message {
+  max-width: 52ch;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-body);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}

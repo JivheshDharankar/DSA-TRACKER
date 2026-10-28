@@ -53,6 +53,28 @@ describe('DeleteProblemDialog component', () => {
     expect(screen.getByText(/Remaining problems will not be renumbered/i)).toBeInTheDocument();
   });
 
+  it('renders as a modal dialog with a warning description and closes on Escape', async () => {
+    const user = userEvent.setup();
+    const handleClose = vi.fn();
+
+    render(
+      <DeleteProblemDialog
+        isOpen={true}
+        problem={mockProblem}
+        onClose={handleClose}
+        onConfirmDelete={async () => {}}
+      />
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Delete Problem #42?' });
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(dialog).toHaveAccessibleDescription(/irreversible/i);
+    expect(dialog).toHaveAccessibleDescription(/Trapping Rain Water/i);
+
+    await user.keyboard('{Escape}');
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
   it('calls onClose when Cancel button is clicked without calling onConfirmDelete', async () => {
     const user = userEvent.setup();
     const handleClose = vi.fn();

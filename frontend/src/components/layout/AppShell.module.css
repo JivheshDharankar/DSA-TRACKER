@@ -1,21 +1,47 @@
+/**
+ * DSA Tracker — Application shell styles (Phase 3)
+ * ===============================================
+ * The shell is a flex row: sidebar (or rail) beside a column of topbar + scrolling
+ * content. `main` remains the scroll container, exactly as before, so pages that assume
+ * an inner scroller keep working.
+ *
+ * Below 768px the sidebar is gone, the bottom bar is fixed over the viewport, and the
+ * scroll container reserves space for it — no `overflow-x: hidden` workaround is used
+ * anywhere in the shell.
+ */
+
 .shell {
   display: flex;
   min-height: 100vh;
-  background: var(--bg-app);
+  /* Dynamic viewport height keeps the shell correct when mobile browser chrome
+     collapses; `vh` above is the fallback for engines without `dvh`. */
+  min-height: 100dvh;
+  background: var(--color-bg-app);
 }
 
 .mainWrapper {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
 .content {
-  flex: 1;
-  padding: var(--space-xl);
-  overflow-y: auto;
-  max-width: 1400px;
+  flex: 1 1 auto;
   width: 100%;
+  max-width: var(--layout-wide-max);
   margin: 0 auto;
+  padding: var(--layout-gutter);
+  overflow-y: auto;
+}
+
+@media (max-width: 767px) {
+  .content {
+    padding: var(--layout-gutter-mobile);
+    /* Clear the fixed bottom bar (plus its safe-area inset) so no page content is
+       ever hidden behind the navigation. */
+    padding-bottom: calc(
+      var(--layout-bottomnav) + env(safe-area-inset-bottom, 0px) + var(--layout-gutter-mobile)
+    );
+  }
 }

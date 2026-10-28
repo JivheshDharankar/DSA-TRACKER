@@ -1,0 +1,76 @@
+/**
+ * DSA Tracker — Input primitive styles (Phase 2)
+ * All values come from `styles/tokens.css`.
+ */
+
+.control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height-md);
+  padding: 0 var(--space-3);
+  background: var(--color-bg-sunken);
+  color: var(--color-text-primary);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-3);
+  font-family: inherit;
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-tight);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.control::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.control:hover:not(:disabled):not(:focus-visible) {
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-app);
+}
+
+.control:focus-visible {
+  outline: none;
+  border-color: var(--color-border-accent);
+  background: var(--color-bg-sunken);
+  box-shadow: var(--focus-ring);
+}
+
+.control:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background: var(--color-bg-surface);
+}
+
+.compact {
+  height: calc(var(--control-height-sm) + var(--space-1)); /* 36px */
+}
+
+.invalid,
+.invalid:hover:not(:disabled) {
+  border-color: var(--color-danger);
+}
+
+/* Error state keeps a focus ring, but in the danger hue so state is not colour-only. */
+.invalid:focus-visible {
+  border-color: var(--color-danger);
+  box-shadow:
+    0 0 0 var(--focus-ring-offset) var(--color-bg-app),
+    0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--color-danger);
+}
+
+/* Below the `sm` breakpoint (640px) the control text is 16px so iOS Safari does not
+   zoom the viewport when the field receives focus. */
+@media (max-width: 639px) {
+  .control {
+    font-size: var(--font-size-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control {
+    transition: none;
+  }
+}

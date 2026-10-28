@@ -6,6 +6,7 @@ import { reviewRouter } from './review.routes.js';
 import patternRoutes from './pattern.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import masteryOverviewRoutes from './masteryOverview.routes.js';
+import aiRoutes from './ai.routes.js';
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.use('/reviews', reviewRouter);
 router.use('/patterns', patternRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/mastery', masteryOverviewRoutes);
+router.use('/ai', aiRoutes);
 
 export default router;
 

@@ -1,37 +1,46 @@
+/**
+ * DSA Tracker — recall result chip styles
+ * =======================================
+ * Deliberately not the `Badge` primitive: a recall outcome keeps its own uppercase mono
+ * treatment so it reads as recorded data rather than as a status pill, which is why these
+ * classes exist at all. The colours are the shared semantic tokens now — the legacy
+ * `--color-easy` / `--accent-cyan` names and the raw rgba() values are gone.
+ */
+
 .badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-1);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .easy {
-  background: var(--color-easy-bg);
-  color: var(--color-easy);
-  border: 1px solid var(--color-easy-border);
+  background: var(--color-success-subtle);
+  color: var(--color-success);
+  border: var(--border-width-hairline) solid rgba(16, 185, 129, 0.35);
 }
 
 .struggled {
-  background: var(--color-medium-bg);
-  color: var(--color-medium);
-  border: 1px solid var(--color-medium-border);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+  border: var(--border-width-hairline) solid rgba(245, 158, 11, 0.35);
 }
 
 .hint {
-  background: rgba(56, 189, 248, 0.12);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: var(--color-info-subtle);
+  color: var(--color-info);
+  border: var(--border-width-hairline) solid rgba(56, 189, 248, 0.35);
 }
 
 .forgot {
-  background: var(--color-hard-bg);
-  color: var(--color-hard);
-  border: 1px solid var(--color-hard-border);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  border: var(--border-width-hairline) solid rgba(239, 68, 68, 0.35);
 }

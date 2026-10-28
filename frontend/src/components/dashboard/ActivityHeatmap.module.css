@@ -1,95 +1,89 @@
+/**
+ * DSA Tracker — Practice activity heatmap styles (Phase 5)
+ * The 720px year grid lives inside `.scroller`, which is `min-width: 0` and scrolls
+ * horizontally. Nothing outside `.scroller` exceeds its column.
+ */
+
 .card {
-  background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--text-main);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
+  min-width: 0;
 }
 
 .streakSummary {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--font-size-2);
+  color: var(--color-text-secondary);
 }
 
-.streakBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.6rem;
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  color: #fbbf24;
-  border-radius: var(--radius-full);
-  font-weight: 700;
-  font-size: 0.8rem;
-}
-
-.heatmapWrapper {
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
+/* The one intentionally scrollable region in the dashboard. */
+.scroller {
   position: relative;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: var(--space-2);
+  overflow-x: auto;
 }
 
 .heatmapContainer {
   display: inline-flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
+  /* 53 week columns × (12px cell + 3px gap) + weekday gutter. */
   min-width: 720px;
 }
 
 .monthLabels {
-  display: flex;
-  margin-left: 32px;
-  height: 16px;
   position: relative;
+  height: var(--space-4);
+  margin-left: 32px;
 }
 
 .monthLabel {
   position: absolute;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-dim);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
 }
 
 .gridArea {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 .dayLabels {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 104px;
   width: 26px;
-  font-size: 0.68rem;
-  color: var(--text-dim);
+  height: 104px;
+  padding-right: var(--space-1);
+  font-size: var(--font-size-1);
+  color: var(--color-text-tertiary);
   text-align: right;
-  padding-right: 4px;
 }
 
 .weeksGrid {
@@ -103,64 +97,75 @@
   gap: 3px;
 }
 
+/* Leading pad cells of the first week: same footprint as a day cell, never painted. */
+.emptyCell {
+  width: 12px;
+  height: 12px;
+}
+
 .dayCell {
   width: 12px;
   height: 12px;
-  border-radius: 2px;
-  border: 1px solid transparent;
-  cursor: pointer;
   padding: 0;
-  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  border: var(--border-width-hairline) solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.dayCell:hover {
+  border-color: var(--color-accent-hover);
+}
+
+.dayCell:focus-visible {
   outline: none;
+  border-color: var(--color-focus);
+  box-shadow: var(--focus-ring);
 }
 
-.dayCell:hover,
-.dayCell:focus {
-  transform: scale(1.35);
-  z-index: 10;
-  border-color: #fff;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
-}
-
-/* Intensity levels using dark canvas theme */
+/* Intensity ramp — restrained indigo; level 4 carries no glow. */
 .level0 {
-  background: rgba(148, 163, 184, 0.08);
+  background: var(--color-bg-hover);
 }
 
 .level1 {
-  background: #0e4429;
-  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(99, 102, 241, 0.28);
 }
 
 .level2 {
-  background: #006d32;
-  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(99, 102, 241, 0.5);
 }
 
 .level3 {
-  background: #26a641;
+  background: rgba(99, 102, 241, 0.72);
 }
 
 .level4 {
-  background: #39d353;
-  box-shadow: 0 0 6px rgba(57, 211, 83, 0.4);
+  background: var(--color-accent-hover);
 }
 
 .footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  margin-top: 0.25rem;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: var(--space-3);
+  font-size: var(--font-size-1);
+  color: var(--color-text-tertiary);
+}
+
+.footerStrong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: var(--font-variant-numeric);
 }
 
 .legend {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .legendCells {
@@ -174,37 +179,42 @@
   border-radius: 2px;
 }
 
-/* Active Tooltip Popover */
+/* Active tooltip popover. */
 .tooltipBox {
   position: absolute;
   bottom: 30px;
-  transform: translateX(-50%);
-  background: #0f172a;
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.75rem;
-  box-shadow: var(--shadow-card);
-  z-index: 50;
-  pointer-events: none;
-  white-space: nowrap;
-  font-size: 0.75rem;
+  z-index: var(--z-tooltip);
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  animation: fadeIn var(--transition-fast) ease-out;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  transform: translateX(-50%);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-2);
+  font-size: var(--font-size-1);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .tooltipDate {
-  font-weight: 700;
-  color: var(--text-main);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .tooltipCount {
-  color: #34d399;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
 }
 
 .tooltipBreakdown {
-  font-size: 0.7rem;
-  color: var(--text-dim);
+  font-size: var(--font-size-1);
+  color: var(--color-text-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dayCell {
+    transition: none;
+  }
 }

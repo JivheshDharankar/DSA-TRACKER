@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, Loader2, Bookmark } from 'lucide-react';
 import {
   Problem,
   SectionType,
@@ -16,7 +15,39 @@ import { fetchPatterns, fetchProblemPatterns, syncProblemPatterns } from '../../
 import { getErrorMessage } from '../../utils/error.utils';
 import { toInputDateString } from '../../utils/date.utils';
 import { getSafeUrl } from '../../utils/url.util';
+import { Dialog } from '../ui/Dialog';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
+import { Field } from '../ui/Field';
+import { Alert, AlertTone } from '../ui/Alert';
+import { cx } from '../ui/cx';
+import { LeetcodeImportPanel } from './LeetcodeImportPanel';
+import { LeetcodeImportPreview } from '../../types';
 import styles from './ProblemModal.module.css';
+
+/**
+ * DSA Tracker — problem create/edit dialog (Phase 9)
+ * ==================================================
+ * The form now renders inside the shared `Dialog` primitive: portal, `role="dialog"`,
+ * accessible name/description, focus trap, Escape, body scroll lock and focus
+ * restoration all come from that component. This module owns only the form itself.
+ *
+ * Behaviour is unchanged: the same fields, defaults, validation messages, submit
+ * payloads, pattern attachment calls and error handling run on the same handlers as
+ * before. Controls use the Phase 2 `Input`, `Select` and `Field` primitives, so labels,
+ * `aria-invalid`, `aria-describedby`, focus rings and the 16px mobile control text are
+ * shared with the rest of the redesign.
+ *
+ * Layout: two columns on wide screens, three for the short date/status/retention row;
+ * both collapse to one column on mobile. The panel is scrollable, so the actions stay
+ * reachable at 390px and at short viewport heights without scrolling the page behind.
+ *
+ * Phase 2A adds one thing: for a new Personal problem the dialog can start from a LeetCode
+ * URL. That path is a preview only — it fills in the same fields this form already owns and
+ * the existing Save button still persists the problem through the same handler, so an
+ * imported problem is identical to a manually entered one.
+ */
 
 interface ProblemModalProps {
   isOpen: boolean;
@@ -36,6 +67,7 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
   onSubmitUpdate,
 }) => {
   const isEditMode = Boolean(problemToEdit);
+  const canImportFromLeetcode = !isEditMode && section === 'PERSONAL';
 
   const [title, setTitle] = useState('');
   const [collegeLink, setCollegeLink] = useState('');
@@ -53,6 +85,10 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /** `import` shows the LeetCode panel; `manual` is the original form. */
+  const [entryMode, setEntryMode] = useState<'manual' | 'import'>('manual');
+  const [importNotice, setImportNotice] = useState<{ tone: AlertTone; text: string } | null>(null);
 
   // Load available patterns catalog
   useEffect(() => {
@@ -77,6 +113,8 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
       setStatus(problemToEdit.status);
       setRetentionLevel(problemToEdit.retentionLevel);
       setNotes(problemToEdit.notes || '');
+      setEntryMode('manual');
+      setImportNotice(null);
 
       // Fetch attached pattern if editing
       fetchProblemPatterns(problemToEdit.id)
@@ -102,11 +140,49 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
       setStatus('Not Started');
       setRetentionLevel('Learning');
       setNotes('');
+      setEntryMode('manual');
+      setImportNotice(null);
     }
     setErrorMessage(null);
   }, [problemToEdit, section, isOpen]);
 
-  if (!isOpen) return null;
+  /**
+   * Applies an import preview to the normal form and returns to it. Only fields LeetCode
+   * actually provides are touched; `topic` stays empty because it is a required judgement
+   * call the user makes. A `null` preview means retrieval failed entirely, so only the
+   * pasted URL is carried over.
+   */
+  const handleImportApply = (preview: LeetcodeImportPreview | null, rawUrl: string) => {
+    setEntryMode('manual');
+
+    if (preview) {
+      setTitle(preview.title ?? preview.suggestedTitle);
+      if (preview.difficulty) setDifficulty(preview.difficulty);
+      setLeetcodeLink(preview.url);
+      setLeetcodeNumber(preview.leetcodeNumber ? String(preview.leetcodeNumber) : '');
+      setSource('LeetCode');
+
+      setImportNotice({
+        tone: preview.status === 'IMPORTED' ? 'success' : 'info',
+        text:
+          preview.status === 'IMPORTED'
+            ? 'Imported from LeetCode. Review the details, add a topic, and save.'
+            : preview.status === 'PARTIAL'
+              ? "Some details couldn't be retrieved. Review what was imported, complete the rest, and save."
+              : "We couldn't retrieve this problem automatically, so the title and link were filled in from the URL. Check them, add the remaining details, and save.",
+      });
+      return;
+    }
+
+    if (rawUrl.trim().match(/^https?:\/\//i)) {
+      setLeetcodeLink(rawUrl.trim());
+      setSource('LeetCode');
+    }
+    setImportNotice({
+      tone: 'info',
+      text: "We couldn't import this problem automatically. You can enter the problem details manually.",
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,93 +271,90 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
   };
 
   const currentSources = section === 'COLLEGE' ? COLLEGE_SOURCES : PERSONAL_SOURCES;
+  const safeCollegeLink = getSafeUrl(collegeLink);
+  const safeLeetcodeLink = getSafeUrl(leetcodeLink);
+
+  const linkHint = (safeUrl: string | undefined) =>
+    safeUrl ? (
+      <a href={safeUrl} target="_blank" rel="noopener noreferrer" className={styles.linkHint}>
+        Open ↗<span className="sr-only"> (opens in a new tab)</span>
+      </a>
+    ) : undefined;
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Bookmark size={18} color="var(--accent-cyan)" />
-            <h3 className={styles.title}>
-              {isEditMode
-                ? `Edit Problem #${problemToEdit?.sNo}`
-                : `Add ${section === 'COLLEGE' ? 'College' : 'Personal'} DSA Problem`}
-            </h3>
-          </div>
-          <button onClick={onClose} className={styles.closeBtn} title="Close modal">
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      title={isEditMode ? `Edit Problem #${problemToEdit?.sNo}` : `Add ${section === 'COLLEGE' ? 'College' : 'Personal'} DSA Problem`}
+      description={<span className={styles.sectionTag}>{section} DSA</span>}
+      size="lg"
+    >
+      <form className={styles.form} onSubmit={handleSubmit}>
+        {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {errorMessage && (
-            <div className={styles.errorBanner}>
-              <AlertCircle size={18} />
-              <span>{errorMessage}</span>
+        {canImportFromLeetcode ? (
+          <div className={styles.modeSwitch} role="group" aria-label="How to add this problem">
+            <button
+              type="button"
+              className={cx(styles.modeOption, entryMode === 'manual' && styles.modeOptionActive)}
+              aria-pressed={entryMode === 'manual'}
+              onClick={() => setEntryMode('manual')}
+            >
+              Manual entry
+            </button>
+            <button
+              type="button"
+              className={cx(styles.modeOption, entryMode === 'import' && styles.modeOptionActive)}
+              aria-pressed={entryMode === 'import'}
+              onClick={() => setEntryMode('import')}
+            >
+              Import from LeetCode
+            </button>
+          </div>
+        ) : null}
+
+        {entryMode === 'import' ? (
+          <LeetcodeImportPanel onApply={handleImportApply} disabled={isSubmitting} />
+        ) : (
+          <>
+            {importNotice ? <Alert tone={importNotice.tone}>{importNotice.text}</Alert> : null}
+
+            <div className={styles.metaRow}>
+              <span className={styles.metaItem}>
+                <span className={styles.metaLabel}>S.No</span>
+                <strong className={styles.metaValue}>
+                  {isEditMode ? `#${problemToEdit?.sNo}` : 'Auto-generated on save'}
+                </strong>
+              </span>
+              <span className={styles.metaDivider} aria-hidden="true" />
+              <span className={styles.metaHint}>
+                {isEditMode ? 'Editing an existing problem' : 'Added to the end of this tracker'}
+              </span>
             </div>
-          )}
 
-          {/* S.No. Info & Section Display */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '6px 12px',
-              background: 'var(--bg-surface-elevated)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '0.78rem',
-              color: 'var(--text-dim)',
-            }}
-          >
-            <span>
-              Section: <strong style={{ color: 'var(--text-main)' }}>{section} DSA</strong>
-            </span>
-            <span>
-              S.No:{' '}
-              <strong style={{ color: 'var(--accent-cyan)' }}>
-                {isEditMode ? `#${problemToEdit?.sNo}` : 'Auto-generated on save'}
-              </strong>
-            </span>
-          </div>
-
-          {/* Problem Title */}
-          <div className={styles.field}>
-            <label className={styles.label}>Problem Title *</label>
-            <input
-              type="text"
+            <Input
+              label="Problem Title"
               required
               placeholder="e.g. Longest Substring Without Repeating Characters"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className={styles.input}
             />
-          </div>
 
-          {/* Topic and Primary Pattern */}
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label}>Topic *</label>
-              <input
-                type="text"
+            <div className={styles.grid}>
+              <Input
+                label="Topic"
                 required
                 placeholder="e.g. Arrays, Strings, Trees, DP"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className={styles.input}
               />
-            </div>
 
-            <div className={styles.field}>
-              <label htmlFor="primary-pattern-select" className={styles.label}>
-                Primary Pattern (Optional)
-              </label>
-              <select
+              <Select
+                label="Primary Pattern (Optional)"
                 id="primary-pattern-select"
-                aria-label="Primary Pattern (Optional)"
                 value={selectedPatternId}
                 onChange={(e) => setSelectedPatternId(e.target.value)}
-                className={styles.select}
+                hint="Used for pattern mastery on the dashboard"
               >
                 <option value="">None / Unspecified</option>
                 {availablePatterns.map((pat) => (
@@ -289,231 +362,143 @@ export const ProblemModal: React.FC<ProblemModalProps> = ({
                     {pat.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
-          </div>
 
-          {/* Dual Links Configuration */}
-          {section === 'PERSONAL' ? (
-            <>
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label className={styles.label}>
-                    LeetCode Link (Optional)
-                    {getSafeUrl(leetcodeLink) && (
-                      <a
-                        href={getSafeUrl(leetcodeLink)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}
-                      >
-                        Open ↗
-                      </a>
-                    )}
-                  </label>
-                  <input
+            {section === 'PERSONAL' ? (
+              <>
+                <div className={styles.grid}>
+                  <Field label="LeetCode Link (Optional)" hint={linkHint(safeLeetcodeLink)}>
+                    <Input
+                      type="url"
+                      placeholder="https://leetcode.com/problems/..."
+                      value={leetcodeLink}
+                      onChange={(e) => setLeetcodeLink(e.target.value)}
+                    />
+                  </Field>
+
+                  <Input
+                    label="LeetCode Number (Optional)"
+                    type="number"
+                    min={1}
+                    step={1}
+                    placeholder="e.g. 3"
+                    value={leetcodeNumber}
+                    onChange={(e) => setLeetcodeNumber(e.target.value)}
+                  />
+                </div>
+
+                <Field label="College Link (Optional Dual Link)" hint={linkHint(safeCollegeLink)}>
+                  <Input
+                    type="url"
+                    placeholder="https://college.edu/dsa/..."
+                    value={collegeLink}
+                    onChange={(e) => setCollegeLink(e.target.value)}
+                  />
+                </Field>
+              </>
+            ) : (
+              <div className={styles.grid}>
+                <Field label="College Link (Optional)" hint={linkHint(safeCollegeLink)}>
+                  <Input
+                    type="url"
+                    placeholder="https://college.edu/dsa/..."
+                    value={collegeLink}
+                    onChange={(e) => setCollegeLink(e.target.value)}
+                  />
+                </Field>
+
+                <Field label="LeetCode Link (Optional Dual Link)" hint={linkHint(safeLeetcodeLink)}>
+                  <Input
                     type="url"
                     placeholder="https://leetcode.com/problems/..."
                     value={leetcodeLink}
                     onChange={(e) => setLeetcodeLink(e.target.value)}
-                    className={styles.input}
                   />
-                </div>
-
-                <div className={styles.field}>
-                  <label className={styles.label}>LeetCode Number (Optional)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="e.g. 3"
-                    value={leetcodeNumber}
-                    onChange={(e) => setLeetcodeNumber(e.target.value)}
-                    className={styles.input}
-                  />
-                </div>
+                </Field>
               </div>
+            )}
 
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  College Link (Optional Dual Link)
-                  {getSafeUrl(collegeLink) && (
-                    <a
-                      href={getSafeUrl(collegeLink)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}
-                    >
-                      Open ↗
-                    </a>
-                  )}
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://college.edu/dsa/..."
-                  value={collegeLink}
-                  onChange={(e) => setCollegeLink(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-            </>
-          ) : (
-            <div className={styles.row}>
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  College Link (Optional)
-                  {getSafeUrl(collegeLink) && (
-                    <a
-                      href={getSafeUrl(collegeLink)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}
-                    >
-                      Open ↗
-                    </a>
-                  )}
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://college.edu/dsa/..."
-                  value={collegeLink}
-                  onChange={(e) => setCollegeLink(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  LeetCode Link (Optional Dual Link)
-                  {getSafeUrl(leetcodeLink) && (
-                    <a
-                      href={getSafeUrl(leetcodeLink)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ marginLeft: '8px', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}
-                    >
-                      Open ↗
-                    </a>
-                  )}
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://leetcode.com/problems/..."
-                  value={leetcodeLink}
-                  onChange={(e) => setLeetcodeLink(e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Difficulty & Source */}
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label}>Difficulty *</label>
-              <select
+            <div className={styles.grid}>
+              <Select
+                label="Difficulty"
+                required
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as DifficultyType)}
-                className={styles.select}
               >
                 <option value="Easy">Easy</option>
                 <option value="Medium">Medium</option>
                 <option value="Hard">Hard</option>
-              </select>
-            </div>
+              </Select>
 
-            <div className={styles.field}>
-              <label className={styles.label}>Source *</label>
-              <select
+              <Select
+                label="Source"
+                required
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                className={styles.select}
               >
                 {currentSources.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
-          </div>
 
-          {/* Date Learned, Status & Retention */}
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label}>Date Learned *</label>
-              <input
+            <div className={styles.gridThree}>
+              <Input
+                label="Date Learned"
                 type="date"
                 required
                 value={dateLearned}
                 onChange={(e) => setDateLearned(e.target.value)}
-                className={styles.input}
               />
-            </div>
 
-            <div className={styles.field}>
-              <label className={styles.label}>Status</label>
-              <select
+              <Select
+                label="Status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as StatusType)}
-                className={styles.select}
               >
                 <option value="Not Started">Not Started</option>
                 <option value="Attempted">Attempted</option>
                 <option value="Solved">Solved</option>
-              </select>
-            </div>
+              </Select>
 
-            <div className={styles.field}>
-              <label className={styles.label}>Retention Level</label>
-              <select
+              <Select
+                label="Retention Level"
                 value={retentionLevel}
                 onChange={(e) => setRetentionLevel(e.target.value as RetentionType)}
-                className={styles.select}
               >
                 <option value="Learning">Learning</option>
                 <option value="Familiar">Familiar</option>
                 <option value="Independent">Independent</option>
                 <option value="Strong">Strong</option>
                 <option value="Locked">Locked</option>
-              </select>
+              </Select>
             </div>
-          </div>
 
-          {/* Notes & Invariants */}
-          <div className={styles.field}>
-            <label className={styles.label}>Notes, Invariants & Approach (Optional)</label>
-            <textarea
-              placeholder="Key invariants, time/space complexities, edge cases to remember..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className={styles.textarea}
-              rows={3}
-            />
-          </div>
+            <Field label="Notes, Invariants & Approach (Optional)" id="problem-notes">
+              <textarea
+                id="problem-notes"
+                placeholder="Key invariants, time/space complexities, edge cases to remember..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className={styles.textarea}
+                rows={4}
+              />
+            </Field>
 
-          <div className={styles.footer}>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className={styles.cancelBtn}
-            >
-              Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className={styles.submitBtn}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <span>{isEditMode ? 'Update Problem' : 'Save Problem'}</span>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            <div className={styles.actions}>
+              <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={isSubmitting} loadingLabel="Saving...">
+                {isEditMode ? 'Update Problem' : 'Save Problem'}
+              </Button>
+            </div>
+          </>
+        )}
+      </form>
+    </Dialog>
   );
 };

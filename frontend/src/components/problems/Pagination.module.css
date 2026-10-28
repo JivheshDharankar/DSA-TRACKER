@@ -1,53 +1,160 @@
-.paginationContainer {
+/**
+ * DSA Tracker — shared pagination styles
+ * ======================================
+ * `full` puts the record range on the left and the controls on the right from 640px up;
+ * below that both stack, which is what keeps seven controls inside a 360px viewport.
+ *
+ * Every value comes from `styles/tokens.css`; the legacy `--space-md`, `--accent-cyan`,
+ * `--radius-md` names and the inline `var(...)` styles this component used before are gone.
+ */
+
+.pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) var(--space-sm);
-  margin-top: var(--space-md);
+  gap: var(--space-2) var(--space-4);
   flex-wrap: wrap;
-  gap: var(--space-md);
+  padding: var(--space-3) 0;
+  min-width: 0;
 }
 
-.metaInfo {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+/* --------------------------------------------------------------- range line */
+
+.range {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-2);
+  font-variant-numeric: var(--font-variant-numeric);
 }
+
+.range strong {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ------------------------------------------------------------------ controls */
 
 .controls {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.pageInfo {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-2);
+  font-variant-numeric: var(--font-variant-numeric);
+  white-space: nowrap;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  /* Wraps only on a coarse pointer below 360px, where 44px touch targets plus the
+     windowed page numbers exceed the content column. */
+  flex-wrap: wrap;
+  gap: var(--space-1);
 }
 
 .pageBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 8px;
-  border-radius: var(--radius-md);
-  background: var(--bg-surface-elevated);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  border: 1px solid var(--border-subtle);
+  min-width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-2);
+  background: var(--color-bg-sunken);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: var(--font-variant-numeric);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
 .pageBtn:hover:not(:disabled) {
-  color: var(--text-main);
-  border-color: var(--accent-cyan);
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
+}
+
+.pageBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .activePageBtn {
-  background: var(--accent-cyan);
-  color: var(--text-inverse);
-  font-weight: 700;
-  border-color: var(--accent-cyan);
+  background: var(--color-accent-subtle);
+  border-color: var(--color-border-accent);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.activePageBtn:hover:not(:disabled) {
+  background: var(--color-accent-subtle);
+  border-color: var(--color-border-accent);
 }
 
 .pageBtn:disabled {
+  /* Disabled arrows stay visible so the control row does not change width on page 1. */
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-4);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-2);
+  user-select: none;
+}
+
+/* --------------------------------------------------------------- responsive */
+
+@media (max-width: 639px) {
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .range {
+    order: 2;
+  }
+
+  .controls {
+    order: 1;
+    justify-content: space-between;
+  }
+}
+
+/* The range already states where the reader is; on desktop `full` does not repeat it as
+   "Page X of Y". `compact` always shows it because it has no range line. */
+@media (min-width: 640px) {
+  .full .pageInfo {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .pageBtn {
+    min-width: var(--layout-touch-target);
+    height: var(--layout-touch-target);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageBtn {
+    transition: none;
+  }
 }

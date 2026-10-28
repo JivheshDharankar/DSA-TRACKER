@@ -1,22 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { RefreshCw, LogOut, User as UserIcon } from 'lucide-react';
+import { Layers, RefreshCw, LogOut, User as UserIcon } from 'lucide-react';
 import { checkApiHealth } from '../../api/health.api';
 import { HealthCheckData } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../ui/Button';
+import { cx } from '../ui/cx';
+import { getRouteTitle } from './nav.config';
 import styles from './Header.module.css';
 
-const routeTitleMap: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/college-dsa': 'College DSA Tracker',
-  '/personal-dsa': 'Personal DSA Tracker',
-  '/review': 'Review Queue',
-  '/reviews/history': 'Review History',
-  '/patterns': 'Patterns',
-  '/problems/locked': 'Locked Problems',
-  '/login': 'Sign In',
-  '/register': 'Create Account',
-};
+/**
+ * DSA Tracker — Topbar (Phase 3)
+ * =============================
+ * Holds the page heading (`<h1>`), the API-health indicator and the account actions.
+ *
+ * The heading text comes from `nav.config.ts` (`getRouteTitle`): an exact path match
+ * first, then the parent destination's title, then the `DSA Tracker` fallback — so
+ * `/patterns/:id` reads "Patterns" instead of the app name.
+ *
+ * Unchanged behaviour: the 30s health poll and its three states, the guest "Sign In"
+ * action (still suppressed on `/login` and `/register`), and logout
+ * (`await logout()` then `navigate('/login')`).
+ *
+ * The heading stays an `<h1>` — an `<h2>` here would collide with the end-to-end
+ * suite's single level-2 heading assertion.
+ */
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -57,69 +65,74 @@ export const Header: React.FC = () => {
     }
   };
 
-  const pageTitle = routeTitleMap[location.pathname] || 'DSA Tracker';
+  const pageTitle = getRouteTitle(location.pathname);
+  const statusText = status === 'connected' ? 'API Online' : status === 'checking' ? 'Checking API...' : 'API Offline';
+  const statusTone =
+    status === 'connected' ? styles.statusConnected : status === 'checking' ? styles.statusChecking : styles.statusDisconnected;
 
   return (
     <header className={styles.header}>
+      {/* Mobile only: the sidebar (which owns the brand from 768px up) is not rendered. */}
+      <div className={styles.brand}>
+        <span className={styles.brandIcon}>
+          <Layers size={16} aria-hidden="true" />
+        </span>
+      </div>
+
       <div className={styles.titleArea}>
         <h1 className={styles.title}>{pageTitle}</h1>
       </div>
 
-      <div className={styles.actionsArea}>
+      <div className={styles.actions}>
         <div className={styles.statusPill}>
-          <span
-            className={`${styles.statusDot} ${
-              status === 'connected'
-                ? styles.statusConnected
-                : status === 'checking'
-                ? styles.statusChecking
-                : styles.statusDisconnected
-            }`}
-          />
-          <span>
-            {status === 'connected'
-              ? `API Online (${health?.database.connected ? 'DB Connected' : 'DB Offline'})`
-              : status === 'checking'
-              ? 'Checking API...'
-              : 'API Offline'}
-          </span>
+          <span className={cx(styles.statusDot, statusTone)} aria-hidden="true" />
+          <span>{statusText}</span>
+          {status === 'connected' ? (
+            <span className={styles.statusDetail}>
+              ({health?.database.connected ? 'DB Connected' : 'DB Offline'})
+            </span>
+          ) : null}
           <button
+            type="button"
             onClick={fetchHealth}
             className={styles.refreshBtn}
             title="Refresh API Health"
             disabled={isRefreshing}
           >
-            <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} aria-hidden="true" />
           </button>
         </div>
 
-        {isAuthenticated && user && (
-          <div className={styles.userProfilePill}>
-            <div className={styles.userAvatar}>
+        {isAuthenticated && user ? (
+          <div className={styles.userPill}>
+            <span className={styles.userAvatar} aria-hidden="true">
               {user.name.charAt(0).toUpperCase()}
-            </div>
+            </span>
             <span className={styles.userName}>{user.name}</span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className={styles.logoutBtn}
               title="Log out of session"
+              iconLeft={<LogOut size={15} aria-hidden="true" />}
             >
-              <LogOut size={15} />
-              <span>Sign Out</span>
-            </button>
+              Sign Out
+            </Button>
           </div>
-        )}
+        ) : null}
 
-        {!isAuthenticated && location.pathname !== '/login' && location.pathname !== '/register' && (
-          <button
+        {!isAuthenticated && location.pathname !== '/login' && location.pathname !== '/register' ? (
+          <Button
+            variant="primary"
+            size="sm"
+            className={styles.signInAction}
             onClick={() => navigate('/login')}
-            className={styles.loginBtn}
+            iconLeft={<UserIcon size={15} aria-hidden="true" />}
           >
-            <UserIcon size={15} />
-            <span>Sign In</span>
-          </button>
-        )}
+            Sign In
+          </Button>
+        ) : null}
       </div>
     </header>
   );

@@ -1,236 +1,193 @@
+/**
+ * DSA Tracker — Dashboard page composition (Phase 5)
+ * ==================================================
+ * Owns the page container, the page header and the responsive placement of the eight
+ * dashboard areas. Every value comes from `styles/tokens.css`; the legacy glass/glow
+ * treatment (blur, cyan, glow shadows) is gone.
+ *
+ * Placement is declared with `grid-template-areas`, so the DOM order can stay
+ * mobile-first (the order the areas read best stacked) while each breakpoint arranges
+ * them as the approved layout:
+ *
+ *   <768      1 column   — metrics · today · progress · pattern · analytics · timeline · heatmap
+ *   768–1279  2 columns  — metrics, pattern, analytics and heatmap full width; the
+ *                           activity rail spans rows 2–3 beside today + progress
+ *   >=1280    3 columns  — today + progress stack in the first two columns with the
+ *                           activity rail spanning both rows beside them
+ *
+ * `today` is only ~240px tall while the activity rail is capped at ~544px. Keeping them
+ * as the only two items in one row left a ~300px hole under the queue card; stacking
+ * `progress` beneath `today` fills that column and keeps the rail's height matched, and
+ * `pattern` then reads as a full-width band instead of a half-width card.
+ *
+ * Every track is `minmax(0, 1fr)` and every area is `min-width: 0`, so no child can
+ * widen the page: the dashboard fits the viewport on its own and does not rely on the
+ * global `overflow-x: hidden`.
+ */
+
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding-bottom: 3rem;
-  max-width: 1200px;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--layout-content-max);
   margin: 0 auto;
+  padding-bottom: var(--space-7);
+  min-width: 0;
 }
 
-/* Header */
-.header {
+/* -------------------------------------------------------------- page header */
+
+.pageHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  padding: 0.5rem 0;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
-.welcomeText {
+.pageHeaderText {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
-  margin: 0;
+.pageTitle {
+  font-size: var(--font-size-7);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
 }
 
-.subtitle {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin: 0;
+.pageSubtitle {
+  font-size: var(--font-size-3);
+  color: var(--color-text-secondary);
 }
 
-.headerActions {
+.pageHeaderActions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.newProblemBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--accent-cyan);
-  color: #0b0f17;
-  font-weight: 600;
-  font-size: 0.875rem;
-  padding: 0.6rem 1.1rem;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  transition: all var(--transition-fast);
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+/* The header CTA is a real Button; this only widens it on phones. */
+.headerCta {
+  flex-shrink: 0;
 }
 
-.newProblemBtn:hover {
-  background: #22d3ee;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
-}
+/* ------------------------------------------------------- area layout grid */
 
-/* Skeleton Loading State */
-.skeletonContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.skeletonHeader {
-  height: 48px;
-  width: 320px;
-  background: var(--bg-surface-elevated);
-  border-radius: var(--radius-md);
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.skeletonHero {
-  height: 140px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.skeletonGrid {
+.layout,
+.skeletonLayout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'metrics'
+    'today'
+    'progress'
+    'pattern'
+    'analytics'
+    'timeline'
+    'heatmap';
+  /* Cards keep their natural height instead of stretching to the tallest area. */
+  align-items: start;
+  min-width: 0;
 }
 
-.skeletonCard {
-  height: 150px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  animation: pulse 1.5s infinite ease-in-out;
+.areaMetrics,
+.areaToday,
+.areaProgress,
+.areaPattern,
+.areaAnalytics,
+.areaTimeline,
+.areaHeatmap {
+  min-width: 0;
 }
 
-.skeletonHeatmap {
-  height: 200px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  animation: pulse 1.5s infinite ease-in-out;
+.areaMetrics {
+  grid-area: metrics;
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 0.4;
+.areaToday {
+  grid-area: today;
+}
+
+.areaProgress {
+  grid-area: progress;
+}
+
+.areaPattern {
+  grid-area: pattern;
+}
+
+.areaAnalytics {
+  grid-area: analytics;
+}
+
+.areaTimeline {
+  grid-area: timeline;
+}
+
+.areaHeatmap {
+  grid-area: heatmap;
+}
+
+/* 768–1279 — two columns. */
+@media (min-width: 768px) {
+  .layout,
+  .skeletonLayout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'metrics metrics'
+      'today timeline'
+      'progress timeline'
+      'pattern pattern'
+      'analytics analytics'
+      'heatmap heatmap';
   }
-  50% {
-    opacity: 0.8;
+}
+
+/* >=1280 — three columns, today review spanning two with the activity rail beside it. */
+@media (min-width: 1280px) {
+  .layout,
+  .skeletonLayout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      'metrics metrics metrics'
+      'today today timeline'
+      'progress progress timeline'
+      'pattern pattern pattern'
+      'analytics analytics analytics'
+      'heatmap heatmap heatmap';
   }
-  100% {
-    opacity: 0.4;
-  }
 }
 
-/* Error State */
-.errorCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 3.5rem 1.5rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  gap: 1rem;
-  max-width: 480px;
-  margin: 3rem auto;
-}
-
-.errorIcon {
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.1);
-  padding: 0.75rem;
-  border-radius: 50%;
-}
-
-.errorTitle {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0;
-}
-
-.errorDesc {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.retryBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--bg-surface-elevated);
-  color: var(--text-main);
-  border: 1px solid var(--border-default);
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 0.55rem 1.25rem;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.retryBtn:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--border-hover);
-}
-
-/* Empty State */
-.emptyHero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 3.5rem 1.5rem;
-  background: var(--bg-surface);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--radius-lg);
-  gap: 1.25rem;
-  max-width: 600px;
-  margin: 2rem auto;
-}
-
-.emptyIconWrapper {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(6, 182, 212, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent-cyan);
-}
-
-.emptyHeading {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-}
-
-.emptyText {
-  font-size: 0.95rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin: 0;
-  max-width: 440px;
-}
-
-@media (max-width: 768px) {
-  .header {
+@media (max-width: 767px) {
+  .pageHeader {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .headerActions {
+  .pageHeaderActions {
     width: 100%;
   }
 
-  .newProblemBtn {
+  .headerCta {
     width: 100%;
-    justify-content: center;
   }
+
+  .pageTitle {
+    font-size: var(--font-size-6);
+  }
+}
+
+/* ---------------------------------------------------------- loading state */
+
+.skeletonLayout > * {
+  min-width: 0;
 }

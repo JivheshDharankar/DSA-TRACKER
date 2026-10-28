@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Problem } from '../../types';
+import { Dialog } from '../ui/Dialog';
+import { Button } from '../ui/Button';
 import styles from './DeleteProblemDialog.module.css';
+
+/**
+ * DSA Tracker — delete confirmation (Phase 9)
+ * ===========================================
+ * A destructive confirmation on the shared `Dialog`: the question is the dialog's
+ * accessible name, the irreversible warning is its description, and the two actions
+ * are the shared `Button` primitive (`secondary` cancel, `danger` confirm).
+ *
+ * Behaviour is unchanged: `onConfirmDelete(problemId)` is awaited, the dialog closes
+ * only after it resolves, both buttons are disabled while it is in flight, and the
+ * S.No preservation notice stays visible so the consequence is explicit.
+ */
 
 interface DeleteProblemDialogProps {
   isOpen: boolean;
@@ -18,9 +32,9 @@ export const DeleteProblemDialog: React.FC<DeleteProblemDialogProps> = ({
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
-  if (!isOpen || !problem) return null;
-
   const handleDelete = async () => {
+    if (!problem) return;
+
     setIsDeleting(true);
     try {
       await onConfirmDelete(problem.id);
@@ -31,50 +45,45 @@ export const DeleteProblemDialog: React.FC<DeleteProblemDialogProps> = ({
   };
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.warningIconWrapper}>
-          <AlertTriangle size={26} />
-        </div>
-
-        <h3 className={styles.title}>Delete Problem #{problem.sNo}?</h3>
-        <p className={styles.description}>
-          Are you sure you want to permanently delete{' '}
-          <strong style={{ color: 'var(--text-main)' }}>&ldquo;{problem.title}&rdquo;</strong>?
-          This action is irreversible.
-        </p>
-
-        <div className={styles.gapNotice}>
-          💡 <strong>S.No Preservation:</strong> Deleting this problem will leave a permanent gap in
-          numbering at S.No #{problem.sNo}. Remaining problems will not be renumbered.
-        </div>
-
-        <div className={styles.actions}>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isDeleting}
-            className={styles.cancelBtn}
-          >
+    <Dialog
+      open={isOpen && Boolean(problem)}
+      onClose={onClose}
+      title={problem ? `Delete Problem #${problem.sNo}?` : 'Delete problem'}
+      description={
+        problem ? (
+          <>
+            This permanently removes <strong className={styles.problemTitle}>&ldquo;{problem.title}&rdquo;</strong>{' '}
+            from your tracker. This action is irreversible.
+          </>
+        ) : undefined
+      }
+      size="sm"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={isDeleting}>
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="danger"
             onClick={handleDelete}
-            disabled={isDeleting}
-            className={styles.deleteBtn}
+            loading={isDeleting}
+            loadingLabel="Deleting..."
           >
-            {isDeleting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span>Deleting...</span>
-              </>
-            ) : (
-              <span>Delete Permanently</span>
-            )}
-          </button>
-        </div>
+            Delete Permanently
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.notice}>
+        <span className={styles.noticeIcon} aria-hidden="true">
+          <Info size={16} />
+        </span>
+        <p className={styles.noticeText}>
+          <strong className={styles.noticeTitle}>S.No Preservation:</strong> Deleting this problem will
+          leave a permanent gap in numbering at S.No #{problem?.sNo}. Remaining problems will not be
+          renumbered.
+        </p>
       </div>
-    </div>
+    </Dialog>
   );
 };

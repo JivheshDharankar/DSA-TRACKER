@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/error.utils';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Alert } from '../components/ui/Alert';
 import styles from '../styles/Auth.module.css';
 
 export const RegisterPage: React.FC = () => {
@@ -59,114 +62,91 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
-        <div className={styles.cardGlow} />
-
         <div className={styles.header}>
           <div className={styles.iconWrapper}>
-            <UserPlus size={24} />
+            <UserPlus size={24} aria-hidden="true" />
           </div>
           <h2 className={styles.title}>Create Account</h2>
           <p className={styles.subtitle}>Start tracking your DSA retention journey today</p>
         </div>
 
         {errorMessage && (
-          <div className={styles.errorBanner}>
-            <AlertCircle size={18} />
-            <span>{errorMessage}</span>
-          </div>
+          <Alert tone="danger" className={styles.formAlert}>
+            {errorMessage}
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.inputGroup}>
-            <label htmlFor="name" className={styles.label}>
-              Full Name
-            </label>
-            <div className={styles.inputWrapper}>
-              <input
-                id="name"
-                type="text"
-                required
-                autoComplete="name"
-                placeholder="Ada Lovelace"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={styles.input}
-              />
-            </div>
+          <Input
+            id="name"
+            label="Full Name"
+            type="text"
+            required
+            autoComplete="name"
+            placeholder="Ada Lovelace"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+
+          <Input
+            id="email"
+            label="Email Address"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="developer@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <div className={styles.controlRow}>
+            <Input
+              id="password"
+              label="Password (min. 8 characters)"
+              type={showPassword ? 'text' : 'password'}
+              required
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={styles.inputWithToggle}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              iconOnly
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+            </Button>
           </div>
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="email" className={styles.label}>
-              Email Address
-            </label>
-            <div className={styles.inputWrapper}>
-              <input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="developer@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={styles.input}
-              />
-            </div>
-          </div>
+          <Input
+            id="confirmPassword"
+            label="Confirm Password"
+            type={showPassword ? 'text' : 'password'}
+            required
+            autoComplete="new-password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="password" className={styles.label}>
-              Password (min. 8 characters)
-            </label>
-            <div className={styles.inputWrapper}>
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                required
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`${styles.input} ${styles.inputWithToggle}`}
-              />
-              <button
-                type="button"
-                className={styles.passwordToggle}
-                onClick={() => setShowPassword((prev) => !prev)}
-                title={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="confirmPassword" className={styles.label}>
-              Confirm Password
-            </label>
-            <div className={styles.inputWrapper}>
-              <input
-                id="confirmPassword"
-                type={showPassword ? 'text' : 'password'}
-                required
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={styles.input}
-              />
-            </div>
-          </div>
-
-          <button type="submit" disabled={isSubmitting} className={styles.submitBtn}>
-            {isSubmitting ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Creating Account...</span>
-              </>
-            ) : (
-              <span>Get Started</span>
-            )}
-          </button>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={isSubmitting}
+            loadingLabel="Creating Account..."
+            className={styles.submitBtn}
+          >
+            Get Started
+          </Button>
         </form>
 
         <div className={styles.footer}>

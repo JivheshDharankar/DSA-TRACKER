@@ -1,13 +1,10 @@
 import React from 'react';
-import {
-  CheckCircle2,
-  ArrowRight,
-  Circle,
-  Repeat,
-} from 'lucide-react';
+import { CheckCircle2, ArrowRight, Circle, Repeat } from 'lucide-react';
 import { RevisionHistoryItem } from '../../types';
 import { formatCalendarDate } from '../../utils/date.utils';
 import { RecallResultBadge } from './RecallResultBadge';
+import { Badge, BadgeTone } from '../ui/Badge';
+import { cx } from '../ui/cx';
 import styles from './SrsProgressionStepper.module.css';
 
 export interface SrsProgressionStepperProps {
@@ -36,6 +33,9 @@ export const SRS_STAGES = [
 /**
  * Computes calendar-day lateness/due status in pure calendar-day language.
  * Never exposes hours or minutes.
+ *
+ * Unchanged by the redesign — `ProblemTable` and `ProblemCardList` import this function
+ * directly, and the due labels it returns are part of the tracker's wording.
  */
 export const computeDueStatus = (nextReviewDateStr: string): { label: string; state: 'OVERDUE' | 'DUE_TODAY' | 'UPCOMING' } => {
   if (!nextReviewDateStr) {
@@ -70,6 +70,34 @@ export const computeDueStatus = (nextReviewDateStr: string): { label: string; st
   }
 };
 
+/**
+ * DSA Tracker — SRS progression stepper (Phase 8)
+ * ===============================================
+ * The ten-stage spaced-repetition track plus, when not `compact`, the progression
+ * metrics panel. Behaviour and derivation are unchanged:
+ *
+ *   - `reviewsCompleted` is still `history.length`, and the empty/current/completed rules
+ *     for each stage are byte-for-byte the same function as before;
+ *   - the due badge still comes from `computeDueStatus`, which is calendar-day based
+ *     (UTC midnight), never hour based;
+ *   - every metric label and value is the same one that was rendered before.
+ *
+ * What the redesign changes:
+ *   - legacy `--text-*` / `--accent-*` / `--bg-*` names and the two raw hex values are
+ *     replaced by `styles/tokens.css` values and shared `Badge` tones;
+ *   - the track is an ordered list, so the stage sequence is structural. Each stage
+ *     carries `aria-current="step"` when it is the learner's current stage, and its state
+ *     ("Completed" / "Current stage" / "Upcoming") is real text for assistive technology
+ *     rather than a `title` tooltip that only a mouse can reach;
+ *   - the icon shapes still differ per state (check / arrow / circle), so state is never
+ *     conveyed by colour alone;
+ *   - the track no longer forces a 620px-wide horizontal scroll on phones: below 768px it
+ *     reflows into a 5-column grid of stage chips (connectors hidden), and from 768px up
+ *     it is the connected track.
+ *
+ * `compact` (used by the recall session header) renders the track only. The metrics panel
+ * heading is an `<h3>`, which matches its siblings on the problem detail page.
+ */
 export const SrsProgressionStepper: React.FC<SrsProgressionStepperProps> = ({
   repetitionStage = 0,
   intervalDays = 0,
@@ -114,142 +142,165 @@ export const SrsProgressionStepper: React.FC<SrsProgressionStepperProps> = ({
     }
   };
 
+  const dueTone: BadgeTone =
+    dueStatus.state === 'OVERDUE'
+      ? 'danger'
+      : dueStatus.state === 'DUE_TODAY'
+        ? 'warning'
+        : 'info';
+
+  const stepStateClass = (state: 'COMPLETED' | 'CURRENT' | 'FUTURE') =>
+    state === 'COMPLETED'
+      ? styles.stepCompleted
+      : state === 'CURRENT'
+        ? styles.stepCurrent
+        : styles.stepFuture;
+
+  const stepStateLabel = (state: 'COMPLETED' | 'CURRENT' | 'FUTURE') =>
+    state === 'COMPLETED' ? 'Completed' : state === 'CURRENT' ? 'Current stage' : 'Upcoming';
+
   return (
-    <div className={`${styles.container} ${compact ? styles.containerCompact : ''}`}>
+    <div className={cx(styles.container, compact && styles.containerCompact)}>
       {/* Visual Progression Stepper Line */}
-      <div className={styles.stepperWrapper}>
-        <div className={styles.stepperTrack}>
+      <div
+        className={styles.stepperWrapper}
+        role="group"
+        aria-label="Spaced repetition stages"
+      >
+        <ol className={styles.stepperTrack}>
           {SRS_STAGES.map((item, idx) => {
             const state = getStepState(item.stage);
-            return (
-              <React.Fragment key={item.stage}>
-                <div
-                  className={`${styles.stepNode} ${
-                    state === 'COMPLETED'
-                      ? styles.stepCompleted
-                      : state === 'CURRENT'
-                      ? styles.stepCurrent
-                      : styles.stepFuture
-                  }`}
-                  title={`${item.label} (${item.interval} days interval) — ${
-                    state === 'COMPLETED' ? 'Completed' : state === 'CURRENT' ? 'Current Stage' : 'Future Stage'
-                  }`}
-                >
-                  <div className={styles.nodeIcon}>
-                    {state === 'COMPLETED' ? (
-                      <CheckCircle2 size={13} />
-                    ) : state === 'CURRENT' ? (
-                      <ArrowRight size={13} />
-                    ) : (
-                      <Circle size={10} />
-                    )}
-                  </div>
-                  <span className={styles.nodeLabel}>{item.label}</span>
-                </div>
+            const isLast = idx === SRS_STAGES.length - 1;
 
-                {idx < SRS_STAGES.length - 1 && (
-                  <div
-                    className={`${styles.stepConnector} ${
-                      state === 'COMPLETED' ? styles.connectorActive : ''
-                    }`}
+            return (
+              <li
+                key={item.stage}
+                className={cx(styles.stepNode, stepStateClass(state))}
+                aria-current={state === 'CURRENT' ? 'step' : undefined}
+              >
+                <span className={styles.nodeIcon} aria-hidden="true">
+                  {state === 'COMPLETED' ? (
+                    <CheckCircle2 size={13} />
+                  ) : state === 'CURRENT' ? (
+                    <ArrowRight size={13} />
+                  ) : (
+                    <Circle size={10} />
+                  )}
+                </span>
+
+                <span className={styles.nodeLabel} aria-hidden="true">
+                  {item.label}
+                </span>
+
+                <span className="sr-only">
+                  {`Stage ${item.stage}: ${item.label}, ${item.interval} day interval — ${stepStateLabel(state)}`}
+                </span>
+
+                {!isLast && (
+                  <span
+                    className={cx(
+                      styles.stepConnector,
+                      state === 'COMPLETED' && styles.connectorActive
+                    )}
+                    aria-hidden="true"
                   />
                 )}
-              </React.Fragment>
+              </li>
             );
           })}
-        </div>
+        </ol>
       </div>
 
       {/* Spaced Repetition Metrics Grid */}
       {!compact && (
         <div className={styles.metricsBox}>
           <div className={styles.metricsHeader}>
-            <div className={styles.metricsTitleGroup}>
-              <Repeat size={15} color="var(--accent-cyan)" />
+            <h3 className={styles.metricsTitleGroup}>
+              <Repeat size={15} className={styles.metricsIcon} aria-hidden="true" />
               <span className={styles.metricsTitle}>Spaced Repetition Progression</span>
-            </div>
-            <span
-              className={`${styles.statusBadge} ${
-                dueStatus.state === 'OVERDUE'
-                  ? styles.statusOverdue
-                  : dueStatus.state === 'DUE_TODAY'
-                  ? styles.statusDueToday
-                  : styles.statusUpcoming
-              }`}
-            >
+            </h3>
+            <Badge tone={dueTone} shape="pill" dot>
               {dueStatus.label}
-            </span>
+            </Badge>
           </div>
 
-          <div className={styles.metricsGrid}>
+          <dl className={styles.metricsGrid}>
             <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Reviews completed</span>
-              <span className={styles.metricValue}>{reviewsCompleted}</span>
+              <dt className={styles.metricLabel}>Reviews completed</dt>
+              <dd className={styles.metricValue}>{reviewsCompleted}</dd>
             </div>
 
             <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Current stage</span>
-              <span className={styles.metricValue} style={{ color: 'var(--accent-cyan)' }}>
+              <dt className={styles.metricLabel}>Current stage</dt>
+              <dd className={cx(styles.metricValue, styles.metricValueAccent)}>
                 Stage {repetitionStage} (Day {intervalDays})
-              </span>
+              </dd>
             </div>
 
             <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Current interval</span>
-              <span className={styles.metricValue}>
+              <dt className={styles.metricLabel}>Current interval</dt>
+              <dd className={styles.metricValue}>
                 {intervalDays} {intervalDays === 1 ? 'day' : 'days'}
-              </span>
+              </dd>
             </div>
 
             <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Last reviewed</span>
-              <span className={styles.metricValue}>
+              <dt className={styles.metricLabel}>Last reviewed</dt>
+              <dd className={styles.metricValue}>
                 {lastReviewedAt ? formatCalendarDate(lastReviewedAt) : 'Never reviewed'}
-              </span>
+              </dd>
             </div>
 
             <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Next review</span>
-              <span className={styles.metricValue} style={{ color: 'var(--color-easy)' }}>
+              <dt className={styles.metricLabel}>Next review</dt>
+              <dd className={cx(styles.metricValue, styles.metricValueAccent)}>
                 {nextReviewDate ? formatCalendarDate(nextReviewDate) : 'Not scheduled'}
-              </span>
+              </dd>
             </div>
 
             <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Latest recall</span>
-              <div className={styles.metricValue}>
+              <dt className={styles.metricLabel}>Latest recall</dt>
+              <dd className={styles.metricValue}>
                 {latestReview ? (
                   <RecallResultBadge result={latestReview.recallResult} />
                 ) : (
-                  <span style={{ color: 'var(--text-dim)' }}>—</span>
+                  <>
+                    <span aria-hidden="true">—</span>
+                    <span className="sr-only">No reviews recorded</span>
+                  </>
                 )}
-              </div>
+              </dd>
             </div>
 
             <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Cold Solve</span>
-              <span className={styles.metricValue}>
-                {latestReview && latestReview.coldSolve !== null && latestReview.coldSolve !== undefined ? (
+              <dt className={styles.metricLabel}>Cold Solve</dt>
+              <dd className={styles.metricValue}>
+                {latestReview &&
+                latestReview.coldSolve !== null &&
+                latestReview.coldSolve !== undefined ? (
                   latestReview.coldSolve ? (
-                    <span style={{ color: 'var(--color-easy)', fontWeight: 600 }}>Yes ✓</span>
+                    <span className={styles.metricValueYes}>Yes ✓</span>
                   ) : (
-                    <span style={{ color: 'var(--text-muted)' }}>No</span>
+                    <span className={styles.metricValueMuted}>No</span>
                   )
                 ) : (
-                  <span style={{ color: 'var(--text-dim)' }}>—</span>
+                  <>
+                    <span aria-hidden="true">—</span>
+                    <span className="sr-only">No reviews recorded</span>
+                  </>
                 )}
-              </span>
+              </dd>
             </div>
 
             {retentionLevel && (
               <div className={styles.metricItem}>
-                <span className={styles.metricLabel}>Retention Level</span>
-                <span className={styles.metricValue} style={{ color: 'var(--accent-violet)' }}>
+                <dt className={styles.metricLabel}>Retention Level</dt>
+                <dd className={cx(styles.metricValue, styles.metricValueRetention)}>
                   {retentionLevel}
-                </span>
+                </dd>
               </div>
             )}
-          </div>
+          </dl>
         </div>
       )}
     </div>

@@ -1,7 +1,34 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Flame, Calendar as CalendarIcon } from 'lucide-react';
+import { Card } from '../ui/Card';
+import { Badge } from '../ui/Badge';
 import { ActivityHeatmapDay } from '../../types';
 import styles from './ActivityHeatmap.module.css';
+
+/**
+ * DSA Tracker — Practice activity heatmap (Phase 5)
+ * ================================================
+ * Area 8 of the dashboard: always its own full-width panel beneath the rest, never
+ * folded into the analytics cards.
+ *
+ * The 12-month grid is ~720px wide, so it scrolls inside its own bounded container —
+ * `overflow-x: auto` on a box that is itself `min-width: 0`. That is the one place in
+ * the dashboard where content may exceed its column, and it never widens the page.
+ *
+ * The week/month geometry, the tooltip, the legend, the UTC date labels and the
+ * intensity aggregation are unchanged; only the palette moved to the design tokens
+ * (a restrained indigo ramp, no neon glow, no white-outline hover).
+ */
+
+/** Intensity ramp — the two intermediate steps are alpha steps of `--color-accent`,
+ *  because the token set has no five-step ramp. */
+const LEVEL_CLASS: Record<0 | 1 | 2 | 3 | 4, string> = {
+  0: styles.level0,
+  1: styles.level1,
+  2: styles.level2,
+  3: styles.level3,
+  4: styles.level4,
+};
 
 interface ActivityHeatmapProps {
   data: ActivityHeatmapDay[];
@@ -14,11 +41,23 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   currentStreak,
   longestStreak,
 }) => {
-  const [hoveredDay, setHoveredDay] = useState<{
-    day: ActivityHeatmapDay;
-    x: number;
-    y: number;
-  } | null>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  /** `x` is measured inside the scroll container, not the viewport, so the tooltip stays
+   *  pinned to its day cell when the year grid is scrolled horizontally. */
+  const [hoveredDay, setHoveredDay] = useState<{ day: ActivityHeatmapDay; x: number } | null>(
+    null
+  );
+
+  const showTooltip = (element: HTMLElement, day: ActivityHeatmapDay) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const cellRect = element.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
+    const x = cellRect.left - scrollerRect.left + scroller.scrollLeft + cellRect.width / 2;
+
+    setHoveredDay({ day, x });
+  };
 
   // Group the 365 days into 53 weeks (columns)
   const { weeks, monthLabels } = useMemo(() => {
@@ -80,27 +119,34 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   };
 
   return (
-    <div className={styles.card}>
+    <Card className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.title}>
-          <CalendarIcon size={18} color="var(--accent-cyan)" />
-          <span>Practice Activity Heatmap</span>
-        </div>
+        <h2 className={styles.title}>
+          <CalendarIcon size={16} aria-hidden="true" />
+          Practice Activity Heatmap
+        </h2>
+
         <div className={styles.streakSummary}>
           <span>
-            {totalReviewsInYear} {totalReviewsInYear === 1 ? 'revision' : 'revisions'} in the last 12 months
+            {totalReviewsInYear} {totalReviewsInYear === 1 ? 'revision' : 'revisions'} in the last
+            12 months
           </span>
-          <div className={styles.streakBadge}>
-            <Flame size={14} color="#f59e0b" />
-            <span>{currentStreak} Day Streak</span>
-          </div>
+          <Badge tone="warning" shape="pill">
+            <Flame size={12} aria-hidden="true" />
+            {currentStreak} Day Streak
+          </Badge>
         </div>
       </div>
 
-      <div className={styles.heatmapWrapper}>
+      <div
+        ref={scrollerRef}
+        className={styles.scroller}
+        role="group"
+        aria-label="Practice activity by day"
+      >
         <div className={styles.heatmapContainer}>
           {/* Month Header Labels */}
-          <div className={styles.monthLabels}>
+          <div className={styles.monthLabels} aria-hidden="true">
             {monthLabels.map((m, idx) => (
               <span
                 key={idx}
@@ -114,7 +160,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
           <div className={styles.gridArea}>
             {/* Weekday Row Labels */}
-            <div className={styles.dayLabels}>
+            <div className={styles.dayLabels} aria-hidden="true">
               <span>Sun</span>
               <span>Tue</span>
               <span>Thu</span>
@@ -128,30 +174,19 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                   {week.map((day, dIdx) => {
                     if (!day) {
                       return (
-                        <div
-                          key={`empty-${wIdx}-${dIdx}`}
-                          style={{ width: 12, height: 12, opacity: 0 }}
-                        />
+                        <div key={`empty-${wIdx}-${dIdx}`} className={styles.emptyCell} aria-hidden="true" />
                       );
                     }
-
-                    const levelClass = styles[`level${day.level}`];
 
                     return (
                       <button
                         key={day.date}
                         type="button"
-                        className={`${styles.dayCell} ${levelClass}`}
+                        className={`${styles.dayCell} ${LEVEL_CLASS[day.level]}`}
                         aria-label={`${formatDate(day.date)}: ${day.count} reviews`}
-                        onMouseEnter={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setHoveredDay({ day, x: rect.left + rect.width / 2, y: rect.top });
-                        }}
+                        onMouseEnter={(e) => showTooltip(e.currentTarget, day)}
                         onMouseLeave={() => setHoveredDay(null)}
-                        onFocus={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setHoveredDay({ day, x: rect.left + rect.width / 2, y: rect.top });
-                        }}
+                        onFocus={(e) => showTooltip(e.currentTarget, day)}
                         onBlur={() => setHoveredDay(null)}
                       />
                     );
@@ -164,21 +199,15 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
         {/* Hovered Day Tooltip */}
         {hoveredDay && (
-          <div
-            className={styles.tooltipBox}
-            style={{
-              left: `${Math.max(120, Math.min(window.innerWidth - 120, hoveredDay.x))}px`,
-              top: '10px',
-              position: 'absolute',
-            }}
-          >
+          <div className={styles.tooltipBox} style={{ left: `${hoveredDay.x}px` }}>
             <span className={styles.tooltipDate}>{formatDate(hoveredDay.day.date)}</span>
             <span className={styles.tooltipCount}>
               {hoveredDay.day.count} {hoveredDay.day.count === 1 ? 'review' : 'reviews'} completed
             </span>
             {hoveredDay.day.count > 0 && (
               <span className={styles.tooltipBreakdown}>
-                {hoveredDay.day.easy} EASY · {hoveredDay.day.struggled} STRUGGLED · {hoveredDay.day.hint} HINT · {hoveredDay.day.forgot} FORGOT
+                {hoveredDay.day.easy} EASY · {hoveredDay.day.struggled} STRUGGLED ·{' '}
+                {hoveredDay.day.hint} HINT · {hoveredDay.day.forgot} FORGOT
               </span>
             )}
           </div>
@@ -186,14 +215,13 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       </div>
 
       <div className={styles.footer}>
-        <div>
-          <span>Longest Practice Streak: </span>
-          <strong style={{ color: 'var(--text-main)' }}>{longestStreak} days</strong>
-        </div>
+        <span>
+          Longest Practice Streak: <strong className={styles.footerStrong}>{longestStreak} days</strong>
+        </span>
 
         <div className={styles.legend}>
           <span>Less</span>
-          <div className={styles.legendCells}>
+          <div className={styles.legendCells} aria-hidden="true">
             <div className={`${styles.legendCell} ${styles.level0}`} />
             <div className={`${styles.legendCell} ${styles.level1}`} />
             <div className={`${styles.legendCell} ${styles.level2}`} />
@@ -203,6 +231,6 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           <span>More</span>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };

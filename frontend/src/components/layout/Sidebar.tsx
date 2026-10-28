@@ -1,181 +1,111 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  GraduationCap,
-  Code2,
-  Repeat,
-  History,
-  Network,
-  Lock,
-  LogIn,
-  UserPlus,
-  Layers,
-  LogOut,
-  User as UserIcon,
-} from 'lucide-react';
+import { Layers, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { MEDIA } from '../../styles/breakpoints';
+import { Button } from '../ui/Button';
+import { cx } from '../ui/cx';
+import { NAV_GROUPS } from './nav.config';
 import styles from './Sidebar.module.css';
+
+/**
+ * DSA Tracker — App shell navigation (Phase 3)
+ * ============================================
+ * Desktop sidebar (>=1024px, `--layout-sidebar` 240px) and tablet icon rail
+ * (768–1023px, `--layout-rail` 64px). Below 768px the whole element is removed from the
+ * layout by `Sidebar.module.css` and replaced by the mobile topbar + bottom bar.
+ *
+ * Destinations, labels and grouping come from `nav.config.ts`. `NavLink` keeps its
+ * default matching (no `end`, no custom matcher), so the pre-Phase-3 active-route
+ * semantics are preserved exactly. The only change to a link is its styling.
+ *
+ * Logout behaviour is unchanged: `await logout()` then `navigate('/login')`.
+ */
 
 export const Sidebar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  /** Rail mode also decides props that cannot be expressed in CSS (icon-only logout
+   *  button, tooltips), using the same breakpoint the stylesheet uses. */
+  const isRail = useMediaQuery(MEDIA.tablet);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
+  const groups = NAV_GROUPS.map((group) => ({
+    heading: group.heading,
+    // Protected destinations are always listed (unchanged behaviour); the guest-only
+    // Account group appears only while signed out.
+    items: group.items.filter((item) => item.requiresAuth || !isAuthenticated),
+  })).filter((group) => group.items.length > 0);
+
+  const accountLabel = user ? user.name || user.email : '';
+
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
-        <div className={styles.brandIcon}>
-          <Layers size={18} />
-        </div>
+        <span className={styles.brandIcon}>
+          <Layers size={18} aria-hidden="true" />
+        </span>
         <span className={styles.brandName}>DSA Tracker</span>
       </div>
 
-      <nav className={styles.navSection}>
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <LayoutDashboard size={18} />
-          <span>Dashboard</span>
-        </NavLink>
+      <nav className={styles.nav} aria-label="Primary">
+        {groups.map((group) => (
+          <div key={group.heading ?? 'primary'} className={styles.group}>
+            {group.heading ? <p className={styles.groupHeading}>{group.heading}</p> : null}
 
-        <div className={styles.sectionHeading}>MY DSA</div>
-        <NavLink
-          to="/college-dsa"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <GraduationCap size={18} />
-          <span>College DSA</span>
-        </NavLink>
-
-        <NavLink
-          to="/personal-dsa"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <Code2 size={18} />
-          <span>Personal DSA</span>
-        </NavLink>
-
-        <div className={styles.sectionHeading}>SPACED REPETITION</div>
-        <NavLink
-          to="/review"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <Repeat size={18} />
-          <span>Reviews</span>
-        </NavLink>
-
-        <NavLink
-          to="/reviews/history"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <History size={18} />
-          <span>Review History</span>
-        </NavLink>
-
-        <div className={styles.sectionHeading}>MASTERY</div>
-        <NavLink
-          to="/patterns"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <Network size={18} />
-          <span>Patterns</span>
-        </NavLink>
-
-        <NavLink
-          to="/problems/locked"
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <Lock size={18} />
-          <span>Locked Problems</span>
-        </NavLink>
-
-        {!isAuthenticated && (
-          <>
-            <div className={styles.sectionHeading}>Account</div>
-            <NavLink
-              to="/login"
-              className={({ isActive }) =>
-                `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-              }
-            >
-              <LogIn size={18} />
-              <span>Sign In</span>
-            </NavLink>
-
-            <NavLink
-              to="/register"
-              className={({ isActive }) =>
-                `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-              }
-            >
-              <UserPlus size={18} />
-              <span>Register</span>
-            </NavLink>
-          </>
-        )}
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  /* Tooltip only where the label is visually hidden (tablet rail). */
+                  title={isRail ? item.label : undefined}
+                  className={({ isActive }) => cx(styles.navLink, isActive && styles.navLinkActive)}
+                >
+                  <span className={styles.navIcon}>
+                    <Icon size={18} aria-hidden="true" />
+                  </span>
+                  <span className={styles.navLabel}>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
-      <div className={styles.sidebarFooter}>
-        {isAuthenticated && user ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div className={styles.userFootprint}>
-              <UserIcon size={14} color="var(--accent-cyan)" />
-              <span className={styles.userFootprintEmail} title={user.email}>
-                {user.name || user.email}
+      {isAuthenticated && user ? (
+        <div className={styles.footer}>
+          <div className={styles.userBlock}>
+            <span className={styles.userAvatar} aria-hidden="true">
+              {accountLabel.charAt(0).toUpperCase()}
+            </span>
+            <span className={styles.userMeta}>
+              <span className={styles.userName} title={user.email}>
+                {accountLabel}
               </span>
-            </div>
-            <button
-              onClick={handleLogout}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                background: 'transparent',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--text-muted)',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-                minHeight: '38px',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#f87171';
-                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              }}
-              title="Sign Out of session"
-            >
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
+            </span>
           </div>
-        ) : null}
-      </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            fullWidth={!isRail}
+            iconOnly={isRail}
+            aria-label={isRail ? 'Sign Out' : undefined}
+            title="Sign Out of session"
+            onClick={handleLogout}
+            iconLeft={<LogOut size={14} aria-hidden="true" />}
+          >
+            {isRail ? null : 'Sign Out'}
+          </Button>
+        </div>
+      ) : null}
     </aside>
   );
 };

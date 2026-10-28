@@ -1,0 +1,34 @@
+/**
+ * DSA Tracker — Design-system utilities (Phase 0)
+ * ===============================================
+ * Deliberately tiny and strictly OPT-IN: nothing in this file targets an existing
+ * class or element selector, so importing it cannot change how the app renders today.
+ *
+ * Only two helpers are defined, because only these two are required by the foundation
+ * itself:
+ *   .sr-only     — screen-reader-only text. Required by every icon-only control the
+ *                  design system introduces (row actions, close buttons, nav icons).
+ *   .focus-ring  — applies the tokenised focus ring. Components opt in instead of the
+ *                  app applying a global :focus-visible rule, which would restyle
+ *                  controls that already define their own focus treatment.
+ *
+ * Layout/text helpers (`.stack`, `.row`, `.truncate`, …) are intentionally deferred:
+ * they will be added in the phase that first consumes them, so no dead CSS accumulates.
+ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

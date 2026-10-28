@@ -1,0 +1,196 @@
+/**
+ * DSA Tracker — Button primitive styles (Phase 2)
+ * All values come from `styles/tokens.css`. No gradients, no glow, no arbitrary
+ * colours. Heights: 32 / 38 / 44px (38px derived — see below).
+ */
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  border: var(--border-width-hairline) solid transparent;
+  border-radius: var(--radius-3);
+  font-family: inherit;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-normal);
+  text-align: center;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    filter var(--duration-fast) var(--ease-standard);
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Disabled and loading are distinguishable without relying on colour: the cursor
+   changes, the spinner appears and `aria-busy`/`aria-disabled` are set. */
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.button[data-loading='true']:disabled {
+  cursor: progress;
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ sizes */
+
+.sm {
+  height: var(--control-height-sm);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-2);
+}
+
+/* No 38px token exists; derived from the 40px control height so the value stays
+   token-driven instead of becoming a magic number. */
+.md {
+  height: calc(var(--control-height-md) - 2px);
+  padding: 0 var(--space-4);
+}
+
+.lg {
+  height: var(--control-height-lg);
+  padding: 0 var(--space-5);
+  font-size: var(--font-size-3);
+}
+
+.iconOnly {
+  padding: 0;
+}
+
+.iconOnly.sm {
+  width: var(--control-height-sm);
+}
+
+.iconOnly.md {
+  width: calc(var(--control-height-md) - 2px);
+}
+
+.iconOnly.lg {
+  width: var(--control-height-lg);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Comfortable touch target on touch devices without changing visual height. */
+@media (pointer: coarse) {
+  .sm::after,
+  .md::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: var(--layout-touch-target);
+    transform: translateY(-50%);
+    background: transparent;
+  }
+}
+
+/* --------------------------------------------------------------- variants */
+
+.primary {
+  background: var(--color-accent-strong);
+  color: var(--color-text-primary);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--color-accent);
+}
+
+.primary:active:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.secondary {
+  background: var(--color-bg-raised);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.subtle {
+  background: var(--color-accent-subtle);
+  color: var(--color-text-link);
+}
+
+.subtle:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+/* `--color-danger` has no lighter/darker step in the token set, so the filled
+   danger button uses the inverse text colour (4.98:1) — light text on red would be
+   3.76:1 and fail AA. Hover brightens instead of swapping to a missing token. */
+.danger {
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+  font-weight: var(--font-weight-semibold);
+}
+
+.danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.danger:active:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+/* --------------------------------------------------------------- contents */
+
+.icon,
+.label {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spinner {
+  flex-shrink: 0;
+  animation: buttonSpin calc(var(--duration-slow) * 3) linear infinite;
+}
+
+@keyframes buttonSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}

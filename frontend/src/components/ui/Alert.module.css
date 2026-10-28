@@ -1,0 +1,106 @@
+/**
+ * DSA Tracker — Alert primitive styles (Phase 2)
+ * Tinted surface + hairline border + tone-coloured icon; text stays high contrast so
+ * every tone passes AA. All values come from `styles/tokens.css`.
+ */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
+  --alert-tone-color: var(--color-text-tertiary);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: var(--space-1);
+  color: var(--alert-tone-color);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+}
+
+.body {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-body);
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+.dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  background: transparent;
+  border: var(--border-width-hairline) solid transparent;
+  border-radius: var(--radius-2);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.dismiss:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.dismiss:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ------------------------------------------------------------------- tones */
+
+.info {
+  --alert-tone-color: var(--color-info);
+  background: var(--color-info-subtle);
+}
+
+.success {
+  --alert-tone-color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.warning {
+  --alert-tone-color: var(--color-warning);
+  background: var(--color-warning-subtle);
+}
+
+.danger {
+  --alert-tone-color: var(--color-danger);
+  background: var(--color-danger-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dismiss {
+    transition: none;
+  }
+}

@@ -6,6 +6,7 @@ import {
   ProblemQueryParams,
   CreateProblemInput,
   UpdateProblemInput,
+  LeetcodeImportPreview,
 } from '../types';
 
 export const fetchProblems = async (params: ProblemQueryParams): Promise<PaginatedProblems> => {
@@ -24,6 +25,21 @@ export const fetchProblemById = async (id: string): Promise<Problem> => {
     throw new Error(response.data.message || 'Problem not found');
   }
   return response.data.data.problem;
+};
+
+/**
+ * Asks the backend for LeetCode metadata for a pasted problem URL.
+ * A 200 response with `status: 'UNAVAILABLE'` is the supported fallback, not an error.
+ */
+export const importLeetcodeProblem = async (url: string): Promise<LeetcodeImportPreview> => {
+  const response = await apiClient.post<ApiResponse<LeetcodeImportPreview>>(
+    '/problems/import/leetcode',
+    { url }
+  );
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.message || 'Failed to import LeetCode problem');
+  }
+  return response.data.data;
 };
 
 export const createProblem = async (data: CreateProblemInput): Promise<Problem> => {

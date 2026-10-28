@@ -1,37 +1,124 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  Lock,
-  ShieldCheck,
+  ArrowUpRight,
   CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Loader2,
+  Lock,
+  Repeat,
+  ShieldCheck,
   Sparkles,
-  ExternalLink,
+  Unlock,
+  XCircle,
 } from 'lucide-react';
 import { fetchMasteryOverview } from '../api/mastery.api';
 import { ProblemMasteryOverviewItem } from '../types';
-import { DifficultyBadge } from '../components/problems/DifficultyBadge';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState } from '../components/ui/ErrorState';
+import { Skeleton } from '../components/ui/Skeleton';
+import { cx } from '../components/ui/cx';
+import {
+  difficultyTone,
+  masteryTone,
+  retentionTone,
+} from '../components/problems/badgeTones';
 import { formatCalendarDate } from '../utils/date.utils';
+import { getErrorMessage } from '../utils/error.utils';
 import styles from './LockedProblemsPage.module.css';
 
+/**
+ * DSA Tracker — Locked Problems / proof-of-learning vault
+ * ======================================================
+ * The overview half of the locked-mastery feature. A single `GET /mastery/overview` call
+ * returns every problem with its server-evaluated four gates, and this page renders those
+ * facts verbatim — it never recomputes eligibility, never offers a manual lock/unlock and
+ * never changes a rule. Locking still happens automatically on a review through the
+ * backend evaluator, so the only actions here are navigation ones.
+ *
+ * Behaviour preserved from the previous implementation:
+ *   - the same three filters, in the same order, with catalog-wide counts;
+ *   - every card still links to `/problems/:id` and the empty state still offers the
+ *     Review Queue;
+ *   - the four gate descriptions and every per-gate number come from the API payload.
+ *
+ * What the redesign adds is presentation and state handling: the gates are shown as a
+ * labelled list instead of coloured boxes (the pass/fail icon and `sr-only` text carry the
+ * state, never colour alone), loading reserves the list with skeletons, a failed request
+ * gets a working Retry instead of an inline red strip, and "no problems tracked" is
+ * separated from "nothing matches this filter" because they need different next steps.
+ */
+
+type FilterMode = 'ALL' | 'LOCKED' | 'IN_PROGRESS';
+
+interface GateGuide {
+  letter: string;
+  name: string;
+  description: React.ReactNode;
+}
+
+/** The four gates, worded exactly as `LockedMasteryEvaluator` implements them. */
+const GATE_GUIDE: GateGuide[] = [
+  {
+    letter: 'A',
+    name: 'Solved status',
+    description: (
+      <>
+        Problem status must be <strong>Solved</strong>.
+      </>
+    ),
+  },
+  {
+    letter: 'B',
+    name: 'SRS evidence',
+    description: (
+      <>
+        At least <strong>3 successful reviews</strong> (EASY or STRUGGLED), one of them at{' '}
+        <strong>stage 3 or later</strong>.
+      </>
+    ),
+  },
+  {
+    letter: 'C',
+    name: 'Independent recall',
+    description: (
+      <>
+        At least <strong>2 successful cold solves</strong> without notes or hints.
+      </>
+    ),
+  },
+  {
+    letter: 'D',
+    name: 'Recent consistency',
+    description: (
+      <>
+        The most recent review must be <strong>EASY or STRUGGLED</strong>.
+      </>
+    ),
+  },
+];
+
+const plural = (count: number, singular: string, pluralForm = `${singular}s`): string =>
+  `${count} ${count === 1 ? singular : pluralForm}`;
+
 export const LockedProblemsPage: React.FC = () => {
+  const navigate = useNavigate();
+
   const [items, setItems] = useState<ProblemMasteryOverviewItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterMode, setFilterMode] = useState<'ALL' | 'LOCKED' | 'IN_PROGRESS'>('ALL');
+  const [filterMode, setFilterMode] = useState<FilterMode>('ALL');
 
   const loadOverview = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Bulk 2-query fetch (Zero N+1)
+      // Bulk 2-query fetch (zero N+1) — unchanged.
       const data = await fetchMasteryOverview();
       setItems(data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to load locked problems.';
-      setError(msg);
+      setError(getErrorMessage(err, 'Failed to load locked problems.'));
     } finally {
       setIsLoading(false);
     }
@@ -41,272 +128,512 @@ export const LockedProblemsPage: React.FC = () => {
     loadOverview();
   }, [loadOverview]);
 
-  const lockedCount = items.filter((i) => i.problem.masteryStatus === 'LOCKED').length;
-  const inProgressCount = items.filter((i) => i.problem.masteryStatus !== 'LOCKED').length;
+  const stats = useMemo(() => {
+    let locked = 0;
+    let readyToLock = 0;
 
-  const filteredItems = items.filter((item) => {
-    if (filterMode === 'LOCKED') return item.problem.masteryStatus === 'LOCKED';
-    if (filterMode === 'IN_PROGRESS') return item.problem.masteryStatus !== 'LOCKED';
-    return true;
-  });
+    for (const item of items) {
+      if (item.problem.masteryStatus === 'LOCKED') {
+        locked += 1;
+      } else if (item.isEligible) {
+        readyToLock += 1;
+      }
+    }
+
+    return {
+      total: items.length,
+      locked,
+      inProgress: items.length - locked,
+      readyToLock,
+    };
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    if (filterMode === 'LOCKED') {
+      return items.filter((item) => item.problem.masteryStatus === 'LOCKED');
+    }
+    if (filterMode === 'IN_PROGRESS') {
+      return items.filter((item) => item.problem.masteryStatus !== 'LOCKED');
+    }
+    return items;
+  }, [items, filterMode]);
+
+  const filterOptions: Array<{ key: FilterMode; label: string; count: number }> = [
+    { key: 'ALL', label: 'All problems', count: stats.total },
+    { key: 'LOCKED', label: 'Locked mastery', count: stats.locked },
+    { key: 'IN_PROGRESS', label: 'In progress', count: stats.inProgress },
+  ];
+
+  const isFilteredViewEmpty = filteredItems.length === 0;
 
   return (
-    <div className={styles.pageContainer}>
-      {/* Header */}
+    <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.titleArea}>
-          <div className={styles.iconCircle}>
-            <Lock size={22} color="#fbbf24" />
-          </div>
-          <div>
-            <h1 className={styles.title}>Locked Problems</h1>
+        <div className={styles.heading}>
+          <span className={styles.iconTile} aria-hidden="true">
+            <Lock size={20} />
+          </span>
+          <div className={styles.headingText}>
+            <h2 className={styles.title}>Locked Problems</h2>
             <p className={styles.subtitle}>
-              Proof-of-learning mastery vault. Problems that pass all 4 rigorous qualification gates
-              are locked into long-term retention.
+              A problem is sealed only after it passes all four proof-of-learning gates.
+              Any failed recall reopens it for recovery, so a lock always reflects current
+              recall — not a one-off solve.
             </p>
           </div>
         </div>
 
-        <div className={styles.statsPillGroup}>
-          <div className={styles.statsPillLocked}>
-            <Lock size={14} color="#fbbf24" />
-            <span>{lockedCount} Locked</span>
-          </div>
-          <div className={styles.statsPillInProgress}>
-            <Sparkles size={14} color="var(--accent-cyan)" />
-            <span>{inProgressCount} In Progress</span>
-          </div>
+        <div className={styles.headerActions}>
+          {!isLoading && !error ? (
+            <>
+              <Badge tone="warning" shape="pill" dot>
+                {stats.locked} locked
+              </Badge>
+              <Badge tone="neutral" shape="pill">
+                {stats.inProgress} in progress
+              </Badge>
+            </>
+          ) : null}
+          <Button
+            variant="secondary"
+            size="sm"
+            iconLeft={<Repeat size={14} />}
+            onClick={() => navigate('/review')}
+          >
+            Review Queue
+          </Button>
         </div>
       </header>
 
-      {/* Educational 4-Gate Explanation Banner */}
-      <div className={styles.gatesExplainerCard}>
-        <div className={styles.explainerHeader}>
-          <ShieldCheck size={18} color="#fbbf24" />
-          <h2 className={styles.explainerTitle}>The 4 Authoritative Locked Mastery Gates</h2>
-        </div>
-        <p className={styles.explainerDesc}>
-          To protect against false confidence, a problem is locked only when all 4 conditions are met.
-          Any subsequent review failure (HINT or FORGOT) will automatically unlock the problem for recovery.
-        </p>
-        <div className={styles.gatesGrid}>
-          <div className={styles.gateGuideItem}>
-            <span className={styles.gateGuideLetter}>Gate A</span>
-            <span className={styles.gateGuideName}>Solved Status</span>
-            <span className={styles.gateGuideText}>
-              Problem status must be marked as <strong>Solved</strong>.
-            </span>
-          </div>
-
-          <div className={styles.gateGuideItem}>
-            <span className={styles.gateGuideLetter}>Gate B</span>
-            <span className={styles.gateGuideName}>SRS Evidence</span>
-            <span className={styles.gateGuideText}>
-              At least <strong>3 successful reviews</strong> (EASY or STRUGGLED) AND reached <strong>Stage 3+ (Day 7 interval)</strong>.
-            </span>
-          </div>
-
-          <div className={styles.gateGuideItem}>
-            <span className={styles.gateGuideLetter}>Gate C</span>
-            <span className={styles.gateGuideName}>Cold Recall</span>
-            <span className={styles.gateGuideText}>
-              At least <strong>2 successful cold solves</strong> without checking notes or hints.
-            </span>
-          </div>
-
-          <div className={styles.gateGuideItem}>
-            <span className={styles.gateGuideLetter}>Gate D</span>
-            <span className={styles.gateGuideName}>Recent Consistency</span>
-            <span className={styles.gateGuideText}>
-              Most recent learning review outcome must be <strong>EASY or STRUGGLED</strong> (no lingering failures).
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className={styles.filterRow}>
-        <div className={styles.filterBtns}>
-          <button
-            onClick={() => setFilterMode('ALL')}
-            className={`${styles.filterBtn} ${filterMode === 'ALL' ? styles.filterBtnActive : ''}`}
-          >
-            All Problems ({items.length})
-          </button>
-          <button
-            onClick={() => setFilterMode('LOCKED')}
-            className={`${styles.filterBtn} ${filterMode === 'LOCKED' ? styles.filterBtnActive : ''}`}
-          >
-            Locked Mastery ({lockedCount})
-          </button>
-          <button
-            onClick={() => setFilterMode('IN_PROGRESS')}
-            className={`${styles.filterBtn} ${filterMode === 'IN_PROGRESS' ? styles.filterBtnActive : ''}`}
-          >
-            In Progress ({inProgressCount})
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className={styles.errorCard}>
-          <AlertCircle size={20} color="#f87171" />
-          <span>{error}</span>
-          <button onClick={loadOverview} className={styles.retryBtn}>
-            Retry
-          </button>
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className={styles.loadingContainer}>
-          <Loader2 size={36} className="animate-spin" color="var(--accent-cyan)" />
-          <span style={{ color: 'var(--text-muted)' }}>Evaluating mastery gates across your library...</span>
-        </div>
-      ) : filteredItems.length === 0 ? (
-        <div className={styles.emptyCard}>
-          <Lock size={36} color="var(--text-dim)" />
-          <h3 className={styles.emptyTitle}>
-            {filterMode === 'LOCKED' ? 'No Problems Locked Yet' : 'No Problems Found'}
-          </h3>
-          <p className={styles.emptyText}>
-            {filterMode === 'LOCKED'
-              ? 'Complete SRS reviews and cold solves on your solved problems to unlock their proof-of-learning seal.'
-              : 'Add problems to your trackers to begin your qualification journey.'}
-          </p>
-          <Link to="/review" className={styles.primaryCta}>
-            <span>Go to Review Queue</span>
-          </Link>
-        </div>
+      {error ? (
+        <ErrorState
+          variant="section"
+          title="We couldn't load your mastery overview"
+          message={error}
+          onRetry={loadOverview}
+          isRetrying={isLoading}
+          retryLabel="Retry"
+        />
+      ) : isLoading && items.length === 0 ? (
+        <LockedListSkeleton />
+      ) : items.length === 0 ? (
+        <EmptyState
+          variant="full"
+          icon={<ShieldCheck size={24} />}
+          title="No problems to qualify yet"
+          description="Locked mastery is earned problem by problem. Add problems to a tracker, mark them Solved, then review them to pass the four gates — they appear here as soon as they are tracked."
+          primaryAction={
+            <Button onClick={() => navigate('/college-dsa')}>College DSA</Button>
+          }
+          secondaryAction={
+            <Button variant="secondary" onClick={() => navigate('/personal-dsa')}>
+              Personal DSA
+            </Button>
+          }
+        />
       ) : (
-        <div className={styles.problemsList}>
-          {filteredItems.map(({ problem, gates }) => {
-            const isLocked = problem.masteryStatus === 'LOCKED';
+        <>
+          <dl className={styles.stats}>
+            <StatTile
+              label="Locked"
+              value={stats.locked}
+              hint="Sealed by verified recall"
+              tone="warning"
+            />
+            <StatTile
+              label="In progress"
+              value={stats.inProgress}
+              hint="Still passing the gates"
+              tone="info"
+            />
+            <StatTile
+              label="Ready to lock"
+              value={stats.readyToLock}
+              hint="All four gates met"
+              tone="accent"
+            />
+          </dl>
 
-            return (
-              <div
-                key={problem.id}
-                className={`${styles.problemCard} ${isLocked ? styles.cardLocked : ''}`}
-              >
-                <div className={styles.cardHeader}>
-                  <div className={styles.headerLeft}>
-                    <span className={styles.sNoBadge}>#{problem.sNo}</span>
-                    <span className={styles.sectionBadge}>{problem.section}</span>
-                    <Link to={`/problems/${problem.id}`} className={styles.problemTitle}>
-                      {problem.title}
-                    </Link>
-                    <DifficultyBadge difficulty={problem.difficulty} />
-                  </div>
+          <Card variant="raised" className={styles.gatesCard} aria-labelledby="gate-guide-heading">
+            <div className={styles.gatesHeader}>
+              <h2 className={styles.gatesTitle} id="gate-guide-heading">
+                <ShieldCheck size={16} className={styles.sectionIcon} aria-hidden="true" />
+                The four qualification gates
+              </h2>
+              <Badge tone="neutral">All four required</Badge>
+            </div>
 
-                  <div className={styles.headerRight}>
-                    {isLocked ? (
-                      <div className={styles.lockedBadge}>
-                        <Lock size={13} />
-                        <span>LOCKED (v{problem.lockVersion})</span>
-                      </div>
-                    ) : (
-                      <div className={styles.unlockedBadge}>
-                        <span>In Progress</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <p className={styles.gatesDesc}>
+              Every gate is evaluated from your revision history on each request. A later HINT
+              or FORGOT review unlocks the problem again so it can be re-earned.
+            </p>
 
-                {/* Gates Status Row */}
-                <div className={styles.gatesContainer}>
-                  {/* Gate A */}
-                  <div
-                    className={`${styles.gateBadge} ${
-                      gates.solved.passed ? styles.gatePassed : styles.gateFailed
-                    }`}
-                  >
-                    {gates.solved.passed ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                    <div className={styles.gateTextCol}>
-                      <span className={styles.gateName}>Gate A · Solved</span>
-                      <span className={styles.gateDetail}>
-                        {gates.solved.passed ? 'Status: Solved ✓' : `Status: ${gates.solved.status}`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Gate B */}
-                  <div
-                    className={`${styles.gateBadge} ${
-                      gates.srsEvidence.passed ? styles.gatePassed : styles.gateFailed
-                    }`}
-                  >
-                    {gates.srsEvidence.passed ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                    <div className={styles.gateTextCol}>
-                      <span className={styles.gateName}>Gate B · SRS Evidence</span>
-                      <span className={styles.gateDetail}>
-                        {gates.srsEvidence.successfulReviewsCount}/3 reviews · Stage {gates.srsEvidence.maxStageReached}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Gate C */}
-                  <div
-                    className={`${styles.gateBadge} ${
-                      gates.coldRecall.passed ? styles.gatePassed : styles.gateFailed
-                    }`}
-                  >
-                    {gates.coldRecall.passed ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                    <div className={styles.gateTextCol}>
-                      <span className={styles.gateName}>Gate C · Cold Solves</span>
-                      <span className={styles.gateDetail}>
-                        {gates.coldRecall.qualifyingColdSolvesCount}/2 cold solves
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Gate D */}
-                  <div
-                    className={`${styles.gateBadge} ${
-                      gates.recentSuccess.passed ? styles.gatePassed : styles.gateFailed
-                    }`}
-                  >
-                    {gates.recentSuccess.passed ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                    <div className={styles.gateTextCol}>
-                      <span className={styles.gateName}>Gate D · Last Review</span>
-                      <span className={styles.gateDetail}>
-                        {gates.recentSuccess.latestOutcome
-                          ? `Last: ${gates.recentSuccess.latestOutcome}`
-                          : 'No reviews yet'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Explanation */}
-                <div className={styles.cardFooter}>
-                  {isLocked ? (
-                    <span className={styles.footerNoteLocked}>
-                      ✓ Locked {problem.lockedAt ? `on ${formatCalendarDate(problem.lockedAt)}` : ''}. Memory sealed with verified recall proof.
+            <ol className={styles.gateGuideList}>
+              {GATE_GUIDE.map((gate) => (
+                <li key={gate.letter} className={styles.gateGuideItem}>
+                  <span className={styles.gateLetter} aria-hidden="true">
+                    {gate.letter}
+                  </span>
+                  <div className={styles.gateGuideBody}>
+                    <span className={styles.gateGuideName}>
+                      <span className="sr-only">Gate </span>
+                      {gate.name}
                     </span>
-                  ) : (
-                    <span className={styles.footerNoteUnlocked}>
-                      {!gates.solved.passed
-                        ? 'Needs status changed to Solved.'
-                        : !gates.srsEvidence.passed
-                        ? `Needs ${Math.max(0, 3 - gates.srsEvidence.successfulReviewsCount)} more successful reviews (reaching Stage 3+).`
-                        : !gates.coldRecall.passed
-                        ? `Needs ${Math.max(0, 2 - gates.coldRecall.qualifyingColdSolvesCount)} more independent cold solve(s).`
-                        : !gates.recentSuccess.passed
-                        ? 'Most recent review was not successful. Review next interval to pass Gate D.'
-                        : 'All 4 gates passed! Eligible for automatic lock transition on next review.'}
-                    </span>
-                  )}
+                    <span className={styles.gateGuideText}>{gate.description}</span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Card>
 
-                  <Link to={`/problems/${problem.id}`} className={styles.detailLink}>
-                    <span>Inspect Problem</span>
-                    <ExternalLink size={12} />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          <section className={styles.controls} aria-label="Filter problems by mastery status">
+            <div className={styles.filterGroup} role="group" aria-label="Mastery status filters">
+              {filterOptions.map((option) => {
+                const isActive = filterMode === option.key;
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    className={cx(styles.filterBtn, isActive && styles.filterBtnActive)}
+                    aria-pressed={isActive}
+                    onClick={() => setFilterMode(option.key)}
+                  >
+                    {option.label}
+                    <span className={styles.filterCount}>{option.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className={styles.resultSummary} aria-live="polite">
+              Showing <strong>{filteredItems.length}</strong> of{' '}
+              <strong>{stats.total}</strong> problems
+            </p>
+          </section>
+
+          {isFilteredViewEmpty ? (
+            filterMode === 'LOCKED' ? (
+              <EmptyState
+                variant="full"
+                icon={<Lock size={24} />}
+                title="No problems locked yet"
+                description="Nothing has passed all four gates so far. Keep the reviews coming — a lock is applied automatically the moment every gate is satisfied."
+                primaryAction={<Button onClick={() => navigate('/review')}>Go to Review Queue</Button>}
+                secondaryAction={
+                  <Button variant="secondary" onClick={() => setFilterMode('ALL')}>
+                    Show all problems
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                variant="full"
+                icon={<Unlock size={24} />}
+                title="Every tracked problem is locked"
+                description="All problems currently tracked have passed the four gates. New problems start in progress as soon as they are added."
+                primaryAction={
+                  <Button onClick={() => setFilterMode('LOCKED')}>Show locked mastery</Button>
+                }
+                secondaryAction={
+                  <Button variant="secondary" onClick={() => navigate('/college-dsa')}>
+                    Add a problem
+                  </Button>
+                }
+              />
+            )
+          ) : (
+            <ul className={styles.problemList}>
+              {filteredItems.map((item) => (
+                <li key={item.problem.id}>
+                  <ProblemMasteryCard item={item} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
 };
+
+/* ------------------------------------------------------------------ stat tile */
+
+interface StatTileProps {
+  label: string;
+  value: number;
+  hint: string;
+  tone?: 'accent' | 'warning' | 'info';
+}
+
+const StatTile: React.FC<StatTileProps> = ({ label, value, hint, tone }) => (
+  <div className={styles.statTile}>
+    <dt className={styles.statLabel}>{label}</dt>
+    <dd className={styles.statBody}>
+      <span
+        className={cx(
+          styles.statValue,
+          tone === 'accent' && styles.statValueAccent,
+          tone === 'warning' && styles.statValueWarning,
+          tone === 'info' && styles.statValueInfo
+        )}
+      >
+        {value}
+      </span>
+      <span className={styles.statHint}>{hint}</span>
+    </dd>
+  </div>
+);
+
+/* ------------------------------------------------------------------ gate list */
+
+interface GateItemProps {
+  letter: string;
+  title: string;
+  detail: React.ReactNode;
+  passed: boolean;
+}
+
+const GateItem: React.FC<GateItemProps> = ({ letter, title, detail, passed }) => (
+  <li className={cx(styles.gate, passed && styles.gatePassed)}>
+    {passed ? (
+      <CheckCircle2 size={16} className={styles.gateIconPass} aria-hidden="true" />
+    ) : (
+      <XCircle size={16} className={styles.gateIconFail} aria-hidden="true" />
+    )}
+
+    <div className={styles.gateBody}>
+      <span className={styles.gateTitle}>
+        <span className={styles.gateLetterInline} aria-hidden="true">
+          {letter}
+        </span>
+        {title}
+      </span>
+      <span className={styles.gateDetail}>
+        <span className="sr-only">{passed ? 'Passed. ' : 'Not passed. '}</span>
+        {detail}
+      </span>
+    </div>
+  </li>
+);
+
+/* ------------------------------------------------------------------ problem card */
+
+interface ProblemMasteryCardProps {
+  item: ProblemMasteryOverviewItem;
+}
+
+const ProblemMasteryCard: React.FC<ProblemMasteryCardProps> = ({ item }) => {
+  const { problem, gates, isEligible } = item;
+  const isLocked = problem.masteryStatus === 'LOCKED';
+
+  const passedGates = [gates.solved, gates.srsEvidence, gates.coldRecall, gates.recentSuccess].filter(
+    (gate) => gate.passed
+  ).length;
+
+  const missingReviews = Math.max(
+    0,
+    gates.srsEvidence.requiredReviewsCount - gates.srsEvidence.successfulReviewsCount
+  );
+  const missingColdSolves = Math.max(
+    0,
+    gates.coldRecall.requiredColdSolvesCount - gates.coldRecall.qualifyingColdSolvesCount
+  );
+
+  /** The single next step for an unlocked problem, based on the first failing gate. */
+  const nextAction = (): React.ReactNode => {
+    if (!gates.solved.passed) {
+      return (
+        <>
+          Mark the problem as <strong>Solved</strong> to pass Gate A.
+        </>
+      );
+    }
+
+    if (!gates.srsEvidence.passed) {
+      const needs: string[] = [];
+      if (missingReviews > 0) {
+        needs.push(plural(missingReviews, 'more successful review'));
+      }
+      if (!gates.srsEvidence.hasStageThreeMilestone) {
+        needs.push('a review at stage 3 or later');
+      }
+
+      return <>Needs {needs.join(' and ')} to pass Gate B.</>;
+    }
+
+    if (!gates.coldRecall.passed) {
+      return (
+        <>
+          Needs {plural(missingColdSolves, 'more independent cold solve')} to pass Gate C.
+        </>
+      );
+    }
+
+    if (!gates.recentSuccess.passed) {
+      return (
+        <>
+          The latest review was not successful — pass <strong>Gate D</strong> on the next
+          review.
+        </>
+      );
+    }
+
+    return <>All four gates are met — the problem locks on its next review.</>;
+  };
+
+  return (
+    <Card
+      className={cx(styles.problemCard, isLocked ? styles.problemCardLocked : undefined)}
+      aria-labelledby={`mastery-${problem.id}-title`}
+    >
+      <div className={styles.cardHeader}>
+        <div className={styles.cardIdentity}>
+          <span className={styles.sNo}>#{problem.sNo}</span>
+          <Badge tone="neutral" shape="pill">
+            {problem.section === 'COLLEGE' ? 'College' : 'Personal'}
+          </Badge>
+          <Link
+            to={`/problems/${problem.id}`}
+            className={styles.problemTitle}
+            id={`mastery-${problem.id}-title`}
+          >
+            {problem.title}
+          </Link>
+        </div>
+
+        <div className={styles.cardBadges}>
+          <Badge tone={difficultyTone(problem.difficulty)} dot>
+            {problem.difficulty}
+          </Badge>
+          {/* "Locked" retention would repeat the seal badge below, so only the SRS
+              retention steps are shown here. */}
+          {problem.retentionLevel !== 'Locked' ? (
+            <Badge tone={retentionTone(problem.retentionLevel)}>{problem.retentionLevel}</Badge>
+          ) : null}
+          <Badge tone={masteryTone(problem.masteryStatus)}>
+            {isLocked ? (
+              <>
+                <Lock size={11} aria-hidden="true" />
+                <span>Locked · v{problem.lockVersion}</span>
+              </>
+            ) : (
+              <>
+                <Unlock size={11} aria-hidden="true" />
+                <span>In progress</span>
+              </>
+            )}
+          </Badge>
+          {!isLocked && isEligible ? (
+            <Badge tone="success" dot>
+              Ready to lock
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+
+      <ul className={styles.gateList} role="list">
+        <GateItem
+          letter="A"
+          title="Solved"
+          passed={gates.solved.passed}
+          detail={
+            gates.solved.passed
+              ? 'Status: Solved'
+              : `Status: ${gates.solved.status} · needs ${gates.solved.requiredStatus}`
+          }
+        />
+        <GateItem
+          letter="B"
+          title="SRS evidence"
+          passed={gates.srsEvidence.passed}
+          detail={
+            <>
+              {gates.srsEvidence.successfulReviewsCount}/
+              {gates.srsEvidence.requiredReviewsCount} reviews · max stage{' '}
+              {gates.srsEvidence.maxStageReached} · stage 3+{' '}
+              {gates.srsEvidence.hasStageThreeMilestone ? 'reached' : 'pending'}
+            </>
+          }
+        />
+        <GateItem
+          letter="C"
+          title="Cold solves"
+          passed={gates.coldRecall.passed}
+          detail={
+            <>
+              {gates.coldRecall.qualifyingColdSolvesCount}/
+              {gates.coldRecall.requiredColdSolvesCount} independent solves
+            </>
+          }
+        />
+        <GateItem
+          letter="D"
+          title="Recent review"
+          passed={gates.recentSuccess.passed}
+          detail={
+            gates.recentSuccess.latestOutcome
+              ? `Last outcome: ${gates.recentSuccess.latestOutcome}`
+              : 'No reviews yet'
+          }
+        />
+      </ul>
+
+      <div className={styles.cardFooter}>
+        {isLocked ? (
+          <p className={styles.footerNoteLocked}>
+            <Sparkles size={13} aria-hidden="true" />
+            <span>
+              Locked
+              {problem.lockedAt ? ` on ${formatCalendarDate(problem.lockedAt)}` : ''} · seal v
+              {problem.lockVersion}. A failed recall unlocks it automatically.
+            </span>
+          </p>
+        ) : (
+          <p className={styles.footerNote}>
+            <span className={styles.gateProgress}>
+              {passedGates}/4 gates passed
+            </span>
+            <span>{nextAction()}</span>
+          </p>
+        )}
+
+        <Link to={`/problems/${problem.id}`} className={styles.inspectLink}>
+          Inspect problem
+          <ArrowUpRight size={14} aria-hidden="true" />
+        </Link>
+      </div>
+    </Card>
+  );
+};
+
+/* ------------------------------------------------------------------ skeleton */
+
+const LockedListSkeleton: React.FC = () => (
+  <div className={styles.skeletonStack} role="status" aria-busy="true">
+    <span className="sr-only">Loading locked problems</span>
+
+    {[0, 1, 2].map((index) => (
+      <Card key={index} className={styles.problemCard} aria-hidden="true">
+        <div className={styles.cardHeader}>
+          <div className={styles.cardIdentity}>
+            <Skeleton width={40} height={18} />
+            <Skeleton width={120} height={18} />
+            <Skeleton width={200} height={18} />
+          </div>
+          <Skeleton width={140} height={20} />
+        </div>
+
+        <div className={styles.skeletonGates}>
+          {[0, 1, 2, 3].map((gate) => (
+            <Skeleton key={gate} width="100%" height={52} />
+          ))}
+        </div>
+
+        <div className={styles.cardFooter}>
+          <Skeleton width={260} height={14} />
+          <Skeleton width={120} height={14} />
+        </div>
+      </Card>
+    ))}
+  </div>
+);

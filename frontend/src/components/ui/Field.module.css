@@ -1,0 +1,38 @@
+/**
+ * DSA Tracker — Field primitive styles (Phase 2)
+ * Labels, hints and errors only; the control itself is styled by Input/Select.
+ * All values come from `styles/tokens.css`.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+.requiredMark {
+  color: var(--color-danger);
+}
+
+.hint {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  line-height: var(--line-height-snug);
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--font-size-1);
+  line-height: var(--line-height-snug);
+}

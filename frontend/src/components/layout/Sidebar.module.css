@@ -1,133 +1,279 @@
+/**
+ * DSA Tracker — Sidebar / icon rail styles (Phase 3)
+ * ==================================================
+ * >=1024px: `--layout-sidebar` (240px) with full labels.
+ * 768–1023px: `--layout-rail` (64px) — labels hidden visually but kept in the
+ *   accessibility tree, icons centred, tooltips supplied by the component.
+ * <768px: removed from the layout entirely (display: none) and replaced by the mobile
+ *   topbar + bottom bar. Nothing is hidden with a clipping/overflow workaround.
+ *
+ * The active item uses a 2px accent rail plus a subtle accent surface. All values come
+ * from `styles/tokens.css` — no gradients, no glow, no glassmorphism.
+ */
+
 .sidebar {
-  width: 260px;
-  background: var(--bg-surface);
-  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  width: var(--layout-sidebar);
   height: 100vh;
+  height: 100dvh;
   position: sticky;
   top: 0;
-  z-index: 20;
-  transition: width var(--transition-normal);
+  background: var(--color-bg-surface);
+  border-right: var(--border-width-hairline) solid var(--color-border-hairline);
+  /* Shell chrome stays below the not-yet-migrated page overlays (z-index 50) so those
+     modals keep covering the shell exactly as they do today; the token scale has no
+     step between `--z-base` and `--z-sticky`. Moves to `--z-sticky` when page overlays
+     migrate to the Phase 2 Dialog. Same value the header used before Phase 3. */
+  z-index: 10;
 }
 
+/* ------------------------------------------------------------------ brand */
+
 .brand {
-  padding: var(--space-lg);
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--space-2);
+  flex-shrink: 0;
+  height: var(--layout-topbar);
+  padding: 0 var(--space-4);
+  border-bottom: var(--border-width-hairline) solid var(--color-border-hairline);
 }
 
 .brandIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  border-radius: var(--radius-3);
+  background: var(--color-accent-subtle);
+  color: var(--color-text-link);
 }
 
 .brandName {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-main);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  white-space: nowrap;
 }
 
-.brandTag {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 2px 6px;
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--accent-cyan);
-  border-radius: var(--radius-sm);
-  margin-left: auto;
-  font-weight: 700;
-}
+/* -------------------------------------------------------------------- nav */
 
-.navSection {
-  flex: 1;
-  padding: var(--space-md) var(--space-sm);
+.nav {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-2);
+  /* Vertical scroller only. No `overflow-x: hidden` anywhere in the shell: labels
+     ellipsise via min-width/ellipsis, so horizontal overflow never needs hiding. */
   overflow-y: auto;
 }
 
-.sectionHeading {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.groupHeading {
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-1);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  line-height: var(--line-height-tight);
 }
 
 .navLink {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all var(--transition-fast);
+  gap: var(--space-3);
+  min-width: 0;
+  height: var(--control-height-md);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
 .navLink:hover {
-  background: var(--bg-glass-hover);
-  color: var(--text-main);
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.navLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .navLinkActive {
-  background: rgba(56, 189, 248, 0.12);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  font-weight: 600;
+  background: var(--color-accent-subtle);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
-.navLinkActive svg {
-  color: var(--accent-cyan);
+/* The 2px active accent rail — `--border-width-thick` is the token equivalent. */
+.navLinkActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  width: var(--border-width-thick);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
 }
 
-.sidebarFooter {
-  padding: var(--space-md);
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.phaseBadge {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  text-align: center;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface-elevated);
-}
-
-.userFootprint {
-  display: flex;
+.navIcon {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.userFootprintEmail {
-  white-space: nowrap;
+.navLabel {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
+}
+
+.userBlock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--space-1);
+}
+
+.userAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.userName {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-snug);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------- 768–1023px: icon rail */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar {
+    width: var(--layout-rail);
+  }
+
+  .brand {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .brandName {
+    display: none;
+  }
+
+  .nav {
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-2);
+  }
+
+  .group {
+    gap: var(--space-2);
+  }
+
+  .groupHeading {
+    /* Group headings are pure text and cannot shrink; the groups stay separated by
+       spacing instead. */
+    display: none;
+  }
+
+  .navLink {
+    justify-content: center;
+    gap: 0;
+    height: var(--control-height-lg);
+    padding: 0;
+  }
+
+  .navLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .footer {
+    align-items: center;
+    padding: var(--space-2);
+  }
+
+  .userBlock {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .userMeta {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------- <768px: mobile */
+
+@media (max-width: 767px) {
+  .sidebar {
+    /* Out of the layout entirely — the mobile topbar + bottom bar replace it. */
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navLink {
+    transition: none;
+  }
 }

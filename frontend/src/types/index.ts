@@ -207,6 +207,36 @@ export interface UpdateProblemInput {
   notes?: string;
 }
 
+// ==================== PHASE 2A: LEETCODE IMPORT TYPES ====================
+
+export type LeetcodeImportStatus = 'IMPORTED' | 'PARTIAL' | 'UNAVAILABLE';
+
+export interface LeetcodeImportDuplicate {
+  id: string;
+  sNo: number;
+  title: string;
+  section: SectionType;
+}
+
+/**
+ * Preview returned by `POST /problems/import/leetcode`.
+ * `status` distinguishes verified metadata (`IMPORTED`), partially retrieved metadata
+ * (`PARTIAL`) and the supported manual fallback (`UNAVAILABLE`). Nothing is persisted by
+ * this call — the existing create endpoint saves the values the user confirms.
+ */
+export interface LeetcodeImportPreview {
+  source: 'LeetCode';
+  slug: string;
+  url: string;
+  suggestedTitle: string;
+  title: string | null;
+  difficulty: DifficultyType | null;
+  leetcodeNumber: number | null;
+  status: LeetcodeImportStatus;
+  message?: string;
+  duplicate: LeetcodeImportDuplicate | null;
+}
+
 // ==================== PHASE 5: PATTERN & MASTERY TYPES ====================
 
 export type PatternMasteryLevel = 'Learning' | 'Familiar' | 'Independent' | 'Strong';
@@ -375,6 +405,97 @@ export interface DashboardData {
     needsPracticePatterns: DashboardPatternItem[];
   };
   recentActivity: RecentActivityItem[];
+}
+
+// ==================== PHASE 2B: AI ASSISTANCE TYPES ====================
+
+export type AiFeature = 'explain' | 'hint' | 'complexity' | 'recall' | 'revision-notes';
+export type AiHintLevel = 1 | 2 | 3;
+
+export type AiRecallCategory =
+  | 'core-idea'
+  | 'pattern-recognition'
+  | 'why-it-works'
+  | 'edge-cases'
+  | 'complexity'
+  | 'common-mistake'
+  | 'what-would-change-if';
+
+export interface AiComplexityPair {
+  time: string;
+  space: string;
+}
+
+export interface AiExplanation {
+  summary: string;
+  observations: string[];
+  constraints: string[];
+  intuition: string;
+  approach: string[];
+  correctness: string;
+  complexity: AiComplexityPair;
+  edgeCases: string[];
+}
+
+export interface AiHint {
+  level: AiHintLevel;
+  title: string;
+  hint: string;
+  nextStep: string;
+}
+
+export interface AiComplexityAnalysis {
+  subject: 'user-code' | 'recommended-approach';
+  time: string;
+  space: string;
+  reasoning: string;
+  bottlenecks: string[];
+  caveats: string[];
+}
+
+export interface AiRecallQuestion {
+  question: string;
+  category: AiRecallCategory;
+  answer: string;
+}
+
+export interface AiRecall {
+  questions: AiRecallQuestion[];
+}
+
+export interface AiRevisionNotes {
+  trigger: string;
+  keyInsight: string;
+  algorithm: string[];
+  edgeCases: string[];
+  complexity: AiComplexityPair;
+  commonMistake: string;
+  recallQuestion: string;
+}
+
+export interface AiMeta {
+  promptVersion: string;
+  generatedAt: string;
+  level?: AiHintLevel;
+}
+
+interface AiResponseBase {
+  model: string;
+  cached: boolean;
+  meta: AiMeta;
+}
+
+export type AiGenerationResponse =
+  | (AiResponseBase & { feature: 'explain'; content: AiExplanation })
+  | (AiResponseBase & { feature: 'hint'; content: AiHint })
+  | (AiResponseBase & { feature: 'complexity'; content: AiComplexityAnalysis })
+  | (AiResponseBase & { feature: 'recall'; content: AiRecall })
+  | (AiResponseBase & { feature: 'revision-notes'; content: AiRevisionNotes });
+
+export interface AiStatus {
+  enabled: boolean;
+  model: string | null;
+  features: AiFeature[];
 }
 
 // ==================== PHASE 8: LOCKED MASTERY TYPES ====================

@@ -45,4 +45,24 @@ test.describe('Flow 1 — Authentication & Protected Route Enforcement', () => {
     await expect(page).toHaveURL(/.*college-dsa/);
     await expect(page.getByRole('heading', { level: 2 })).toHaveText('College DSA Tracker');
   });
+
+  test('rejects invalid credentials with a visible alert and stays on the login page', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText('Welcome Back');
+
+    // A guaranteed non-existent account, so the 401 does not depend on test order.
+    const email = `nonexistent-${Date.now()}@example.com`;
+    await page.getByLabel(/email address/i).fill(email);
+    await page.locator('#password').fill('definitelyWrongPassword123!');
+    await page.getByRole('button', { name: /sign in/i }).click();
+
+    // The page must stay mounted and announce the backend's uniform 401 message.
+    await expect(page.getByRole('alert')).toHaveText('Invalid email or password.');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText('Welcome Back');
+    await expect(page.getByLabel(/email address/i)).toHaveValue(email);
+    await expect(page.locator('#password')).toHaveValue('definitelyWrongPassword123!');
+  });
 });

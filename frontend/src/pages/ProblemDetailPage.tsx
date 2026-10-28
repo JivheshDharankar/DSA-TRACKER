@@ -6,7 +6,6 @@ import {
   Edit2,
   Trash2,
   FileText,
-  Loader2,
   AlertCircle,
   History,
   ShieldCheck,
@@ -31,6 +30,13 @@ import {
   PatternConfidence,
   ProblemMasteryDetails,
 } from '../types';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState } from '../components/ui/ErrorState';
+import { Skeleton } from '../components/ui/Skeleton';
+import { cx } from '../components/ui/cx';
 import { DifficultyBadge } from '../components/problems/DifficultyBadge';
 import { RetentionBadge } from '../components/problems/RetentionBadge';
 import { StatusBadge } from '../components/problems/StatusBadge';
@@ -40,9 +46,133 @@ import { DeleteProblemDialog } from '../components/problems/DeleteProblemDialog'
 import { RevisionHistoryList } from '../components/reviews/RevisionHistoryList';
 import { SrsProgressionStepper } from '../components/reviews/SrsProgressionStepper';
 import { PatternPickerModal } from '../components/patterns/PatternPickerModal';
+import { AIAssistantPanel } from '../components/ai/AIAssistantPanel';
 import { formatCalendarDate } from '../utils/date.utils';
 import { getErrorMessage } from '../utils/error.utils';
 import styles from '../styles/ProblemDetail.module.css';
+
+/**
+ * DSA Tracker — Problem Detail (Phase 7)
+ * =====================================
+ * The page keeps exactly the same data, endpoints, routes and actions as before; only the
+ * presentation moved onto the Phase 0/2 design system and the Phase 3 shell.
+ *
+ * Responsive metadata
+ *   The metadata is a `<dl>` of label/value pairs laid out 1-up (< 640px), 2-up
+ *   (640–1023px) and 3-up (>= 1024px), so a twelve-field record reads as a single tidy
+ *   column on a phone and as a scannable grid on a desktop. The identity block stacks on
+ *   small screens and becomes title-left / links-right from 768px. The layout rule is
+ *   documented in `ProblemDetail.module.css`.
+ *
+ * Page states
+ *   - loading        `<Skeleton>` shapes that mirror the real sections, in one
+ *                    `role="status"` region, so the page does not jump when data arrives;
+ *   - missing        a distinct `EmptyState` ("Problem not found") when the API reports
+ *                    `NOT_FOUND`, with a way back;
+ *   - error          `ErrorState` with a real retry when the request itself failed;
+ *   - populated      the record itself.
+ *   The API client rejects with the backend error envelope (`{ message, code }`), so the
+ *   missing case is identified by `code`, not by matching message text.
+ *
+ * Accessibility
+ *   The topbar owns the page `<h1>` (`getRouteTitle`), the problem title is the `<h2>` and
+ *   every section is an `<h3>`, so the page is navigable by heading. Decorative icons are
+ *   `aria-hidden`, two of the four mastery gates carry a screen-reader pass/fail status
+ *   instead of relying on colour, every control is a real button or link with a visible
+ *   `:focus-visible` ring, and dialog triggers declare `aria-haspopup`.
+ *
+ * Out of scope in this phase: the shared badge components, the shared dialogs
+ * (`ProblemModal`, `DeleteProblemDialog`, `PatternPickerModal`), `SrsProgressionStepper`
+ * and `RevisionHistoryList`. They are used unchanged.
+ */
+
+type FailureKind = 'NOT_FOUND' | 'ERROR';
+
+interface LoadFailure {
+  kind: FailureKind;
+  message: string;
+}
+
+const NOT_FOUND_DEFAULT = 'This problem does not exist or you do not have permission to view it.';
+
+/** The API client rejects with `{ message, code }` — a missing or inaccessible problem
+ *  arrives as `code: 'NOT_FOUND'`, which is what separates it from a transport failure. */
+const failureKindFor = (err: unknown): FailureKind => {
+  if (typeof err === 'object' && err !== null) {
+    const code = (err as { code?: unknown }).code;
+    if (code === 'NOT_FOUND') {
+      return 'NOT_FOUND';
+    }
+  }
+  return 'ERROR';
+};
+
+const sectionLabel = (section: Problem['section']): string =>
+  section === 'PERSONAL' ? 'Personal DSA' : 'College DSA';
+
+interface MetaItemProps {
+  label: string;
+  children: React.ReactNode;
+  valueClassName?: string;
+}
+
+const MetaItem: React.FC<MetaItemProps> = ({ label, children, valueClassName }) => (
+  <div className={styles.metaItem}>
+    <dt className={styles.metaLabel}>{label}</dt>
+    <dd className={cx(styles.metaValue, valueClassName)}>{children}</dd>
+  </div>
+);
+
+interface GateProps {
+  title: string;
+  detail: React.ReactNode;
+  passed: boolean;
+}
+
+const Gate: React.FC<GateProps> = ({ title, detail, passed }) => (
+  <li className={cx(styles.gate, passed && styles.gatePassed)}>
+    {passed ? (
+      <CheckCircle2 size={18} className={styles.gateIconPass} aria-hidden="true" />
+    ) : (
+      <XCircle size={18} className={styles.gateIconFail} aria-hidden="true" />
+    )}
+    <div className={styles.gateContent}>
+      <span className={styles.gateTitle}>{title}</span>
+      <span className={styles.gateSubtitle}>
+        <span className="sr-only">{passed ? 'Passed. ' : 'Not passed. '}</span>
+        {detail}
+      </span>
+    </div>
+  </li>
+);
+
+/**
+ * Loading placeholder. Uses the same page frame as the real layout so the sections do not
+ * jump when the record arrives. The shapes are decorative; the single `role="status"`
+ * region announces the state once.
+ */
+const ProblemDetailSkeleton: React.FC = () => (
+  <div className={styles.page} role="status" aria-busy="true">
+    <span className="sr-only">Loading problem details</span>
+
+    <div className={styles.skeletonTopBar}>
+      <Skeleton shape="block" width={200} height={36} />
+    </div>
+
+    <Card variant="compact" className={styles.skeletonStack}>
+      <Skeleton shape="block" width={140} height={22} />
+      <Skeleton shape="block" width="55%" height={30} />
+    </Card>
+
+    <Card variant="compact" className={styles.skeletonStack}>
+      <Skeleton shape="block" height={180} />
+    </Card>
+
+    <Card variant="compact" className={styles.skeletonStack}>
+      <Skeleton shape="block" height={150} />
+    </Card>
+  </div>
+);
 
 export const ProblemDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,7 +184,7 @@ export const ProblemDetailPage: React.FC = () => {
   const [mastery, setMastery] = useState<ProblemMasteryDetails | null>(null);
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<LoadFailure | null>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -96,7 +226,7 @@ export const ProblemDetailPage: React.FC = () => {
   const loadProblem = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
-    setError(null);
+    setFailure(null);
     try {
       const data = await fetchProblemById(id);
       setProblem(data);
@@ -104,7 +234,14 @@ export const ProblemDetailPage: React.FC = () => {
       loadPatterns();
       loadMastery();
     } catch (err: unknown) {
-      setError(getErrorMessage(err, 'Problem not found or access denied.'));
+      const kind = failureKindFor(err);
+      setFailure({
+        kind,
+        message: getErrorMessage(
+          err,
+          kind === 'NOT_FOUND' ? NOT_FOUND_DEFAULT : 'Something went wrong loading this problem.'
+        ),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -136,200 +273,201 @@ export const ProblemDetailPage: React.FC = () => {
     await loadMastery();
   };
 
+  const goToDashboard = useCallback(() => {
+    navigate('/dashboard');
+  }, [navigate]);
+
   if (isLoading) {
+    return <ProblemDetailSkeleton />;
+  }
+
+  if (failure?.kind === 'NOT_FOUND') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '16px' }}>
-        <Loader2 size={36} color="var(--accent-cyan)" className="animate-spin" />
-        <span style={{ color: 'var(--text-muted)' }}>Loading problem details...</span>
+      <div className={styles.page}>
+        <EmptyState
+          variant="full"
+          titleAs="h2"
+          icon={<AlertCircle size={24} />}
+          title="Problem Not Found"
+          description={failure.message || NOT_FOUND_DEFAULT}
+          primaryAction={
+            <Button
+              variant="secondary"
+              iconLeft={<ArrowLeft size={16} />}
+              onClick={goToDashboard}
+            >
+              Return to Dashboard
+            </Button>
+          }
+        />
       </div>
     );
   }
 
-  if (error || !problem) {
+  if (failure || !problem) {
     return (
-      <div style={{ maxWidth: '500px', margin: '40px auto', textAlign: 'center', padding: '32px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)' }}>
-        <AlertCircle size={36} color="var(--color-hard)" style={{ margin: '0 auto 16px' }} />
-        <h3 style={{ color: 'var(--text-main)', marginBottom: '8px' }}>Problem Not Found</h3>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '0.9rem' }}>
-          {error || 'This problem does not exist or you do not have permission to view it.'}
-        </p>
-        <Link
-          to="/dashboard"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 20px',
-            background: 'var(--accent-cyan)',
-            color: 'var(--text-inverse)',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 600,
-          }}
-        >
-          <ArrowLeft size={16} />
-          <span>Return to Dashboard</span>
-        </Link>
+      <div className={styles.page}>
+        <ErrorState
+          variant="section"
+          title="We couldn't load this problem."
+          message={failure?.message || 'Something went wrong loading this problem.'}
+          onRetry={loadProblem}
+          retryLabel="Retry"
+          actions={
+            <Button variant="ghost" size="sm" onClick={goToDashboard}>
+              Return to Dashboard
+            </Button>
+          }
+        />
       </div>
     );
   }
 
   const backUrl = problem.section === 'PERSONAL' ? '/personal-dsa' : '/college-dsa';
+  const collegeUrl = getSafeUrl(problem.collegeLink);
+  const leetcodeUrl = getSafeUrl(problem.leetcodeLink);
+  const isLocked = problem.masteryStatus === 'LOCKED';
 
   return (
-    <div className={styles.detailContainer}>
+    <div className={styles.page}>
       <div className={styles.topBar}>
-        <Link to={backUrl} className={styles.backBtn}>
-          <ArrowLeft size={16} />
-          <span>Back to {problem.section === 'PERSONAL' ? 'Personal DSA' : 'College DSA'}</span>
+        <Link to={backUrl} className={styles.backLink}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          <span>Back to {sectionLabel(problem.section)}</span>
         </Link>
 
-        <div className={styles.actionButtons}>
-          <button onClick={() => setIsEditModalOpen(true)} className={styles.editBtn}>
-            <Edit2 size={15} />
-            <span>Edit Problem</span>
-          </button>
-          <button onClick={() => setIsDeleteDialogOpen(true)} className={styles.deleteBtn}>
-            <Trash2 size={15} />
-            <span>Delete Problem</span>
-          </button>
+        <div className={styles.actions}>
+          <Button
+            variant="secondary"
+            size="sm"
+            iconLeft={<Edit2 size={15} />}
+            onClick={() => setIsEditModalOpen(true)}
+            aria-haspopup="dialog"
+          >
+            Edit Problem
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            iconLeft={<Trash2 size={15} />}
+            onClick={() => setIsDeleteDialogOpen(true)}
+            aria-haspopup="dialog"
+          >
+            Delete Problem
+          </Button>
         </div>
       </div>
 
-      <div className={styles.mainCard}>
-        <div className={styles.titleArea}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-xs)', flexWrap: 'wrap' }}>
-              <span className={styles.sNoTag}>
+      <Card variant="compact" className={styles.identityCard}>
+        <div className={styles.identity}>
+          <div className={styles.identityMain}>
+            <div className={styles.identityTags}>
+              <Badge tone="accent" shape="compact">
                 {problem.section} DSA #{problem.sNo}
-              </span>
+              </Badge>
               <MasteryBadge status={problem.masteryStatus} />
             </div>
             <h2 className={styles.title}>{problem.title}</h2>
           </div>
 
-          {(getSafeUrl(problem.collegeLink) || getSafeUrl(problem.leetcodeLink)) && (
-            <div className={styles.linkGroup}>
-              {getSafeUrl(problem.collegeLink) && (
+          {(collegeUrl || leetcodeUrl) && (
+            <div className={styles.links}>
+              {collegeUrl && (
                 <a
-                  href={getSafeUrl(problem.collegeLink)}
+                  href={collegeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${styles.linkBtn} ${styles.collegeLinkBtn}`}
+                  className={styles.link}
                   title="Open College Problem Link"
                 >
-                  <ExternalLink size={14} />
+                  <ExternalLink size={14} aria-hidden="true" />
                   <span>College Link ↗</span>
                 </a>
               )}
-              {getSafeUrl(problem.leetcodeLink) && (
+              {leetcodeUrl && (
                 <a
-                  href={getSafeUrl(problem.leetcodeLink)}
+                  href={leetcodeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${styles.linkBtn} ${styles.leetcodeLinkBtn}`}
+                  className={styles.link}
                   title="Open LeetCode Problem Link"
                 >
-                  <ExternalLink size={14} />
+                  <ExternalLink size={14} aria-hidden="true" />
                   <span>LeetCode Link ↗</span>
                 </a>
               )}
             </div>
           )}
         </div>
+      </Card>
 
-        <div className={styles.grid}>
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Topic</span>
-            <span className={styles.gridValue}>{problem.topic}</span>
-          </div>
+      {/* AI assistance (Phase 2B): suggestions only. The panel can read the problem and
+          append notes after an explicit confirmation; it has no access to mastery or SRS. */}
+      <AIAssistantPanel problem={problem} onNotesSaved={setProblem} />
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Difficulty</span>
-            <div>
+      <Card variant="compact" className={styles.bodyCard}>
+        <section className={styles.section} aria-labelledby="problem-details-heading">
+          <h3 className={styles.sectionHeading} id="problem-details-heading">
+            Problem Details
+          </h3>
+
+          <dl className={styles.metaGrid}>
+            <MetaItem label="Topic">{problem.topic}</MetaItem>
+
+            <MetaItem label="Difficulty">
               <DifficultyBadge difficulty={problem.difficulty} />
-            </div>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Source</span>
-            <span className={styles.gridValue}>{problem.source}</span>
-          </div>
+            <MetaItem label="Source">{problem.source}</MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>LeetCode #</span>
-            <span className={styles.gridValue}>
+            <MetaItem label="LeetCode #">
               {problem.leetcodeNumber ? `#${problem.leetcodeNumber}` : '—'}
-            </span>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Status</span>
-            <div>
+            <MetaItem label="Status">
               <StatusBadge status={problem.status} />
-            </div>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Retention Level</span>
-            <div>
+            <MetaItem label="Retention Level">
               <RetentionBadge retention={problem.retentionLevel} />
-            </div>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Mastery Status</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <MasteryBadge status={problem.masteryStatus} />
+            <MetaItem label="Mastery Status">
+              {/* `showUnlocked` is what keeps this cell from rendering an empty box for
+                  every problem that has not reached locked mastery. */}
+              <MasteryBadge status={problem.masteryStatus} showUnlocked />
               {problem.lockedAt && (
-                <span style={{ fontSize: '0.75rem', color: '#fbbf24' }}>
+                <span className={styles.masteryLockedNote}>
                   Locked {formatCalendarDate(problem.lockedAt)} (v{problem.lockVersion})
                 </span>
               )}
-            </div>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Date Learned</span>
-            <span className={styles.gridValue}>
-              {new Date(problem.dateLearned).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </span>
-          </div>
+            {/* `dateLearned` is a calendar date; formatting it in local time shifted it a
+                day for users behind UTC. `formatCalendarDate` is the app-wide UTC
+                calendar-day formatter. */}
+            <MetaItem label="Date Learned">{formatCalendarDate(problem.dateLearned)}</MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Stage & Interval</span>
-            <span className={styles.gridValue} style={{ color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>
+            <MetaItem label="Stage & Interval" valueClassName={styles.metaValueMono}>
               Stage {problem.repetitionStage ?? 0} ({problem.intervalDays ?? 0}d)
-            </span>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Next Review</span>
-            <span className={styles.gridValue} style={{ color: 'var(--color-easy)' }}>
+            <MetaItem label="Next Review" valueClassName={styles.metaValueAccent}>
               {formatCalendarDate(problem.nextReviewDate)}
-            </span>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Last Reviewed</span>
-            <span className={styles.gridValue}>
+            <MetaItem label="Last Reviewed">
               {problem.lastReviewedAt ? formatCalendarDate(problem.lastReviewedAt) : 'Never'}
-            </span>
-          </div>
+            </MetaItem>
 
-          <div className={styles.gridItem}>
-            <span className={styles.gridLabel}>Created</span>
-            <span className={styles.gridValue} style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <MetaItem label="Created" valueClassName={styles.metaValueMuted}>
               {new Date(problem.createdAt).toLocaleString()}
-            </span>
-          </div>
-        </div>
+            </MetaItem>
+          </dl>
+        </section>
 
-        {/* Spaced Repetition Progression Stepper & Timeline */}
-        <div style={{ marginTop: 'var(--space-lg)', marginBottom: 'var(--space-md)' }}>
+        {/* Spaced Repetition Progression Stepper & Timeline (shared component, unchanged) */}
+        <section className={styles.section} aria-label="Spaced repetition progression">
           <SrsProgressionStepper
             repetitionStage={problem.repetitionStage ?? 0}
             intervalDays={problem.intervalDays ?? 0}
@@ -338,121 +476,115 @@ export const ProblemDetailPage: React.FC = () => {
             retentionLevel={problem.retentionLevel}
             history={history}
           />
-        </div>
+        </section>
 
-        {/* Phase 8: Locked Mastery & 4-Gate Qualification Panel */}
-        <div className={styles.masterySection}>
-          <div className={`${styles.masteryCard} ${mastery?.masteryStatus === 'LOCKED' ? styles.masteryCardLocked : ''}`}>
-            <div className={styles.masteryTopRow}>
-              <div className={styles.masteryHeading}>
-                <ShieldCheck size={20} color={mastery?.masteryStatus === 'LOCKED' ? '#fbbf24' : 'var(--accent-cyan)'} />
-                <span>Proof-of-Learning Mastery & Qualification</span>
-                {mastery && <MasteryBadge status={mastery.masteryStatus} />}
-              </div>
-            </div>
+        {/* Locked Mastery & 4-Gate Qualification Panel */}
+        <section className={styles.section} aria-labelledby="problem-mastery-heading">
+          <div className={styles.masteryHeading}>
+            <h3 className={styles.sectionHeading} id="problem-mastery-heading">
+              <ShieldCheck
+                size={20}
+                aria-hidden="true"
+                className={isLocked ? styles.masteryIconLocked : styles.masteryIcon}
+              />
+              <span>Proof-of-Learning Mastery &amp; Qualification</span>
+            </h3>
+            {mastery && <MasteryBadge status={mastery.masteryStatus} />}
+          </div>
 
+          <div className={cx(styles.masteryCard, isLocked && styles.masteryCardLocked)}>
             {mastery && (
               <>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <p className={styles.masterySummary}>
                   {mastery.masteryStatus === 'LOCKED' ? (
-                    <span style={{ color: '#fbbf24', fontWeight: 600 }}>
-                      ★ Problem is LOCKED in mastery. Locked on {mastery.lockedAt ? new Date(mastery.lockedAt).toLocaleString() : 'N/A'}. (Lock version: v{mastery.lockVersion})
+                    <span className={styles.masterySummaryLocked}>
+                      ★ Problem is LOCKED in mastery. Locked on{' '}
+                      {mastery.lockedAt ? new Date(mastery.lockedAt).toLocaleString() : 'N/A'}. (Lock
+                      version: v{mastery.lockVersion})
                     </span>
                   ) : mastery.isEligible ? (
-                    <span style={{ color: '#34d399', fontWeight: 600 }}>
-                      ✓ All 4 qualification gates are satisfied! Problem qualifies for Locked mastery status.
+                    <span className={styles.masterySummaryEligible}>
+                      ✓ All 4 qualification gates are satisfied! Problem qualifies for Locked mastery
+                      status.
                     </span>
                   ) : (
                     <span>
-                      Requires passing all 4 evidence-based learning gates simultaneously to achieve Locked status.
+                      Requires passing all 4 evidence-based learning gates simultaneously to achieve
+                      Locked status.
                     </span>
                   )}
-                </div>
+                </p>
 
-                <div className={styles.gatesGrid}>
-                  {/* Gate A */}
-                  <div className={`${styles.gateItem} ${mastery.gates.solved.passed ? styles.gatePassed : styles.gateFailed}`}>
-                    {mastery.gates.solved.passed ? (
-                      <CheckCircle2 size={18} className={styles.gateIconPass} />
-                    ) : (
-                      <XCircle size={18} className={styles.gateIconFail} />
-                    )}
-                    <div className={styles.gateContent}>
-                      <span className={styles.gateTitle}>Gate A: Solved Status</span>
-                      <span className={styles.gateSubtitle}>
-                        Status: {mastery.gates.solved.status} (Required: Solved)
-                      </span>
-                    </div>
-                  </div>
+                <ul className={styles.gates} role="list">
+                  <Gate
+                    title="Gate A: Solved Status"
+                    passed={mastery.gates.solved.passed}
+                    detail={<>Status: {mastery.gates.solved.status} (Required: Solved)</>}
+                  />
 
-                  {/* Gate B */}
-                  <div className={`${styles.gateItem} ${mastery.gates.srsEvidence.passed ? styles.gatePassed : styles.gateFailed}`}>
-                    {mastery.gates.srsEvidence.passed ? (
-                      <CheckCircle2 size={18} className={styles.gateIconPass} />
-                    ) : (
-                      <XCircle size={18} className={styles.gateIconFail} />
-                    )}
-                    <div className={styles.gateContent}>
-                      <span className={styles.gateTitle}>Gate B: Spaced Reviews</span>
-                      <span className={styles.gateSubtitle}>
-                        {mastery.gates.srsEvidence.successfulReviewsCount}/{mastery.gates.srsEvidence.requiredReviewsCount} successes &bull; Stage &ge;3: {mastery.gates.srsEvidence.hasStageThreeMilestone ? 'Yes' : 'No'} (Max: {mastery.gates.srsEvidence.maxStageReached})
-                      </span>
-                    </div>
-                  </div>
+                  <Gate
+                    title="Gate B: Spaced Reviews"
+                    passed={mastery.gates.srsEvidence.passed}
+                    detail={
+                      <>
+                        {mastery.gates.srsEvidence.successfulReviewsCount}/
+                        {mastery.gates.srsEvidence.requiredReviewsCount} successes &bull; Stage
+                        &ge;3: {mastery.gates.srsEvidence.hasStageThreeMilestone ? 'Yes' : 'No'} (Max:{' '}
+                        {mastery.gates.srsEvidence.maxStageReached})
+                      </>
+                    }
+                  />
 
-                  {/* Gate C */}
-                  <div className={`${styles.gateItem} ${mastery.gates.coldRecall.passed ? styles.gatePassed : styles.gateFailed}`}>
-                    {mastery.gates.coldRecall.passed ? (
-                      <CheckCircle2 size={18} className={styles.gateIconPass} />
-                    ) : (
-                      <XCircle size={18} className={styles.gateIconFail} />
-                    )}
-                    <div className={styles.gateContent}>
-                      <span className={styles.gateTitle}>Gate C: Cold Solves</span>
-                      <span className={styles.gateSubtitle}>
-                        {mastery.gates.coldRecall.qualifyingColdSolvesCount}/{mastery.gates.coldRecall.requiredColdSolvesCount} successful cold solves
-                      </span>
-                    </div>
-                  </div>
+                  <Gate
+                    title="Gate C: Cold Solves"
+                    passed={mastery.gates.coldRecall.passed}
+                    detail={
+                      <>
+                        {mastery.gates.coldRecall.qualifyingColdSolvesCount}/
+                        {mastery.gates.coldRecall.requiredColdSolvesCount} successful cold solves
+                      </>
+                    }
+                  />
 
-                  {/* Gate D */}
-                  <div className={`${styles.gateItem} ${mastery.gates.recentSuccess.passed ? styles.gatePassed : styles.gateFailed}`}>
-                    {mastery.gates.recentSuccess.passed ? (
-                      <CheckCircle2 size={18} className={styles.gateIconPass} />
-                    ) : (
-                      <XCircle size={18} className={styles.gateIconFail} />
-                    )}
-                    <div className={styles.gateContent}>
-                      <span className={styles.gateTitle}>Gate D: Recent Review</span>
-                      <span className={styles.gateSubtitle}>
-                        Latest: {mastery.gates.recentSuccess.latestOutcome ? `${mastery.gates.recentSuccess.latestOutcome}` : 'No reviews'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  <Gate
+                    title="Gate D: Recent Review"
+                    passed={mastery.gates.recentSuccess.passed}
+                    detail={
+                      <>
+                        Latest:{' '}
+                        {mastery.gates.recentSuccess.latestOutcome
+                          ? `${mastery.gates.recentSuccess.latestOutcome}`
+                          : 'No reviews'}
+                      </>
+                    }
+                  />
+                </ul>
               </>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Algorithmic Patterns Section */}
-        <div className={styles.patternsSection}>
-          <div className={styles.patternsHeader}>
-            <div className={styles.patternsHeading}>
-              <Layers size={18} color="var(--accent-cyan)" />
+        <section className={styles.section} aria-labelledby="problem-patterns-heading">
+          <div className={styles.sectionHeadingRow}>
+            <h3 className={styles.sectionHeading} id="problem-patterns-heading">
+              <Layers size={18} aria-hidden="true" />
               <span>Algorithmic Patterns ({patterns.length})</span>
-            </div>
-            <button
-              className={styles.managePatternsBtn}
+            </h3>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              iconLeft={<Sparkles size={14} />}
               onClick={() => setIsPatternModalOpen(true)}
+              aria-haspopup="dialog"
             >
-              <Sparkles size={14} />
-              <span>Manage Patterns</span>
-            </button>
+              Manage Patterns
+            </Button>
           </div>
 
           {patterns.length > 0 ? (
-            <div className={styles.patternPillsContainer}>
+            <div className={styles.patternList}>
               {patterns.map((att) => {
                 const patternObj = att.pattern;
                 const patId = patternObj?.id || (att as unknown as { patternId: string }).patternId;
@@ -466,70 +598,69 @@ export const ProblemDetailPage: React.FC = () => {
                     title="View pattern breakdown in library"
                   >
                     <span className={styles.patternName}>{patName}</span>
-                    <span
-                      className={`${styles.confidenceTag} ${
+                    <Badge
+                      tone={
                         att.confidence === 'HIGH'
-                          ? styles.confidenceTagHigh
+                          ? 'success'
                           : att.confidence === 'MEDIUM'
-                          ? styles.confidenceTagMedium
-                          : styles.confidenceTagLow
-                      }`}
+                            ? 'warning'
+                            : 'neutral'
+                      }
+                      shape="pill"
                     >
                       {att.confidence}
-                    </span>
-                    {att.isPrimary && <span className={styles.primaryBadge}>Primary</span>}
+                    </Badge>
+                    {att.isPrimary && (
+                      <Badge tone="accent" shape="pill">
+                        Primary
+                      </Badge>
+                    )}
                   </Link>
                 );
               })}
             </div>
           ) : (
-            <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+            <p className={styles.patternEmpty}>
               No algorithmic patterns tagged yet.{' '}
               <button
+                type="button"
                 onClick={() => setIsPatternModalOpen(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--accent-cyan)',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  padding: 0,
-                  font: 'inherit',
-                }}
+                className={styles.patternEmptyAction}
               >
                 Assign patterns
               </button>{' '}
               to track pattern recognition and transfer mastery.
-            </div>
+            </p>
           )}
-        </div>
+        </section>
 
         {/* Notes & Invariants */}
-        <div className={styles.notesSection}>
-          <div className={styles.notesHeading}>
-            <FileText size={18} color="var(--accent-cyan)" />
-            <span>Approach, Invariants & Notes</span>
-          </div>
-          <div className={styles.notesBox}>
-            {problem.notes && problem.notes.trim() ? (
-              problem.notes
-            ) : (
-              <span style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>
-                No notes or invariants recorded for this problem yet. Click Edit to document your solution approach.
-              </span>
-            )}
-          </div>
-        </div>
+        <section className={styles.section} aria-labelledby="problem-notes-heading">
+          <h3 className={styles.sectionHeading} id="problem-notes-heading">
+            <FileText size={18} aria-hidden="true" />
+            <span>Approach, Invariants &amp; Notes</span>
+          </h3>
 
-        {/* Revision History */}
-        <div className={styles.historySection}>
-          <div className={styles.historyHeading}>
-            <History size={18} color="var(--accent-cyan)" />
+          {problem.notes && problem.notes.trim() ? (
+            <div className={styles.notes}>{problem.notes}</div>
+          ) : (
+            <div className={cx(styles.notes, styles.notesEmpty)}>
+              No notes or invariants recorded for this problem yet. Click Edit to document your
+              solution approach.
+            </div>
+          )}
+        </section>
+
+        {/* Revision History (shared list component, unchanged) */}
+        <section className={styles.section} aria-labelledby="problem-history-heading">
+          <h3 className={styles.sectionHeading} id="problem-history-heading">
+            <History size={18} aria-hidden="true" />
             <span>Revision History ({history.length})</span>
-          </div>
+          </h3>
+
           <RevisionHistoryList history={history} isLoading={isHistoryLoading} />
-        </div>
-      </div>
+        </section>
+      </Card>
 
       <ProblemModal
         isOpen={isEditModalOpen}
@@ -557,4 +688,3 @@ export const ProblemDetailPage: React.FC = () => {
     </div>
   );
 };
-

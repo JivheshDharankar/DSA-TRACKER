@@ -1,0 +1,67 @@
+/**
+ * DSA Tracker — app-level error boundary styles
+ * =============================================
+ * Replaces the large inline `style={{ … }}` block (and its legacy `--bg-app`,
+ * `--text-main`, `--radius-lg` values) the component used to carry. Everything comes from
+ * `styles/tokens.css`.
+ */
+
+.shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-5);
+  background: var(--color-bg-app);
+  color: var(--color-text-primary);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+}
+
+.iconTile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger-subtle);
+  border: var(--border-width-hairline) solid rgba(239, 68, 68, 0.3);
+  color: var(--color-danger);
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+}
+
+.message {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-body);
+}
+
+.detail {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-sunken);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-2);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-1);
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,101 @@
+/**
+ * DSA Tracker — Tabs primitive styles (Phase 2)
+ * 36px tab height with a 2px accent underline on the active tab. All values come from
+ * `styles/tokens.css`; the list scrolls horizontally on narrow screens instead of
+ * clipping its tabs.
+ */
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  border-bottom: var(--border-width-hairline) solid var(--color-border-hairline);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  /* No 36px token exists; derived from the 40px control height. */
+  height: calc(var(--control-height-md) - var(--space-1));
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-2) var(--radius-2) 0 0;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.tab:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tabActive {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--border-width-hairline) * -1);
+  height: var(--border-width-thick);
+  background: var(--color-accent);
+  border-radius: var(--radius-pill);
+  opacity: 0;
+}
+
+.tabActive .indicator {
+  opacity: 1;
+}
+
+.panel {
+  padding-top: var(--space-4);
+  min-width: 0;
+}
+
+.panel:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

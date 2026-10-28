@@ -63,8 +63,8 @@ describe('RevisionScheduler Unit Tests', () => {
       expect(result.timingStatus).toBe('ON_TIME');
       expect(result.latenessDays).toBe(0);
 
-      // Verify nextReviewDate is anchored to reviewedAt + 1 day
-      const expectedDate = new Date('2026-09-15T10:00:00Z');
+      // Verify nextReviewDate is anchored to the START of the reviewedAt calendar day + 1 day
+      const expectedDate = new Date('2026-09-15T00:00:00Z');
       expect(result.newNextReviewDate.toISOString()).toBe(expectedDate.toISOString());
     });
 
@@ -81,8 +81,8 @@ describe('RevisionScheduler Unit Tests', () => {
       expect(result.timingStatus).toBe('LATE');
       expect(result.latenessDays).toBe(3);
 
-      // Next review anchored to Sep 17 + 14 days = Oct 1
-      const expectedDate = new Date('2026-10-01T10:00:00Z');
+      // Next review anchored to the UTC calendar day of Sep 17 + 14 days = Oct 1, at midnight
+      const expectedDate = new Date('2026-10-01T00:00:00Z');
       expect(result.newNextReviewDate.toISOString()).toBe(expectedDate.toISOString());
     });
 
@@ -131,8 +131,8 @@ describe('RevisionScheduler Unit Tests', () => {
       expect(result.newIntervalDays).toBe(RECOVERY_INTERVALS[0]); // 1 day
       expect(result.newRetentionLevel).toBe('Learning');
 
-      // Next review is 1 day later
-      const expectedDate = new Date('2026-09-15T10:00:00Z');
+      // Next review is 1 calendar day later, at the start of that day
+      const expectedDate = new Date('2026-09-15T00:00:00Z');
       expect(result.newNextReviewDate.toISOString()).toBe(expectedDate.toISOString());
     });
 
@@ -332,8 +332,8 @@ describe('RevisionScheduler Unit Tests', () => {
       expect(result.newStage).toBe(3);
       expect(result.newIntervalDays).toBe(7);
 
-      // Anchors to reviewedAt + 7 days = 2026-04-18, NOT scheduled + 7 days = 2026-01-08
-      const expectedNext = new Date('2026-04-18T10:00:00Z');
+      // Anchors to the reviewedAt calendar day + 7 days = 2026-04-18, NOT scheduled + 7 days = 2026-01-08
+      const expectedNext = new Date('2026-04-18T00:00:00Z');
       expect(result.newNextReviewDate.toISOString()).toBe(expectedNext.toISOString());
     });
 
@@ -349,7 +349,7 @@ describe('RevisionScheduler Unit Tests', () => {
       const res1 = RevisionScheduler.calculateNextSchedule(state0, 'EASY', review1);
       expect(res1.newStage).toBe(1);
       expect(res1.newIntervalDays).toBe(1);
-      // Next scheduled is 2026-06-02T08:00:00Z
+      // Next scheduled is 2026-06-02T00:00:00Z (start of the next calendar day)
 
       // Same day second review at 18:00 UTC (1 day early relative to 2026-06-02)
       const review2 = new Date('2026-06-01T18:00:00Z');
@@ -366,8 +366,8 @@ describe('RevisionScheduler Unit Tests', () => {
       expect(res2.timingStatus).toBe('EARLY');
       expect(res2.latenessDays).toBe(1);
 
-      // Anchored to review2 + 3 days = 2026-06-04T18:00:00Z
-      const expectedNext = new Date('2026-06-04T18:00:00Z');
+      // Anchored to the review2 calendar day + 3 days = 2026-06-04T00:00:00Z
+      const expectedNext = new Date('2026-06-04T00:00:00Z');
       expect(res2.newNextReviewDate.toISOString()).toBe(expectedNext.toISOString());
     });
   });

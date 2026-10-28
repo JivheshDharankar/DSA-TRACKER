@@ -1,4 +1,9 @@
+/* The design tokens load first, then the legacy token set — kept only for the two font
+   stacks (`--font-sans` / `--font-mono`) that the html itself needs before React mounts —
+   and finally the design-system utilities. This base layer uses semantic tokens only. */
+@import './tokens.css';
 @import './variables.css';
+@import './utilities.css';
 
 *,
 *::before,
@@ -12,10 +17,13 @@ html,
 body {
   height: 100%;
   width: 100%;
-  background-color: var(--bg-app);
-  color: var(--text-main);
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
   font-family: var(--font-sans);
-  font-size: 15px;
+  /* Phase 0: base font moved 15px -> 16px so 1rem === 16px and the approved
+     type scale lands on real pixel values. This is the only intentional global
+     visual change in Phase 0. */
+  font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -35,27 +43,27 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-surface);
+  background: var(--color-bg-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-medium);
-  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+  background: var(--color-text-tertiary);
 }
 
 /* Base typography */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: var(--tracking-tight);
 }
 
 p {
-  color: var(--text-muted);
+  color: var(--color-text-secondary);
 }
 
 a {

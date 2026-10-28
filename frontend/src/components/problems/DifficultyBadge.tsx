@@ -1,29 +1,19 @@
 import React from 'react';
 import { DifficultyType } from '../../types';
-import styles from './Badges.module.css';
+import { Badge } from '../ui/Badge';
+import { difficultyTone } from './badgeTones';
 
 interface DifficultyBadgeProps {
   difficulty: DifficultyType;
 }
 
-export const DifficultyBadge: React.FC<DifficultyBadgeProps> = ({ difficulty }) => {
-  const getClassName = () => {
-    switch (difficulty) {
-      case 'Easy':
-        return styles.diffEasy;
-      case 'Medium':
-        return styles.diffMedium;
-      case 'Hard':
-        return styles.diffHard;
-      default:
-        return styles.diffEasy;
-    }
-  };
-
-  return (
-    <span className={`${styles.badge} ${getClassName()}`}>
-      <span className={styles.dot} />
-      <span>{difficulty}</span>
-    </span>
-  );
-};
+/**
+ * Difficulty pill — the shared `Badge` primitive with the tracker tone mapping, so the
+ * table, the cards, Problem Detail and Review History can never disagree about what an
+ * Easy/Medium/Hard chip looks like. The label and the leading dot are unchanged.
+ */
+export const DifficultyBadge: React.FC<DifficultyBadgeProps> = ({ difficulty }) => (
+  <Badge tone={difficultyTone(difficulty)} shape="pill" dot>
+    {difficulty}
+  </Badge>
+);

@@ -1,0 +1,60 @@
+/**
+ * DSA Tracker — EmptyState primitive styles (Phase 2)
+ * Centred, restrained, no illustration gradients. All values come from
+ * `styles/tokens.css`.
+ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.full {
+  padding: var(--space-8) var(--space-5);
+}
+
+.compact {
+  padding: var(--space-5) var(--space-4);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  margin-bottom: var(--space-2);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+  color: var(--color-text-tertiary);
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--tracking-tight);
+}
+
+.description {
+  max-width: 44ch;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-body);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}

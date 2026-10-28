@@ -1,144 +1,189 @@
-.container {
+/**
+ * DSA Tracker — Analytics panel styles (Phase 5)
+ * Solid token fills only: the neon gradients and hardcoded hex values are gone.
+ */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
+}
+
+.cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .card {
-  background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .cardHeader {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: var(--space-sm);
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-width-hairline) solid var(--color-border-hairline);
+  min-width: 0;
 }
 
 .cardTitle {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-main);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  min-width: 0;
 }
 
 .headerMeta {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  font-weight: 600;
+  flex-shrink: 0;
+  font-size: var(--font-size-1);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: var(--font-variant-numeric);
 }
 
-.barsList {
+.rows {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.barItem {
+.row {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.barLabelRow {
+.rowHead {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  font-size: 0.8rem;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.barLabel {
-  color: var(--text-main);
-  font-weight: 600;
+.rowLabel {
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
 }
 
-.barValue {
-  color: var(--text-muted);
+.rowValue {
+  flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--font-size-1);
+  color: var(--color-text-secondary);
+  font-variant-numeric: var(--font-variant-numeric);
 }
 
 .track {
-  height: 6px;
-  background: rgba(148, 163, 184, 0.12);
-  border-radius: var(--radius-full);
+  width: 100%;
+  height: var(--space-1);
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-1);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  border-radius: var(--radius-full);
-  transition: width 0.4s ease;
+  border-radius: var(--radius-1);
+  transition: width var(--duration-slow) var(--ease-out);
 }
 
-/* Review outcome fills */
+/* Review outcome fills — feedback tokens. */
 .fillEasy {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .fillStruggled {
-  background: #f59e0b;
+  background: var(--color-warning);
 }
 
 .fillHint {
-  background: #38bdf8;
+  background: var(--color-info);
 }
 
 .fillForgot {
-  background: #f43f5e;
+  background: var(--color-danger);
 }
 
-/* Retention fills */
+/* Retention fills — the four-step data ramp. */
 .fillLearning {
-  background: #94a3b8;
+  background: var(--color-retention-learning);
 }
 
 .fillFamiliar {
-  background: #38bdf8;
+  background: var(--color-retention-familiar);
 }
 
 .fillIndependent {
-  background: #6366f1;
+  background: var(--color-retention-independent);
 }
 
 .fillStrong {
-  background: #a855f7;
+  background: var(--color-retention-strong);
 }
 
-/* Timing fills */
+/* Timing fills — feedback tokens. */
 .fillOnTime {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .fillLate {
-  background: #f43f5e;
+  background: var(--color-danger);
 }
 
 .fillEarly {
-  background: #38bdf8;
+  background: var(--color-info);
 }
 
-.footerSummary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--space-xs);
+.cardFooter {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
+  font-size: var(--font-size-1);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-secondary);
 }
 
 .highlight {
-  color: var(--text-main);
-  font-weight: 600;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: var(--font-variant-numeric);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    transition: none;
+  }
 }

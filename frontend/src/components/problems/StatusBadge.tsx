@@ -1,24 +1,15 @@
 import React from 'react';
 import { StatusType } from '../../types';
-import styles from './Badges.module.css';
+import { Badge } from '../ui/Badge';
+import { statusTone } from './badgeTones';
 
 interface StatusBadgeProps {
   status: StatusType;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  const getClassName = () => {
-    switch (status) {
-      case 'Not Started':
-        return styles.statusNotStarted;
-      case 'Attempted':
-        return styles.statusAttempted;
-      case 'Solved':
-        return styles.statusSolved;
-      default:
-        return styles.statusNotStarted;
-    }
-  };
-
-  return <span className={`${styles.badge} ${getClassName()}`}>{status}</span>;
-};
+/** Status pill — shared `Badge` primitive and the tracker tone mapping. */
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => (
+  <Badge tone={statusTone(status)} shape="pill">
+    {status}
+  </Badge>
+);

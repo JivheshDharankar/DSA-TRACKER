@@ -1,0 +1,185 @@
+/**
+ * DSA Tracker — LeetCode import panel (Phase 2A)
+ * =============================================
+ * Native to the Add Problem dialog: same surfaces, radii, type scale and spacing tokens as
+ * `ProblemModal.module.css`. No new colours, no new radii, no layout changes elsewhere.
+ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.intro {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
+}
+
+.introIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-2);
+  background: var(--color-accent-subtle);
+  color: var(--color-text-link);
+}
+
+.introText {
+  margin: 0;
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-body);
+  color: var(--color-text-secondary);
+}
+
+/* URL + fetch action: side by side on wide screens, stacked on phones. */
+.urlRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.fetchButton {
+  flex-shrink: 0;
+}
+
+@media (max-width: 559px) {
+  .urlRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fetchButton {
+    width: 100%;
+  }
+}
+
+/* -------------------------------------------------------------------- preview */
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-sunken);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-3);
+  min-width: 0;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.previewTitle {
+  margin: 0;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+
+@media (max-width: 559px) {
+  .previewGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.previewItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.term {
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.value {
+  margin: 0;
+  font-size: var(--font-size-3);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.url {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-link);
+  font-size: var(--font-size-2);
+  text-decoration: none;
+  border-radius: var(--radius-1);
+  overflow-wrap: anywhere;
+}
+
+.url:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+.previewNote {
+  margin: 0;
+  font-size: var(--font-size-2);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-body);
+}
+
+.previewActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
+}
+
+.previewHint {
+  margin: 0;
+  font-size: var(--font-size-1);
+  color: var(--color-text-tertiary);
+}
+
+/* Alert action slot: retry + manual entry side by side, stacked on phones. */
+.alertActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+@media (max-width: 479px) {
+  .previewActions,
+  .alertActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}

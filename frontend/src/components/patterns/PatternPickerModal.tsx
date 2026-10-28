@@ -1,12 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Sparkles, Check, Loader2 } from 'lucide-react';
+import { Search, Sparkles, Check, Loader2 } from 'lucide-react';
 import { fetchPatterns } from '../../api/patterns.api';
-import {
-  PatternWithMastery,
-  ProblemPatternAttachment,
-  PatternConfidence,
-} from '../../types';
+import { PatternWithMastery, ProblemPatternAttachment, PatternConfidence } from '../../types';
+import { Dialog } from '../ui/Dialog';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
+import { Badge } from '../ui/Badge';
+import { EmptyState } from '../ui/EmptyState';
+import { cx } from '../ui/cx';
 import styles from './PatternPickerModal.module.css';
+
+/**
+ * DSA Tracker — pattern assignment dialog (Phase 9)
+ * =================================================
+ * The picker now renders inside the shared `Dialog`: portal, accessible name and
+ * description, focus trap, Escape, scroll lock and focus restoration come from that
+ * primitive. This module owns the search field, the pattern list and the per-pattern
+ * confidence/primary controls.
+ *
+ * Behaviour is unchanged: the same catalog fetch, the same selection map, the first
+ * selected pattern becoming primary, single-primary enforcement, and the same
+ * `onSave` payload (`{ patternId, confidence, isPrimary }[]`) followed by `onClose()`.
+ *
+ * Empty states: the list distinguishes "no patterns in the catalog yet" from "nothing
+ * matches this search", and the latter offers a one-click clear action. The list
+ * scrolls inside the dialog so the footer actions stay reachable on small screens.
+ */
 
 interface PatternSelectionState {
   patternId: string;
@@ -19,7 +39,9 @@ interface PatternPickerModalProps {
   problemTitle: string;
   currentAttachments: ProblemPatternAttachment[];
   onClose: () => void;
-  onSave: (patterns: Array<{ patternId: string; confidence: PatternConfidence; isPrimary: boolean }>) => Promise<void>;
+  onSave: (
+    patterns: Array<{ patternId: string; confidence: PatternConfidence; isPrimary: boolean }>
+  ) => Promise<void>;
 }
 
 export const PatternPickerModal: React.FC<PatternPickerModalProps> = ({
@@ -66,8 +88,6 @@ export const PatternPickerModal: React.FC<PatternPickerModalProps> = ({
       setIsLoading(false);
     }
   };
-
-  if (!isOpen) return null;
 
   const handleTogglePattern = (patternId: string) => {
     setSelections((prev) => {
@@ -135,70 +155,111 @@ export const PatternPickerModal: React.FC<PatternPickerModalProps> = ({
   );
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
-          <div className={styles.title}>
-            <Sparkles size={20} color="var(--accent-cyan)" />
-            <span>Assign Patterns — {problemTitle}</span>
-          </div>
-          <button className={styles.closeBtn} onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className={styles.searchBar}>
-          <Search size={16} className={styles.searchIcon} />
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Search 30 algorithmic patterns..."
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      title="Assign Patterns"
+      description={problemTitle}
+      size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            loading={isSaving}
+            loadingLabel="Saving..."
+            iconLeft={<Check size={16} />}
+          >
+            Save Patterns ({selections.size})
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.content}>
+        <div className={styles.searchWrap}>
+          <Search size={16} className={styles.searchIcon} aria-hidden="true" />
+          <Input
+            aria-label="Search patterns"
+            placeholder="Search patterns by name or prerequisite..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className={styles.searchInput}
           />
         </div>
 
-        <div className={styles.patternList}>
+        <div className={styles.toolbar}>
+          <span className={styles.count}>
+            {filteredPatterns.length} of {allPatterns.length} patterns
+          </span>
+          {selections.size > 0 ? (
+            <Badge tone="accent">
+              <span role="status">{selections.size} selected</span>
+            </Badge>
+          ) : (
+            <span className={styles.hint}>Select every pattern this problem applies</span>
+          )}
+        </div>
+
+        <div className={styles.list} role="group" aria-label="Available patterns">
           {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <Loader2 size={24} className="animate-spin" color="var(--accent-cyan)" />
+            <div className={styles.loading} role="status">
+              <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+              <span>Loading patterns…</span>
             </div>
+          ) : filteredPatterns.length === 0 ? (
+            <EmptyState
+              variant="compact"
+              icon={allPatterns.length === 0 ? <Sparkles size={20} /> : <Search size={20} />}
+              title={allPatterns.length === 0 ? 'No patterns available' : 'No matching patterns'}
+              description={
+                allPatterns.length === 0
+                  ? 'There are no patterns in the catalog yet, so nothing can be attached.'
+                  : `Nothing matches “${searchQuery.trim()}”. Try a shorter search.`
+              }
+              primaryAction={
+                allPatterns.length > 0 ? (
+                  <Button size="sm" variant="secondary" onClick={() => setSearchQuery('')}>
+                    Clear search
+                  </Button>
+                ) : undefined
+              }
+            />
           ) : (
             filteredPatterns.map((p) => {
               const isSelected = selections.has(p.id);
               const selection = selections.get(p.id);
 
               return (
-                <div
-                  key={p.id}
-                  className={`${styles.patternItem} ${isSelected ? styles.patternItemSelected : ''}`}
-                >
-                  <div className={styles.itemLeft}>
+                <div key={p.id} className={cx(styles.row, isSelected && styles.rowSelected)}>
+                  <div className={styles.rowMain}>
                     <input
+                      id={`pattern-${p.id}`}
                       type="checkbox"
                       className={styles.checkbox}
                       checked={isSelected}
                       onChange={() => handleTogglePattern(p.id)}
-                      id={`pattern-${p.id}`}
                     />
-                    <div>
-                      <label
-                        htmlFor={`pattern-${p.id}`}
-                        className={styles.patternName}
-                        style={{ cursor: 'pointer' }}
-                      >
+
+                    <div className={styles.rowText}>
+                      <label htmlFor={`pattern-${p.id}`} className={styles.name}>
                         {p.name}
                       </label>
-                      <div className={styles.patternMeta}>
-                        <span>{p.prerequisites.slice(0, 2).join(', ')}</span>
-                      </div>
+                      <p className={styles.meta}>
+                        {p.prerequisites.length > 0
+                          ? p.prerequisites.slice(0, 2).join(' · ')
+                          : p.description}
+                      </p>
                     </div>
                   </div>
 
-                  {isSelected && selection && (
-                    <div className={styles.itemRight}>
-                      <select
-                        className={styles.confidenceSelect}
+                  {isSelected && selection ? (
+                    <div className={styles.rowControls}>
+                      <Select
+                        size="compact"
+                        className={styles.confidence}
+                        aria-label={`Confidence for ${p.name}`}
                         value={selection.confidence}
                         onChange={(e) =>
                           handleChangeConfidence(p.id, e.target.value as PatternConfidence)
@@ -207,7 +268,7 @@ export const PatternPickerModal: React.FC<PatternPickerModalProps> = ({
                         <option value="LOW">Low Conf.</option>
                         <option value="MEDIUM">Med Conf.</option>
                         <option value="HIGH">High Conf.</option>
-                      </select>
+                      </Select>
 
                       <label className={styles.primaryLabel}>
                         <input
@@ -218,32 +279,13 @@ export const PatternPickerModal: React.FC<PatternPickerModalProps> = ({
                         <span>Primary</span>
                       </label>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               );
             })
           )}
         </div>
-
-        <div className={styles.footer}>
-          <button className={styles.cancelBtn} onClick={onClose} disabled={isSaving}>
-            Cancel
-          </button>
-          <button className={styles.saveBtn} onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <Check size={16} />
-                <span>Save Patterns ({selections.size})</span>
-              </>
-            )}
-          </button>
-        </div>
       </div>
-    </div>
+    </Dialog>
   );
 };

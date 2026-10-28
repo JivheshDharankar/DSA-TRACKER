@@ -1,13 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Edit2, Trash2, Eye } from 'lucide-react';
+import { ExternalLink, Edit2, Trash2, Eye, Lock } from 'lucide-react';
 import { Problem, SectionType } from '../../types';
-import { DifficultyBadge } from './DifficultyBadge';
-import { RetentionBadge } from './RetentionBadge';
-import { StatusBadge } from './StatusBadge';
-import { MasteryBadge } from './MasteryBadge';
+import { Badge } from '../ui/Badge';
+import { cx } from '../ui/cx';
+import { computeDueStatus } from '../reviews/SrsProgressionStepper';
+import { difficultyTone, retentionTone, statusTone } from './badgeTones';
+import { formatCalendarDate } from '../../utils/date.utils';
 import { getSafeUrl } from '../../utils/url.util';
 import styles from './ProblemCardList.module.css';
+
+/**
+ * DSA Tracker — Tracker card view (Phase 6)
+ * ========================================
+ * The mobile-first presentation: compact rows rather than a card per field group, and —
+ * new in this phase — the same spaced-repetition information the table shows, so
+ * switching views no longer hides the stage, the interval, the due status or the next
+ * review date.
+ *
+ * Preserved exactly from the previous implementation: the `#S.No` chip, the `LC #N`
+ * chip, the `College` / `LeetCode` link badges with their `title`s, the topic and source
+ * line, the learned date, the retention/mastery semantics (a mastery chip is rendered
+ * only for LOCKED, as the legacy `MasteryBadge` did by default) and the
+ * `Details` / `Edit` / `Delete` actions.
+ */
 
 interface ProblemCardListProps {
   problems: Problem[];
@@ -24,97 +40,122 @@ export const ProblemCardList: React.FC<ProblemCardListProps> = ({
 }) => {
   return (
     <div className={styles.cardList}>
-      {problems.map((prob) => (
-        <div key={prob.id} className={styles.card}>
-          <div className={styles.headerRow}>
-            <span className={styles.sNoBadge}>#{prob.sNo}</span>
-            <Link to={`/problems/${prob.id}`} className={styles.title}>
-              {prob.title}
-            </Link>
-            <div className={styles.linkGroup}>
-              {getSafeUrl(prob.collegeLink) && (
-                <a
-                  href={getSafeUrl(prob.collegeLink)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${styles.linkBadge} ${styles.collegeLink}`}
-                  title="Open College problem link"
-                >
-                  <span>College</span>
-                  <ExternalLink size={11} />
-                </a>
+      {problems.map((prob) => {
+        const dueInfo = computeDueStatus(prob.nextReviewDate);
+        const isLocked = prob.masteryStatus === 'LOCKED';
+        const leetcodeUrl = getSafeUrl(prob.leetcodeLink);
+        const collegeUrl = getSafeUrl(prob.collegeLink);
+
+        return (
+          <article key={prob.id} className={styles.card}>
+            <div className={styles.headerRow}>
+              <span className={styles.sNoBadge}>#{prob.sNo}</span>
+              <Link to={`/problems/${prob.id}`} className={styles.title}>
+                {prob.title}
+              </Link>
+              <div className={styles.linkGroup}>
+                {collegeUrl && (
+                  <a
+                    href={collegeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.linkBadge}
+                    title="Open College problem link"
+                  >
+                    <span>College</span>
+                    <ExternalLink size={11} aria-hidden="true" />
+                  </a>
+                )}
+                {leetcodeUrl && (
+                  <a
+                    href={leetcodeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.linkBadge}
+                    title="Open LeetCode problem link"
+                  >
+                    <span>LeetCode</span>
+                    <ExternalLink size={11} aria-hidden="true" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.metaRow}>
+              {section === 'PERSONAL' && prob.leetcodeNumber && (
+                <span className={styles.lcNumber}>LC #{prob.leetcodeNumber}</span>
               )}
-              {getSafeUrl(prob.leetcodeLink) && (
-                <a
-                  href={getSafeUrl(prob.leetcodeLink)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${styles.linkBadge} ${styles.leetcodeLink}`}
-                  title="Open LeetCode problem link"
-                >
-                  <span>LeetCode</span>
-                  <ExternalLink size={11} />
-                </a>
+              <span className={styles.topicTag}>{prob.topic}</span>
+              <Badge tone={difficultyTone(prob.difficulty)} dot>
+                {prob.difficulty}
+              </Badge>
+              <Badge tone={statusTone(prob.status)}>{prob.status}</Badge>
+              <Badge tone={retentionTone(prob.retentionLevel)}>
+                {prob.retentionLevel === 'Locked' ? (
+                  <>
+                    <Lock size={11} aria-hidden="true" />
+                    <span>{prob.retentionLevel}</span>
+                  </>
+                ) : (
+                  prob.retentionLevel
+                )}
+              </Badge>
+              {isLocked && (
+                <span title="Locked Problem — Long-Term Mastered">
+                  <Badge tone="warning">
+                    <Lock size={11} aria-hidden="true" />
+                    <span>Locked</span>
+                  </Badge>
+                </span>
               )}
             </div>
-          </div>
 
-          <div className={styles.metaRow}>
-            {section === 'PERSONAL' && prob.leetcodeNumber && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.75rem',
-                  color: 'var(--accent-cyan)',
-                  padding: '2px 6px',
-                  background: 'rgba(56, 189, 248, 0.1)',
-                  borderRadius: 'var(--radius-sm)',
-                }}
-              >
-                LC #{prob.leetcodeNumber}
+            <div className={styles.srsRow}>
+              <span className={styles.srsStage}>
+                Stage {prob.repetitionStage ?? 0} ({prob.intervalDays ?? 0}d)
               </span>
-            )}
-            <span
-              style={{
-                fontSize: '0.75rem',
-                background: 'var(--bg-surface-elevated)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-sm)',
-                color: 'var(--text-muted)',
-              }}
-            >
-              {prob.topic}
-            </span>
-            <DifficultyBadge difficulty={prob.difficulty} />
-            <StatusBadge status={prob.status} />
-            <RetentionBadge retention={prob.retentionLevel} />
-            <MasteryBadge status={prob.masteryStatus} />
-          </div>
+              <Badge
+                tone={
+                  dueInfo.state === 'OVERDUE'
+                    ? 'danger'
+                    : dueInfo.state === 'DUE_TODAY'
+                      ? 'accent'
+                      : 'success'
+                }
+              >
+                {dueInfo.label}
+              </Badge>
+              <span className={styles.srsNext}>
+                Next review {formatCalendarDate(prob.nextReviewDate)}
+              </span>
+            </div>
 
-          <div className={styles.infoRow}>
-            <span>Source: {prob.source}</span>
-            <span>{new Date(prob.dateLearned).toLocaleDateString()}</span>
-          </div>
+            <div className={styles.infoRow}>
+              <span>Source: {prob.source}</span>
+              <span>{new Date(prob.dateLearned).toLocaleDateString()}</span>
+            </div>
 
-          <div className={styles.actionRow}>
-            <Link to={`/problems/${prob.id}`} className={styles.btn}>
-              <Eye size={13} />
-              <span>Details</span>
-            </Link>
-            <button onClick={() => onEdit(prob)} className={styles.btn}>
-              <Edit2 size={13} />
-              <span>Edit</span>
-            </button>
-            <button
-              onClick={() => onDelete(prob)}
-              className={`${styles.btn} ${styles.deleteBtn}`}
-            >
-              <Trash2 size={13} />
-              <span>Delete</span>
-            </button>
-          </div>
-        </div>
-      ))}
+            <div className={styles.actionRow}>
+              <Link to={`/problems/${prob.id}`} className={styles.btn}>
+                <Eye size={13} aria-hidden="true" />
+                <span>Details</span>
+              </Link>
+              <button type="button" onClick={() => onEdit(prob)} className={styles.btn}>
+                <Edit2 size={13} aria-hidden="true" />
+                <span>Edit</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(prob)}
+                className={cx(styles.btn, styles.deleteBtn)}
+              >
+                <Trash2 size={13} aria-hidden="true" />
+                <span>Delete</span>
+              </button>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 };

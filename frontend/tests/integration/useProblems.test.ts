@@ -108,17 +108,20 @@ describe('useProblems hook', () => {
       result.current.updateFilters({ difficulty: 'Hard', page: 1 });
     });
 
+    // Wait for the filtered response to be committed to state, not merely for the
+    // request to have been issued: `toHaveBeenLastCalledWith` becomes true when the
+    // effect calls the mock, one microtask before `setProblems` runs.
     await waitFor(() => {
-      expect(problemsApi.fetchProblems).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          section: 'COLLEGE',
-          difficulty: 'Hard',
-          page: 1,
-        })
-      );
+      expect(result.current.problems).toHaveLength(1);
     });
 
-    expect(result.current.problems).toHaveLength(1);
+    expect(problemsApi.fetchProblems).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        section: 'COLLEGE',
+        difficulty: 'Hard',
+        page: 1,
+      })
+    );
   });
 
   it('resets filters back to default section query params', async () => {

@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import { problemController } from '../controllers/problem.controller.js';
+import { problemImportController } from '../controllers/problemImport.controller.js';
 import { patternController } from '../controllers/pattern.controller.js';
 import masteryRoutes from './mastery.routes.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
+import { importRateLimiter } from '../middleware/rateLimiter.middleware.js';
 import {
   createProblemSchema,
   updateProblemSchema,
 } from '../validators/problem.validator.js';
+import { importLeetcodeSchema } from '../validators/problemImport.validator.js';
 
 const router = Router();
 
@@ -18,6 +21,15 @@ router.post(
   '/',
   validateBody(createProblemSchema),
   problemController.createProblem.bind(problemController)
+);
+
+// LeetCode import preview (returns metadata only; persistence stays on POST /).
+// Declared before the `/:id` routes so `import` can never be read as an identifier.
+router.post(
+  '/import/leetcode',
+  importRateLimiter,
+  validateBody(importLeetcodeSchema),
+  problemImportController.importFromLeetcode.bind(problemImportController)
 );
 
 router.get(

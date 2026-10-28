@@ -9,8 +9,8 @@ export const ProtectedRoute: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner} />
+      <div className={styles.loadingContainer} role="status" aria-live="polite">
+        <div className={styles.spinner} aria-hidden="true" />
         <p className={styles.loadingText}>Verifying secure session...</p>
       </div>
     );

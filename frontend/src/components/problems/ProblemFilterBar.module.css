@@ -1,138 +1,138 @@
-.filterContainer {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md) var(--space-lg);
+/**
+ * DSA Tracker — Tracker toolbar styles (Phase 6)
+ * =============================================
+ * One compact surface holding the search row, the filter row and the create action.
+ * Values come from `styles/tokens.css` only; the legacy cyan accent, glow shadows and
+ * glass hover are gone.
+ *
+ * Below 768px the filter controls live in the `Dialog` drawer instead of the filter row,
+ * so the toolbar collapses to search + two actions.
+ */
+
+.toolbar {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+  min-width: 0;
 }
 
-.topRow {
+.searchRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .searchWrapper {
   position: relative;
-  flex: 1;
-  min-width: 260px;
   display: flex;
   align-items: center;
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 420px;
 }
 
 .searchIcon {
   position: absolute;
-  left: 14px;
-  color: var(--text-dim);
+  left: var(--space-3);
+  color: var(--color-text-tertiary);
   pointer-events: none;
 }
 
-.searchInput {
-  width: 100%;
-  height: 42px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0 36px 0 40px;
-  color: var(--text-main);
-  font-size: 0.9rem;
-  font-family: inherit;
-  transition: all var(--transition-fast);
-}
-
-.searchInput:focus {
-  outline: none;
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px var(--accent-cyan-glow);
+/* Two classes so the shared Input primitive's own padding cannot win by source order. */
+.searchWrapper .searchInput {
+  padding-left: 34px;
+  padding-right: 34px;
 }
 
 .clearSearchBtn {
   position: absolute;
-  right: 12px;
-  color: var(--text-dim);
+  right: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-1);
+  color: var(--color-text-tertiary);
 }
 
 .clearSearchBtn:hover {
-  color: var(--text-main);
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
 }
 
-.actionGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.addBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 var(--space-lg);
-  background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-  color: #04101e;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
-  white-space: nowrap;
-}
-
-.addBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.4);
-}
-
-.bottomRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-  padding-top: var(--space-xs);
-  border-top: 1px solid rgba(148, 163, 184, 0.08);
-}
-
-.filterSelect {
-  height: 36px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0 var(--space-md);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-family: inherit;
-  transition: all var(--transition-fast);
-  cursor: pointer;
-}
-
-.filterSelect:focus {
+.clearSearchBtn:focus-visible {
   outline: none;
-  border-color: var(--accent-cyan);
-  color: var(--text-main);
+  box-shadow: var(--focus-ring);
 }
 
-.resetBtn {
+.actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 var(--space-md);
-  border-radius: var(--radius-md);
-  color: var(--text-dim);
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: all var(--transition-fast);
+  gap: var(--space-2);
+  margin-left: auto;
 }
 
-.resetBtn:hover {
-  color: var(--color-hard);
-  background: var(--color-hard-bg);
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding-top: var(--space-3);
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
+}
+
+/* Sizing slot: the Select primitive's wrapper is `width: 100%`, so the width here
+   decides the control width. Two classes deep, so it also wins over the primitive's own
+   padding (which reserves 48px for the chevron); 32px is enough and buys back room for
+   the longest option label. */
+.field {
+  flex: 0 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.field select {
+  padding-right: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .field {
+    width: 176px;
+  }
+}
+
+/* The sort control carries the longest labels, so it gets extra room. */
+.field:last-of-type {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .field:last-of-type {
+    width: 200px;
+  }
+}
+
+.drawerBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Inside the drawer every control is full width; there is no row to share. */
+.drawerBody .field,
+.drawerBody .field:last-of-type {
+  width: 100%;
 }

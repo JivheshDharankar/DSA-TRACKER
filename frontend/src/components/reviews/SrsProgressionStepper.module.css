@@ -1,191 +1,247 @@
+/**
+ * DSA Tracker — SRS progression stepper styles (Phase 8)
+ * =====================================================
+ * Two shapes of the same markup:
+ *
+ *   - below 768px  the ten stages become a 5-column grid of stage chips. The connectors
+ *     are hidden, because a wrapped track would draw lines across rows; position in the
+ *     sequence is still carried by the stage order and the `Day N` label.
+ *   - 768px and up the stages are a single connected track. Steps are `flex: 1 1 0`, so the
+ *     track is fluid instead of the fixed 620px minimum the old module forced, and each
+ *     connector is positioned from the current node's icon edge to the next node's icon
+ *     edge, which keeps the line centred whatever the available width is.
+ *
+ * State is expressed three ways: the icon shape (check / arrow / circle), the label text,
+ * and the tone — never colour alone. The current stage also carries `aria-current="step"`.
+ *
+ * Every value comes from `styles/tokens.css`; the old module mixed legacy `--text-dim`,
+ * `--accent-cyan`, `--accent-violet`, `--color-easy` names with raw rgba() values and a
+ * linear-gradient (#ffffff border, glow shadows).
+ */
+
 .container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-4);
   width: 100%;
+  min-width: 0;
+
+  /* No 28px geometry token exists; derived from the 32px small control height. */
+  --step-node-size: calc(var(--control-height-sm) - var(--space-1));
 }
 
 .containerCompact {
-  gap: var(--space-xs);
+  gap: var(--space-2);
 }
+
+/* ------------------------------------------------------------------- track */
 
 .stepperWrapper {
   width: 100%;
-  overflow-x: auto;
-  padding: 8px 4px 12px;
-  -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 .stepperTrack {
-  display: flex;
-  align-items: center;
-  min-width: 620px;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .stepNode {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  position: relative;
-  z-index: 2;
-  transition: transform var(--transition-fast);
+  gap: var(--space-1);
+  min-width: 0;
+  text-align: center;
 }
 
 .nodeIcon {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-normal);
+  width: var(--step-node-size);
+  height: var(--step-node-size);
+  border-radius: var(--radius-pill);
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard);
 }
 
 .nodeLabel {
-  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
 
-/* Completed Stage */
+/* The connectors only make sense on the single-row track. */
+.stepConnector {
+  display: none;
+}
+
+/* ------------------------------------------------------------- step states */
+
 .stepCompleted .nodeIcon {
-  background: rgba(16, 185, 129, 0.18);
-  border: 1.5px solid var(--color-easy);
-  color: var(--color-easy);
+  background: var(--color-success-subtle);
+  border: var(--border-width-hairline) solid var(--color-success);
+  color: var(--color-success);
 }
 
 .stepCompleted .nodeLabel {
-  color: var(--color-easy);
+  color: var(--color-text-secondary);
 }
 
-/* Current Active Stage */
 .stepCurrent .nodeIcon {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
-  border: 2px solid #ffffff;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
-  transform: scale(1.15);
+  background: var(--color-accent);
+  border: var(--border-width-thick) solid var(--color-accent-hover);
+  color: var(--color-text-primary);
+  box-shadow: 0 0 0 var(--space-1) var(--color-accent-subtle);
 }
 
 .stepCurrent .nodeLabel {
-  color: var(--accent-cyan);
-  font-weight: 700;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+  color: var(--color-accent-hover);
+  font-weight: var(--font-weight-bold);
 }
 
-/* Future Stage */
 .stepFuture .nodeIcon {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-dim);
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  color: var(--color-text-tertiary);
 }
 
-.stepFuture .nodeLabel {
-  color: var(--text-dim);
-}
+/* ---------------------------------------------------------------- metrics */
 
-/* Connector Line */
-.stepConnector {
-  flex: 1;
-  height: 2px;
-  background: var(--border-subtle);
-  margin: 0 4px 18px 4px;
-  min-width: 16px;
-  transition: background var(--transition-normal);
-}
-
-.connectorActive {
-  background: var(--color-easy);
-  opacity: 0.6;
-}
-
-/* Metrics Box */
 .metricsBox {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
 }
 
 .metricsHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: var(--space-xs);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-width-hairline) solid var(--color-border-hairline);
 }
 
 .metricsTitleGroup {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.metricsIcon {
+  color: var(--color-accent-2);
+  flex-shrink: 0;
 }
 
 .metricsTitle {
-  font-size: 0.82rem;
-  font-weight: 700;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-
-.statusBadge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: var(--radius-full);
-}
-
-.statusOverdue {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
-}
-
-.statusDueToday {
-  background: rgba(56, 189, 248, 0.15);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  color: var(--accent-cyan);
-}
-
-.statusUpcoming {
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  color: var(--color-easy);
 }
 
 .metricsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--space-sm);
-  padding-top: var(--space-xs);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
 }
 
 .metricItem {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .metricLabel {
-  font-size: 0.72rem;
-  color: var(--text-dim);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
 }
 
 .metricValue {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-main);
+  /* `dd` starts with a 40px inline margin by default. */
+  margin: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: var(--font-variant-numeric);
+  overflow-wrap: anywhere;
+}
+
+.metricValueAccent {
+  color: var(--color-text-link);
+}
+
+.metricValueRetention {
+  color: var(--color-accent-2);
+}
+
+.metricValueYes {
+  color: var(--color-success);
+}
+
+.metricValueMuted {
+  color: var(--color-text-tertiary);
+}
+
+/* ------------------------------------------------------------- connected track */
+
+@media (min-width: 768px) {
+  .stepperTrack {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .stepNode {
+    flex: 1 1 0;
+  }
+
+  .stepConnector {
+    display: block;
+    position: absolute;
+    top: calc((var(--step-node-size) - var(--space-1)) / 2);
+    left: calc(50% + var(--step-node-size) / 2);
+    right: calc(-50% + var(--step-node-size) / 2);
+    height: var(--space-1);
+    background: var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    transition: background-color var(--duration-normal) var(--ease-standard);
+  }
+
+  .connectorActive {
+    background: var(--color-success);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nodeIcon,
+  .stepConnector {
+    transition: none;
+  }
 }

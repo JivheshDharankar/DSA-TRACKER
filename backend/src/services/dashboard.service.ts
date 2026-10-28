@@ -5,6 +5,7 @@ import { ProblemPattern } from '../models/ProblemPattern.model.js';
 import { User } from '../models/User.model.js';
 import { patternService, PatternService, PatternWithMastery } from './pattern.service.js';
 import { AppError } from '../middleware/error.middleware.js';
+import { startOfUtcDay, startOfNextUtcDay, endOfUtcDay } from '../utils/date.util.js';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -139,12 +140,12 @@ export class DashboardService {
     }
 
     const now = new Date();
-    const startOfTodayUTC = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0)
-    );
-    const endOfTodayUTC = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999)
-    );
+    // Calendar-day boundaries share the app-wide UTC day convention with the scheduler and the
+    // review queue. `startOfTomorrowUTC` is the exclusive upper bound of "due today or earlier",
+    // which is exactly the review queue's eligibility window.
+    const startOfTodayUTC = startOfUtcDay(now);
+    const endOfTodayUTC = endOfUtcDay(now);
+    const startOfTomorrowUTC = startOfNextUtcDay(now);
 
     // 1. Problem aggregation (Queue, Status, Section split, Retention)
     const problemAggregationPromise = Problem.aggregate([
@@ -156,7 +157,7 @@ export class DashboardService {
               $group: {
                 _id: null,
                 dueNow: {
-                  $sum: { $cond: [{ $lte: ['$nextReviewDate', now] }, 1, 0] },
+                  $sum: { $cond: [{ $lt: ['$nextReviewDate', startOfTomorrowUTC] }, 1, 0] },
                 },
                 overdue: {
                   $sum: { $cond: [{ $lt: ['$nextReviewDate', startOfTodayUTC] }, 1, 0] },

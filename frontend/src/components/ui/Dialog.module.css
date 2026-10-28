@@ -1,0 +1,181 @@
+/**
+ * DSA Tracker — Dialog primitive styles (Phase 2)
+ * Desktop: centred panel, 12px radius, 24px internal padding, `--shadow-3`.
+ * Below the `sm` breakpoint (640px — `BREAKPOINTS.sm`): bottom sheet anchored to the
+ * bottom edge, rounded on the top corners only, with a drag affordance and safe-area
+ * padding. No gradients, no glassmorphism. All values come from `styles/tokens.css`.
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--layout-gutter);
+  background: var(--color-bg-overlay);
+  animation: dialogOverlayIn var(--duration-fast) var(--ease-out);
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-height: calc(100vh - var(--space-7));
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-3);
+  animation: dialogPanelIn var(--duration-normal) var(--ease-out);
+}
+
+/* Widths are the approved dialog scale: 420 / 560 / 720px. */
+.sm {
+  max-width: 420px;
+}
+
+.md {
+  max-width: 560px;
+}
+
+.lg {
+  max-width: 720px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--tracking-tight);
+}
+
+.description {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-body);
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--control-height-lg);
+  height: var(--control-height-lg);
+  background: transparent;
+  border: var(--border-width-hairline) solid transparent;
+  border-radius: var(--radius-3);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.close:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.body {
+  min-width: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-body);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.footer:empty {
+  display: none;
+}
+
+@keyframes dialogOverlayIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dialogPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+}
+
+/* ------------------------------------------------------- mobile bottom sheet */
+
+@media (max-width: 639px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .bottomSheet {
+    max-width: none;
+    max-height: calc(100vh - var(--space-7));
+    border-radius: var(--radius-5) var(--radius-5) 0 0;
+    border-bottom: none;
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+    animation: dialogSheetIn var(--duration-normal) var(--ease-out);
+  }
+
+  .bottomSheet::before {
+    content: '';
+    width: var(--space-6);
+    height: var(--space-1);
+    margin: 0 auto calc(var(--space-2) * -1);
+    border-radius: var(--radius-pill);
+    background: var(--color-border-strong);
+  }
+}
+
+@keyframes dialogSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-7));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .panel,
+  .bottomSheet {
+    animation: none;
+  }
+
+  .close {
+    transition: none;
+  }
+}

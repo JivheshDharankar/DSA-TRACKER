@@ -1,163 +1,173 @@
-.breakdownCard {
-  background: var(--bg-glass-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
+/**
+ * DSA Tracker — pattern mastery breakdown styles
+ * ==============================================
+ * The card surface, the border, the radius and the padding come from the `Card`
+ * primitive (`raised`); this module only lays the header, the five factor rows and the
+ * footer out. The bars themselves are the `Progress` primitive.
+ *
+ * The five factors are a wrapping list rather than a rigid grid, so at 360px they stack
+ * one per row and nothing overflows horizontally.
+ *
+ * All values come from `styles/tokens.css`.
+ */
+
+.card {
+  gap: var(--space-5);
 }
+
+/* -------------------------------------------------------------------- header */
 
 .header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: var(--space-md);
+  gap: var(--space-4);
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border-width-hairline) solid var(--color-border-hairline);
 }
 
 .headerTitle {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--text-main);
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-snug);
 }
 
 .headerScore {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .scoreValue {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--text-main);
+  color: var(--color-text-primary);
   font-family: var(--font-mono);
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: var(--font-size-7);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: var(--font-variant-numeric);
+  line-height: var(--line-height-tight);
 }
+
+.scoreMax {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ------------------------------------------------------------------- factors */
 
 .factorsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Three columns leaves a 3 + 2 split; five columns fits all five factors on one row at
+ * desktop widths, so the odd fifth factor can never sit alone on a half-empty row. */
+@media (min-width: 640px) {
+  .factorsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .factorsGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .factorItem {
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  transition: all var(--transition-fast);
-}
-
-.factorItem:hover {
-  border-color: var(--border-medium);
-  background: rgba(15, 23, 42, 0.6);
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  background: var(--color-bg-sunken);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
 }
 
 .factorHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .factorName {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-main);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+}
+
+.factorMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .factorWeight {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.15rem 0.4rem;
-  border-radius: var(--radius-sm);
-}
-
-.factorProgress {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.progressBarTrack {
-  flex: 1;
-  height: 6px;
-  background: rgba(148, 163, 184, 0.15);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  position: relative;
-}
-
-.progressBarFill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  transition: width 0.4s ease;
-}
-
-.fillCoverage {
-  background: linear-gradient(90deg, #38bdf8, #0284c7);
-}
-
-.fillIndependent {
-  background: linear-gradient(90deg, #a855f7, #7c3aed);
-}
-
-.fillQuality {
-  background: linear-gradient(90deg, #10b981, #059669);
-}
-
-.fillConsistency {
-  background: linear-gradient(90deg, #f59e0b, #d97706);
-}
-
-.fillTransfer {
-  background: linear-gradient(90deg, #ec4899, #db2777);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-medium);
 }
 
 .factorPercent {
-  font-size: 0.8rem;
-  font-weight: 700;
+  color: var(--color-text-secondary);
   font-family: var(--font-mono);
-  color: var(--text-muted);
-  min-width: 38px;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: var(--font-variant-numeric);
+  min-width: 42px;
   text-align: right;
 }
 
 .factorDesc {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  line-height: 1.4;
-  margin-top: 0.25rem;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  line-height: var(--line-height-body);
 }
+
+/* -------------------------------------------------------------------- footer */
 
 .footerSummary {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--space-sm);
+  justify-content: space-between;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  gap: var(--space-xs);
+  padding-top: var(--space-3);
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
 }
 
 .statsHighlight {
-  color: var(--text-main);
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.thresholds {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
 }

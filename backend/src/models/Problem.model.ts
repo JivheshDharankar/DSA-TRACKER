@@ -221,7 +221,7 @@ const problemSchema = new Schema<IProblemDocument>(
 
 // Compound indexes for user privacy and ultra-fast scoped queries
 problemSchema.index({ userId: 1, section: 1, sNo: 1 }, { unique: true });
-problemSchema.index({ userId: 1, section: 1, nextReviewDate: 1 });
+problemSchema.index({ userId: 1, section: 1, nextReviewDate: 1, sNo: 1 });
 problemSchema.index({ userId: 1, nextReviewDate: 1, sNo: 1 });
 problemSchema.index({ userId: 1, sNo: 1 });
 problemSchema.index({ userId: 1, section: 1, status: 1 });

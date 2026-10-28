@@ -1,175 +1,238 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 8, 18, 0.8);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  padding: var(--space-md);
-  overflow-y: auto;
-}
-
-.modal {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 620px;
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-}
-
-.header {
-  padding: var(--space-lg) var(--space-xl);
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-surface-elevated);
-}
-
-.title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.closeBtn {
-  color: var(--text-dim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-}
-
-.closeBtn:hover {
-  color: var(--text-main);
-  background: var(--bg-glass-hover);
-}
+/**
+ * DSA Tracker — problem create/edit form (Phase 9)
+ * ===============================================
+ * The overlay, header, close button, scroll container and mobile bottom-sheet
+ * treatment come from the shared `Dialog` primitive. This module styles only the form:
+ * the S.No meta strip, the responsive field grids, the notes control and the action row.
+ *
+ * All values come from `styles/tokens.css`; no legacy token names and no raw colours.
+ */
 
 .form {
-  padding: var(--space-xl);
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+/* The dialog description doubles as the section identifier. */
+.sectionTag {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-link);
 }
 
-@media (max-width: 580px) {
-  .row {
-    grid-template-columns: 1fr;
+/* ------------------------------------------------------------------ meta strip */
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
+  font-size: var(--font-size-2);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.metaLabel {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.metaValue {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.metaDivider {
+  width: var(--border-width-hairline);
+  height: var(--space-4);
+  background: var(--color-border-strong);
+}
+
+.metaHint {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+}
+
+/* ------------------------------------------------------- entry-mode switch */
+
+/* Only rendered for a new Personal problem: manual form or LeetCode import. */
+.modeSwitch {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-bg-sunken);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
+  max-width: 100%;
+}
+
+.modeOption {
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--layout-touch-target);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-2);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.modeOption:hover {
+  color: var(--color-text-primary);
+}
+
+.modeOption:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.modeOptionActive {
+  background: var(--color-bg-raised);
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 479px) {
+  .modeSwitch {
+    width: 100%;
+  }
+
+  .modeOption {
+    flex: 1 1 0;
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
   }
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+@media (prefers-reduced-motion: reduce) {
+  .modeOption {
+    transition: none;
+  }
 }
 
-.label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+/* ---------------------------------------------------------------------- grids */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
 }
 
-.input,
-.select,
+.gridThree {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 559px) {
+  .grid,
+  .gridThree {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 560px) and (max-width: 719px) {
+  .gridThree {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* --------------------------------------------------------------- notes control */
+
 .textarea {
+  display: block;
   width: 100%;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  color: var(--text-main);
-  font-size: 0.9rem;
+  min-height: calc(var(--control-height-lg) * 2);
+  padding: var(--space-3);
+  background: var(--color-bg-sunken);
+  color: var(--color-text-primary);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-3);
   font-family: inherit;
-  transition: all var(--transition-fast);
-}
-
-.input:focus,
-.select:focus,
-.textarea:focus {
-  outline: none;
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px var(--accent-cyan-glow);
-}
-
-.textarea {
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-body);
   resize: vertical;
-  min-height: 80px;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
 }
 
-.errorBanner {
-  background: var(--color-hard-bg);
-  border: 1px solid var(--color-hard-border);
-  color: var(--color-hard);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  display: flex;
+.textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-border-accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* --------------------------------------------------------------------- links */
+
+.linkHint {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-1);
+  color: var(--color-text-link);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  border-radius: var(--radius-1);
 }
 
-.footer {
-  padding: var(--space-md) var(--space-xl);
-  border-top: 1px solid var(--border-subtle);
-  background: var(--bg-surface-elevated);
+.linkHint:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------- actions */
+
+.actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-md);
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
 }
 
-.cancelBtn {
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all var(--transition-fast);
+@media (max-width: 479px) {
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
 }
 
-.cancelBtn:hover {
-  color: var(--text-main);
+@media (max-width: 639px) {
+  .textarea {
+    font-size: var(--font-size-4);
+  }
 }
 
-.submitBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-  color: #04101e;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
-}
-
-.submitBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.4);
-}
-
-.submitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+@media (prefers-reduced-motion: reduce) {
+  .textarea {
+    transition: none;
+  }
 }

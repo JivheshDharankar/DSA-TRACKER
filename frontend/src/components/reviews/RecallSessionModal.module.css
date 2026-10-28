@@ -1,317 +1,405 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 15, 29, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--space-md);
-  animation: fadeIn 0.2s ease-out;
-}
+/**
+ * DSA Tracker — Recall session styles (Phase 8)
+ * =============================================
+ * The recall workflow now renders inside the shared `Dialog` primitive (portal,
+ * `role="dialog"`, focus trap, Escape, body scroll lock, mobile bottom sheet), so this
+ * module only styles the session's own parts: the problem meta row, the compact SRS
+ * stepper slot, and the three steps (attempt → evaluate → result).
+ *
+ * All values come from `styles/tokens.css`.
+ *
+ * The four recall-quality cards are native `<button>`s rather than the `Button`
+ * primitive: a choice card is a multi-line, full-width, left-aligned control, and the
+ * primitive's single-line geometry (fixed height, centred single-line label, ellipsis)
+ * cannot express that. They are still real buttons, they still use the tokenised focus
+ * ring, and their selected state is announced through the button's own text.
+ */
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.modal {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  width: 100%;
-  max-width: 650px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-modal);
+.content {
   display: flex;
   flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
 }
 
-.header {
-  padding: var(--space-lg) var(--space-xl);
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-}
-
-.titleArea {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sNoBadge {
+/* The dialog description doubles as the section/LeetCode identifier line. */
+.sectionTag {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--accent-cyan);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-link);
 }
 
-.title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.01em;
-}
-
-.closeBtn {
-  color: var(--text-muted);
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-}
-
-.closeBtn:hover {
-  color: var(--text-main);
-  background: var(--bg-surface-elevated);
-}
-
-.body {
-  padding: var(--space-xl);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
+/* --------------------------------------------------------------- meta row */
 
 .metaRow {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
   flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.topicChip {
+  padding: 2px var(--space-2);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
 }
 
 .linkGroup {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
   flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
 }
 
-.linkBtn {
+.link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: var(--radius-sm);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
-.collegeLink {
-  background: rgba(168, 85, 247, 0.12);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+.link:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
 }
 
-.collegeLink:hover {
-  background: rgba(168, 85, 247, 0.22);
-  color: #f3e8ff;
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.leetcodeLink {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+.stepperWrap {
+  min-width: 0;
 }
 
-.leetcodeLink:hover {
-  background: rgba(245, 158, 11, 0.22);
-  color: #fef08a;
-}
+/* ----------------------------------------------------------------- attempt */
 
-.instructionBox {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
+.attemptBox {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: var(--space-md);
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
 }
 
 .timer {
+  color: var(--color-accent-hover);
   font-family: var(--font-mono);
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: var(--accent-cyan);
-  letter-spacing: 0.05em;
+  font-size: var(--font-size-8);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: var(--font-variant-numeric);
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--line-height-tight);
+}
+
+.instruction {
+  max-width: 46ch;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-body);
+}
+
+.coldSolve {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.checkbox {
+  width: var(--space-4);
+  height: var(--space-4);
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .coldSolveLabel {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
   cursor: pointer;
 }
 
-.finishBtn {
-  width: 100%;
-  padding: 12px 24px;
-  border-radius: var(--radius-md);
-  background: var(--accent-cyan);
-  color: var(--text-inverse);
-  font-size: 0.95rem;
-  font-weight: 700;
+/* ---------------------------------------------------------------- evaluate */
+
+.evaluate {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-glow);
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
-.finishBtn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.1);
+.evaluateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
+
+.evaluateTitle {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+}
+
+.notesBox {
+  padding: var(--space-4);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-loose);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notesEmpty {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.submitting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+}
+
+.spinner {
+  color: var(--color-accent-hover);
+  animation: recallSpin calc(var(--duration-slow) * 3) linear infinite;
+}
+
+@keyframes recallSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------------------ recall cards */
 
 .recallGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-md);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
 }
 
 .recallCard {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  gap: 6px;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-4);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
-.recallCard:hover {
-  transform: translateY(-2px);
+.recallCard:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.recallCardEasy:hover {
-  border-color: var(--color-easy);
-  background: rgba(34, 197, 94, 0.08);
-}
-
-.recallCardStruggled:hover {
-  border-color: var(--color-medium);
-  background: rgba(245, 158, 11, 0.08);
-}
-
-.recallCardHint:hover {
-  border-color: var(--accent-cyan);
-  background: rgba(56, 189, 248, 0.08);
-}
-
-.recallCardForgot:hover {
-  border-color: var(--color-hard);
-  background: rgba(239, 68, 68, 0.08);
-}
-
+/* The title carries the tone; the hover border repeats it, so the meaning never
+   depends on colour alone (the word EASY/STRUGGLED/HINT/FORGOT is always present). */
 .recallTitle {
   font-family: var(--font-mono);
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-caps);
 }
 
 .recallDesc {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  line-height: 1.4;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
+  line-height: var(--line-height-body);
 }
 
-.notesToggleBtn {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 8px 14px;
-  color: var(--accent-cyan);
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
+.recallEasy .recallTitle {
+  color: var(--color-success);
 }
 
-.notesToggleBtn:hover {
-  border-color: var(--accent-cyan);
+.recallEasy:hover,
+.recallEasy:focus-visible {
+  border-color: var(--color-success);
 }
 
-.notesBox {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-  white-space: pre-wrap;
+.recallStruggled .recallTitle {
+  color: var(--color-warning);
 }
 
-.resultContainer {
+.recallStruggled:hover,
+.recallStruggled:focus-visible {
+  border-color: var(--color-warning);
+}
+
+.recallHint .recallTitle {
+  color: var(--color-info);
+}
+
+.recallHint:hover,
+.recallHint:focus-visible {
+  border-color: var(--color-info);
+}
+
+.recallForgot .recallTitle {
+  color: var(--color-danger);
+}
+
+.recallForgot:hover,
+.recallForgot:focus-visible {
+  border-color: var(--color-danger);
+}
+
+/* ------------------------------------------------------------------ result */
+
+.result {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
   align-items: center;
   text-align: center;
+  gap: var(--space-5);
 }
 
 .resultHeader {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-2);
+}
+
+.resultIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  background: var(--color-success-subtle);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+  color: var(--color-success);
+}
+
+.resultTitle {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.resultBadges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .resultGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-md);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
   width: 100%;
+  margin: 0;
 }
 
 .resultItem {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
   text-align: left;
 }
 
 .resultLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  color: var(--text-dim);
 }
 
 .resultValue {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: var(--font-variant-numeric);
+}
+
+.resultValueAccent {
+  color: var(--color-text-link);
+}
+
+/* ------------------------------------------------------------------ mobile */
+
+@media (max-width: 639px) {
+  .attemptBox {
+    padding: var(--space-4);
+  }
+
+  .timer {
+    font-size: var(--font-size-7);
+  }
+
+  .recallGrid,
+  .resultGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .linkGroup {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recallCard,
+  .link {
+    transition: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
 }

@@ -1,207 +1,180 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Code2,
-  GraduationCap,
-  Laptop,
-  Flame,
-  CheckCircle2,
-  ArrowUpRight,
-} from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
+import { Card } from '../ui/Card';
+import { Progress, ProgressTone } from '../ui/Progress';
 import { DashboardData } from '../../types';
 import styles from './QuickStatsGrid.module.css';
 
-interface QuickStatsGridProps {
+/**
+ * DSA Tracker — Metric strip + progress panel (Phase 5)
+ * ====================================================
+ * This file keeps its original name (Phase 5 restructures the existing five dashboard
+ * components in place rather than renaming files), and now hosts the two
+ * responsibilities the old "quick stats" grid carried:
+ *
+ *   MetricStrip    — the full-width row of headline numbers (area 3)
+ *   ProgressPanel  — completion toward the goal plus the College/Personal splits
+ *                    (area 4)
+ *
+ * Splitting the five legacy stat cards into "numbers" and "progress" is what lets the
+ * strip stay dense on one row while the splittable measures get bars. Every value and
+ * every percentage formula is the one the old cards used — `Problem` counts, the
+ * `locked`/`unlocked` nullish fallbacks, `Math.round((solved / total) * 100)` — and the
+ * `/college-dsa` and `/personal-dsa` links are preserved.
+ */
+
+const percentOf = (value: number, total: number): number =>
+  total > 0 ? Math.round((value / total) * 100) : 0;
+
+interface MetricStripProps {
   problemStats: DashboardData['problemStats'];
   reviewStats: DashboardData['reviewStats'];
   streak: DashboardData['streak'];
 }
 
-export const QuickStatsGrid: React.FC<QuickStatsGridProps> = ({
+/** Area 3 — headline numbers only, no bars, so six tiles fit one row at >=1280. */
+export const MetricStrip: React.FC<MetricStripProps> = ({
   problemStats,
   reviewStats,
   streak,
 }) => {
-  const totalSolvedPct =
-    problemStats.total > 0
-      ? Math.round((problemStats.solved / problemStats.total) * 100)
-      : 0;
+  const totalSolvedPct = percentOf(problemStats.solved, problemStats.total);
 
-  const collegeSolvedPct =
-    problemStats.college.total > 0
-      ? Math.round((problemStats.college.solved / problemStats.college.total) * 100)
-      : 0;
-
-  const personalSolvedPct =
-    problemStats.personal.total > 0
-      ? Math.round((problemStats.personal.solved / problemStats.personal.total) * 100)
-      : 0;
+  const metrics: Array<{
+    key: string;
+    label: string;
+    value: React.ReactNode;
+    meta: string;
+  }> = [
+    {
+      key: 'total',
+      label: 'Total Problems',
+      value: problemStats.total,
+      meta: `${problemStats.solved} solved`,
+    },
+    {
+      key: 'solved',
+      label: 'Solved',
+      value: problemStats.solved,
+      meta: `${totalSolvedPct}% of ${problemStats.total}`,
+    },
+    {
+      key: 'attempted',
+      label: 'Attempted',
+      value: problemStats.attempted,
+      meta: `${problemStats.notStarted} not started`,
+    },
+    {
+      key: 'locked',
+      label: 'Locked',
+      value: problemStats.locked ?? 0,
+      meta: `${problemStats.unlocked ?? 0} unlocked`,
+    },
+    {
+      key: 'reviews',
+      label: 'Reviews',
+      value: reviewStats.totalReviews,
+      meta: `${reviewStats.successRate}% accuracy · ${reviewStats.independentColdSolves} cold solves`,
+    },
+    {
+      key: 'streak',
+      label: 'Active Streak',
+      value: (
+        <>
+          {streak.current}
+          <span className={styles.metricUnit}>days</span>
+        </>
+      ),
+      meta: `longest ${streak.longest} days`,
+    },
+  ];
 
   return (
-    <div className={styles.grid}>
-      {/* 1. Total Problems */}
-      <div className={styles.statCard}>
-        <div>
-          <div className={styles.cardTop}>
-            <span className={styles.label}>Total Problems</span>
-            <div className={styles.iconWrapper}>
-              <Code2 size={16} color="var(--accent-cyan)" />
-            </div>
-          </div>
-          <div className={styles.value}>{problemStats.total}</div>
-          <div className={styles.subValue}>
-            <strong className={styles.highlightValue}>{problemStats.solved}</strong> solved (
-            {totalSolvedPct}%)
-          </div>
-          <div className={styles.progressTrack}>
-            <div className={styles.progressFill} style={{ width: `${totalSolvedPct}%` }} />
-          </div>
-        </div>
-        <div className={styles.footer}>
-          <div className={styles.pillsRow} style={{ flexWrap: 'wrap', gap: '4px' }}>
-            <span className={`${styles.pill} ${styles.pillSolved}`}>
-              {problemStats.solved} Solved
-            </span>
-            <span className={`${styles.pill} ${styles.pillAttempted}`}>
-              {problemStats.attempted} Att.
-            </span>
-            <span className={`${styles.pill} ${styles.pillNotStarted}`}>
-              {problemStats.notStarted} New
-            </span>
-            <span
-              className={styles.pill}
-              style={{
-                background: 'rgba(245, 158, 11, 0.15)',
-                color: '#fbbf24',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-              }}
-              title="Locked Mastery Count"
-            >
-              {problemStats.locked ?? 0} Locked
-            </span>
-            <span
-              className={styles.pill}
-              style={{
-                background: 'rgba(148, 163, 184, 0.1)',
-                color: '#94a3b8',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-              }}
-              title="Unlocked Problems Count"
-            >
-              {problemStats.unlocked ?? 0} Unlocked
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. College DSA Split */}
-      <div className={styles.statCard}>
-        <div>
-          <div className={styles.cardTop}>
-            <span className={styles.label}>College DSA</span>
-            <div className={styles.iconWrapper}>
-              <GraduationCap size={16} color="#38bdf8" />
-            </div>
-          </div>
-          <div className={styles.value}>{problemStats.college.total}</div>
-          <div className={styles.subValue}>
-            <strong className={styles.highlightValue}>{problemStats.college.solved}</strong> solved (
-            {collegeSolvedPct}%)
-          </div>
-          <div className={styles.progressTrack}>
-            <div className={styles.collegeFill} style={{ width: `${collegeSolvedPct}%` }} />
-          </div>
-        </div>
-        <div className={styles.footer}>
-          <span>Assignments & Lab Curriculum</span>
-          <Link to="/college-dsa" className={styles.linkBtn}>
-            <span>View</span>
-            <ArrowUpRight size={13} />
-          </Link>
-        </div>
-      </div>
-
-      {/* 3. Personal DSA Split */}
-      <div className={styles.statCard}>
-        <div>
-          <div className={styles.cardTop}>
-            <span className={styles.label}>Personal DSA</span>
-            <div className={styles.iconWrapper}>
-              <Laptop size={16} color="var(--accent-violet)" />
-            </div>
-          </div>
-          <div className={styles.value}>{problemStats.personal.total}</div>
-          <div className={styles.subValue}>
-            <strong className={styles.highlightValue}>{problemStats.personal.solved}</strong> solved (
-            {personalSolvedPct}%)
-          </div>
-          <div className={styles.progressTrack}>
-            <div className={styles.personalFill} style={{ width: `${personalSolvedPct}%` }} />
-          </div>
-        </div>
-        <div className={styles.footer}>
-          <span>Interview Prep & LeetCode</span>
-          <Link to="/personal-dsa" className={styles.linkBtn}>
-            <span>View</span>
-            <ArrowUpRight size={13} />
-          </Link>
-        </div>
-      </div>
-
-      {/* 4. Total Reviews & Cold Solves */}
-      <div className={styles.statCard}>
-        <div>
-          <div className={styles.cardTop}>
-            <span className={styles.label}>Total Reviews</span>
-            <div className={styles.iconWrapper}>
-              <CheckCircle2 size={16} color="#34d399" />
-            </div>
-          </div>
-          <div className={styles.value}>{reviewStats.totalReviews}</div>
-          <div className={styles.subValue}>
-            <strong className={styles.highlightValue}>{reviewStats.independentColdSolves}</strong>{' '}
-            cold solves ({reviewStats.successRate}% accuracy)
-          </div>
-          <div className={styles.progressTrack}>
-            <div
-              className={styles.progressFill}
-              style={{
-                width: `${reviewStats.successRate}%`,
-                background: 'linear-gradient(90deg, #10b981, #34d399)',
-              }}
-            />
-          </div>
-        </div>
-        <div className={styles.footer}>
-          <span>
-            {reviewStats.easy} Easy · {reviewStats.struggled} Struggled
-          </span>
-          <span style={{ color: 'var(--text-dim)' }}>Lifetime</span>
-        </div>
-      </div>
-
-      {/* 5. Practice Streak */}
-      <div className={styles.statCard}>
-        <div>
-          <div className={styles.cardTop}>
-            <span className={styles.label}>Active Streak</span>
-            <div className={styles.iconWrapper}>
-              <Flame size={16} color="#f59e0b" />
-            </div>
-          </div>
-          <div className={styles.value} style={{ color: '#fbbf24' }}>
-            {streak.current} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>days</span>
-          </div>
-          <div className={styles.subValue}>
-            Longest recorded streak: <strong style={{ color: 'var(--text-main)' }}>{streak.longest} days</strong>
-          </div>
-        </div>
-        <div className={styles.footer}>
-          <span>
-            {streak.current > 0 ? '🔥 Streak active today!' : 'Review a problem to ignite streak'}
-          </span>
-        </div>
-      </div>
+    <div className={styles.strip}>
+      {metrics.map((metric) => (
+        <Card key={metric.key} variant="compact" className={styles.metric}>
+          <span className={styles.metricLabel}>{metric.label}</span>
+          <span className={styles.metricValue}>{metric.value}</span>
+          <span className={styles.metricMeta}>{metric.meta}</span>
+        </Card>
+      ))}
     </div>
+  );
+};
+
+interface ProgressRowProps {
+  label: string;
+  summary: string;
+  value: number;
+  max: number;
+  tone: ProgressTone;
+  link?: { to: string; label: string };
+}
+
+const ProgressRow: React.FC<ProgressRowProps> = ({
+  label,
+  summary,
+  value,
+  max,
+  tone,
+  link,
+}) => (
+  <div className={styles.progressRow}>
+    <div className={styles.progressRowHead}>
+      <span className={styles.progressRowLabel}>{label}</span>
+      {link ? (
+        <Link to={link.to} className={styles.viewLink} aria-label={link.label}>
+          <span>View</span>
+          <ArrowUpRight size={13} aria-hidden="true" />
+        </Link>
+      ) : null}
+    </div>
+
+    <Progress value={value} max={max} label={`${label} solved`} tone={tone} size="sm" />
+    <span className={styles.progressRowSummary}>{summary}</span>
+  </div>
+);
+
+interface ProgressPanelProps {
+  problemStats: DashboardData['problemStats'];
+}
+
+/** Area 4 — the same counts as the old split cards, expressed as completion. */
+export const ProgressPanel: React.FC<ProgressPanelProps> = ({ problemStats }) => {
+  const totalSolvedPct = percentOf(problemStats.solved, problemStats.total);
+  const collegeSolvedPct = percentOf(problemStats.college.solved, problemStats.college.total);
+  const personalSolvedPct = percentOf(problemStats.personal.solved, problemStats.personal.total);
+
+  return (
+    <Card className={styles.progressCard}>
+      <h2 className={styles.panelTitle}>Completion &amp; Section Progress</h2>
+
+      <ProgressRow
+        label="Overall"
+        summary={`${problemStats.solved} of ${problemStats.total} solved (${totalSolvedPct}%)`}
+        value={problemStats.solved}
+        max={problemStats.total}
+        tone="accent"
+      />
+
+      <ProgressRow
+        label="College DSA"
+        summary={`${problemStats.college.solved} of ${problemStats.college.total} solved (${collegeSolvedPct}%)`}
+        value={problemStats.college.solved}
+        max={problemStats.college.total}
+        tone="accent"
+        link={{ to: '/college-dsa', label: 'View College DSA problems' }}
+      />
+
+      <ProgressRow
+        label="Personal DSA"
+        summary={`${problemStats.personal.solved} of ${problemStats.personal.total} solved (${personalSolvedPct}%)`}
+        value={problemStats.personal.solved}
+        max={problemStats.personal.total}
+        tone="accent"
+        link={{ to: '/personal-dsa', label: 'View Personal DSA problems' }}
+      />
+    </Card>
   );
 };

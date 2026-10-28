@@ -1,0 +1,245 @@
+/**
+ * DSA Tracker — Design Tokens (Phase 0 foundation)
+ * ================================================
+ * Single source of truth for the redesign's visual language.
+ *
+ * Two layers:
+ *   1. `--palette-*`  raw values. Never reference these directly in components.
+ *   2. `--color-*`, `--font-*`, `--space-*`, `--radius-*`, `--shadow-*`, `--duration-*`,
+ *      `--layout-*`, `--z-*`  semantic tokens. Components use ONLY this layer.
+ *
+ * Migration note (important)
+ * --------------------------
+ * `variables.css` still owns the legacy token names (--bg-app, --accent-cyan, --radius-md,
+ * --space-lg, …) and they are intentionally left untouched, so the existing 37 CSS modules
+ * keep rendering exactly as they do today. Nothing in this file overrides a legacy name.
+ * Modules adopt these tokens one file at a time during later phases, at which point the
+ * visual change is reviewed per screen.
+ *
+ * Breakpoints (documented here, implemented in `breakpoints.ts`)
+ * -------------------------------------------------------------
+ *   sm 640 · md 768 · lg 1024 · xl 1280 · xxl 1536
+ * CSS custom properties cannot be used inside `@media`, so the values live in
+ * `breakpoints.ts` for JS consumers and are repeated here for CSS authors:
+ *   mobile  : max-width 767px   (bottom nav + drawer)
+ *   tablet  : 768–1023px        (icon rail)
+ *   desktop : min-width 1024px  (full sidebar)
+ *   wide    : min-width 1280px  (3-column layouts)
+ */
+
+:root {
+  /* ============================================================
+   * 1. Palette primitives (raw values)
+   * ============================================================ */
+
+  /* Neutrals — layered charcoal/navy */
+  --palette-slate-990: #070a10;
+  --palette-slate-950: #0a0d14;
+  --palette-slate-900: #111725;
+  --palette-slate-850: #171f31;
+  --palette-slate-800: #1d2639;
+  --palette-slate-700: #27324a;
+  --palette-slate-400: #94a3b8;
+  --palette-slate-300: #a3b0c2;
+  --palette-slate-250: #c7d2de;
+  --palette-slate-100: #f1f5f9;
+
+  /* Accents — restrained indigo, violet reserved for data */
+  --palette-indigo-400: #818cf8;
+  --palette-indigo-500: #6366f1;
+  --palette-indigo-600: #4f46e5;
+  --palette-violet-500: #8b5cf6;
+
+  /* Status hues */
+  --palette-emerald-500: #10b981;
+  --palette-emerald-400: #34d399;
+  --palette-amber-500: #f59e0b;
+  --palette-red-500: #ef4444;
+  --palette-sky-400: #38bdf8;
+
+  /* ============================================================
+   * 2. Surfaces
+   * ============================================================ */
+  --color-bg-app: var(--palette-slate-950);
+  --color-bg-sunken: var(--palette-slate-990);
+  --color-bg-surface: var(--palette-slate-900);
+  --color-bg-raised: var(--palette-slate-850);
+  --color-bg-hover: var(--palette-slate-800);
+  --color-bg-active: var(--palette-slate-700);
+  --color-bg-overlay: rgba(7, 10, 16, 0.72);
+
+  /* ============================================================
+   * 3. Borders
+   * ============================================================ */
+  --color-border-hairline: rgba(148, 163, 184, 0.1);
+  --color-border-strong: rgba(148, 163, 184, 0.2);
+  --color-border-accent: rgba(99, 102, 241, 0.45);
+  --border-width-hairline: 1px;
+  --border-width-thick: 2px;
+
+  /* ============================================================
+   * 4. Text
+   * ============================================================ */
+  --color-text-primary: var(--palette-slate-100);
+  --color-text-secondary: var(--palette-slate-300);
+  --color-text-tertiary: #6b7a90;
+  --color-text-inverse: #0b0f17;
+  --color-text-link: var(--palette-indigo-400);
+
+  /* ============================================================
+   * 5. Accent
+   * ============================================================ */
+  --color-accent: var(--palette-indigo-500);
+  --color-accent-hover: var(--palette-indigo-400);
+  --color-accent-strong: var(--palette-indigo-600);
+  --color-accent-subtle: rgba(99, 102, 241, 0.14);
+  --color-accent-2: var(--palette-violet-500);
+  --color-accent-2-subtle: rgba(139, 92, 246, 0.14);
+
+  /* ============================================================
+   * 6. Feedback + focus
+   * ============================================================ */
+  --color-success: var(--palette-emerald-500);
+  --color-success-subtle: rgba(16, 185, 129, 0.14);
+  --color-warning: var(--palette-amber-500);
+  --color-warning-subtle: rgba(245, 158, 11, 0.14);
+  --color-danger: var(--palette-red-500);
+  --color-danger-subtle: rgba(239, 68, 68, 0.14);
+  --color-info: var(--palette-sky-400);
+  --color-info-subtle: rgba(56, 189, 248, 0.14);
+  --color-focus: var(--palette-indigo-400);
+
+  /* ============================================================
+   * 7. Data colours (meaning only — never decorative chrome)
+   * ============================================================ */
+  --color-difficulty-easy: var(--palette-emerald-500);
+  --color-difficulty-easy-subtle: rgba(16, 185, 129, 0.14);
+  --color-difficulty-medium: var(--palette-amber-500);
+  --color-difficulty-medium-subtle: rgba(245, 158, 11, 0.14);
+  --color-difficulty-hard: var(--palette-red-500);
+  --color-difficulty-hard-subtle: rgba(239, 68, 68, 0.14);
+
+  --color-retention-learning: var(--palette-slate-400);
+  --color-retention-familiar: var(--palette-sky-400);
+  --color-retention-independent: var(--palette-indigo-500);
+  --color-retention-strong: var(--palette-violet-500);
+  --color-retention-locked: #eab308;
+
+  --color-mastery-learning: var(--palette-slate-400);
+  --color-mastery-familiar: var(--palette-sky-400);
+  --color-mastery-independent: var(--palette-indigo-500);
+  --color-mastery-strong: var(--palette-violet-500);
+
+  /* ============================================================
+   * 8. Typography
+   * NOTE: --font-sans (Inter) and --font-mono (JetBrains Mono) already exist in
+   * variables.css and are already loaded in index.html — reuse them, don't duplicate.
+   * ============================================================ */
+  --font-size-0: 0.6875rem; /* 11px — only for the 5-up mobile bottom-nav labels at ≤359px */
+  --font-size-1: 0.75rem; /* 12px — meta, labels, code */
+  --font-size-2: 0.8125rem; /* 13px — dense UI text */
+  --font-size-3: 0.875rem; /* 14px — body default */
+  --font-size-4: 1rem; /* 16px — emphasised body */
+  --font-size-5: 1.125rem; /* 18px — section titles */
+  --font-size-6: 1.375rem; /* 22px — page titles */
+  --font-size-7: 1.75rem; /* 28px — display */
+  --font-size-8: 2.125rem; /* 34px — hero/metric */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.35;
+  --line-height-body: 1.45;
+  --line-height-loose: 1.6;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-caps: 0.06em;
+
+  /* Use on tabular data: stage/interval numbers, timers, metrics */
+  --font-variant-numeric: tabular-nums;
+
+  /* ============================================================
+   * 9. Spacing — 4px grid
+   * ============================================================ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ============================================================
+   * 10. Radius
+   * ============================================================ */
+  --radius-1: 4px; /* badges, inputs */
+  --radius-2: 6px; /* small buttons */
+  --radius-3: 8px; /* buttons, cards */
+  --radius-4: 12px; /* cards, dialogs */
+  --radius-5: 16px; /* large surfaces */
+  --radius-pill: 999px;
+
+  /* Component geometry (heights in px, on the 4px grid) */
+  --control-height-sm: 32px;
+  --control-height-md: 40px;
+  --control-height-lg: 44px;
+
+  /* ============================================================
+   * 11. Shadows / elevation
+   * ============================================================ */
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-2: 0 4px 12px -2px rgba(0, 0, 0, 0.36);
+  --shadow-3: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+
+  /* ============================================================
+   * 12. Focus
+   * ============================================================ */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--color-focus);
+  --focus-ring: 0 0 0 var(--focus-ring-offset) var(--color-bg-app),
+    0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+
+  /* ============================================================
+   * 13. Motion
+   * Reduced-motion handling is applied per component in a later phase
+   * (`@media (prefers-reduced-motion: reduce)`), not globally here.
+   * ============================================================ */
+  --duration-instant: 80ms;
+  --duration-fast: 140ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ============================================================
+   * 14. Layout
+   * ============================================================ */
+  --layout-sidebar: 240px;
+  --layout-rail: 64px;
+  --layout-topbar: 52px;
+  --layout-bottomnav: 56px;
+  --layout-content-max: 1200px;
+  --layout-wide-max: 1400px;
+  --layout-gutter: 24px;
+  --layout-gutter-mobile: 16px;
+  --layout-touch-target: 44px;
+
+  /* ============================================================
+   * 15. Z-index scale
+   * ============================================================ */
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-drawer: 200;
+  --z-dialog: 300;
+  --z-toast: 400;
+  --z-tooltip: 500;
+}

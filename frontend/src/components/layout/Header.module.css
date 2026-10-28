@@ -1,149 +1,216 @@
+/**
+ * DSA Tracker — Topbar styles (Phase 3)
+ * =====================================
+ * 52px (`--layout-topbar`) in every mode. No glassmorphism: the previous
+ * `--bg-glass` + `backdrop-filter: blur(12px)` treatment is replaced by a solid
+ * `--color-bg-surface` with a hairline bottom border.
+ *
+ * Mobile (<768px) shows the brand mark (the sidebar is gone), the page title and a
+ * compact status; the account pill moves into the "More" drawer.
+ */
+
 .header {
-  height: 64px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--space-xl);
+  gap: var(--space-3);
+  flex-shrink: 0;
+  height: var(--layout-topbar);
+  padding: 0 var(--layout-gutter);
+  background: var(--color-bg-surface);
+  border-bottom: var(--border-width-hairline) solid var(--color-border-hairline);
   position: sticky;
   top: 0;
+  /* Shell chrome stays below the not-yet-migrated page overlays (z-index 50) so those
+     modals keep covering the topbar exactly as they do today; the token scale has no
+     step between `--z-base` and `--z-sticky`. Moves to `--z-sticky` when page overlays
+     migrate to the Phase 2 Dialog. Same value the header used before Phase 3. */
   z-index: 10;
+}
+
+/* Brand mark — mobile only (the sidebar carries the brand from 768px up). */
+.brand {
+  display: none;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.brandIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-2);
+  background: var(--color-accent-subtle);
+  color: var(--color-text-link);
 }
 
 .titleArea {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
+/* Stays an <h1>: the shell must not introduce an <h2>, because the end-to-end suite
+   asserts a single level-2 heading per page. */
 .title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-main);
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--line-height-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.actionsArea {
+.actions {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-3);
+  flex-shrink: 0;
+  min-width: 0;
 }
+
+/* ------------------------------------------------------------ health pill */
 
 .statusPill {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
-  font-size: 0.8rem;
-  font-weight: 500;
+  gap: var(--space-2);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-3);
+  background: var(--color-bg-app);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
 }
 
 .statusDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: background-color var(--transition-fast);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
 }
 
+/* State is also carried by the text, never by colour alone. No glow. */
 .statusConnected {
-  background-color: var(--color-easy);
-  box-shadow: 0 0 10px var(--color-easy);
+  background: var(--color-success);
 }
 
 .statusChecking {
-  background-color: var(--color-medium);
-  box-shadow: 0 0 10px var(--color-medium);
+  background: var(--color-warning);
 }
 
 .statusDisconnected {
-  background-color: var(--color-hard);
-  box-shadow: 0 0 10px var(--color-hard);
+  background: var(--color-danger);
+}
+
+/* Only the database detail is dropped on small screens; the state text stays visible. */
+.statusDetail {
+  color: var(--color-text-tertiary);
 }
 
 .refreshBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  transition: all var(--transition-fast);
+  width: var(--space-5);
+  height: var(--space-5);
+  margin-right: calc(var(--space-1) * -1);
+  border: none;
+  border-radius: var(--radius-2);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
-.refreshBtn:hover {
-  color: var(--text-main);
-  background: var(--bg-surface-elevated);
+.refreshBtn:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
 }
 
-.userProfilePill {
+.refreshBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------- account */
+
+.userPill {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: 4px 12px 4px 6px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
+  gap: var(--space-2);
+  padding: 0 var(--space-1) 0 0;
+  min-width: 0;
 }
 
 .userAvatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #fff;
+  flex-shrink: 0;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
 }
 
 .userName {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-main);
-  max-width: 140px;
-  white-space: nowrap;
+  max-width: 160px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.logoutBtn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
-  font-size: 0.75rem;
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  margin-left: var(--space-xs);
-  border-left: 1px solid var(--border-subtle);
+@media (max-width: 767px) {
+  .header {
+    gap: var(--space-2);
+    padding: 0 var(--layout-gutter-mobile);
+  }
+
+  .brand {
+    display: flex;
+  }
+
+  .statusPill {
+    gap: var(--space-1);
+    padding: 0 var(--space-2);
+  }
+
+  /* Database detail and the account actions move out of the tight mobile topbar; the
+     guest "Sign In" button and the signed-in account pill both live in the "More"
+     drawer. Without this the guest button leaves the page title truncated to a few
+     characters on a 360px screen. */
+  .statusDetail,
+  .userPill,
+  .signInAction {
+    display: none;
+  }
 }
 
-.logoutBtn:hover {
-  color: var(--color-hard);
-  background: var(--color-hard-bg);
-}
-
-.loginBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: var(--accent-cyan);
-  color: var(--text-inverse);
-  font-weight: 600;
-  font-size: 0.8rem;
-  border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
-}
-
-.loginBtn:hover {
-  filter: brightness(1.1);
+@media (prefers-reduced-motion: reduce) {
+  .refreshBtn {
+    transition: none;
+  }
 }

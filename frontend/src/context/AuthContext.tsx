@@ -34,23 +34,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [initializeAuth]);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
-    setIsLoading(true);
-    try {
-      const authenticatedUser = await loginUser(credentials);
-      setUser(authenticatedUser);
-    } finally {
-      setIsLoading(false);
-    }
+    const authenticatedUser = await loginUser(credentials);
+    setUser(authenticatedUser);
   };
 
   const register = async (credentials: RegisterCredentials): Promise<void> => {
-    setIsLoading(true);
-    try {
-      const newUser = await registerUser(credentials);
-      setUser(newUser);
-    } finally {
-      setIsLoading(false);
-    }
+    const newUser = await registerUser(credentials);
+    setUser(newUser);
   };
 
   const logout = async (): Promise<void> => {

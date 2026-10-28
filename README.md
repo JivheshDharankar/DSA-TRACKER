@@ -39,6 +39,7 @@
 | **Revision History** | Immutable, append-only history capturing intervals, lateness, cold-solve flags, and time spent. | Verified Complete |
 | **JWT Cookie Authentication** | Stateless JWT stored in HTTP-only, SameSite cookies with bcrypt password hashing. | Verified Complete |
 | **Adversarial Security Hardening** | Dual rate limiting, IDOR isolation, strict Zod schemas, ReDoS protection, and URL sanitization. | Verified Complete |
+| **Gemini AI Study Assistant** | Five explicit DSA actions on Problem Detail, server-side only, structured + validated output, suggestions never mutate mastery or SRS. | Implemented (optional key) |
 
 ---
 
@@ -339,6 +340,18 @@ The Command Center Dashboard (`GET /api/v1/dashboard`) operates as a **unified d
   - Auth: Required (`requireAuth`)
   - Returns: Current authenticated user profile (`id`, `name`, `email`).
 
+### AI Assistance (`/api/v1/ai`) — optional
+- `GET /api/v1/ai/status`
+  - Auth: Required
+  - Returns: `{ enabled, model, features }`. Reports whether a key is configured; never returns the key.
+- `POST /api/v1/ai/problems/:problemId/generate`
+  - Auth: Required (owns the problem)
+  - Body: `{ feature: 'explain' | 'hint' | 'complexity' | 'recall' | 'revision-notes', level?: 1|2|3, code?: string }`
+  - `level` is accepted only for `hint`; `code` only for `complexity`. Unknown fields are rejected.
+  - Returns: `{ feature, model, cached, content, meta }` with schema-validated `content`.
+  - Never writes to the database. Mastery, SRS stage, due date, status and difficulty are out of reach.
+  - Errors: `AI_NOT_CONFIGURED` (503), `AI_QUOTA_EXHAUSTED` (503), `AI_TIMEOUT` (504), `AI_UNAVAILABLE` (502/503), `AI_INVALID_RESPONSE` (502), `AI_RATE_LIMITED` (429).
+
 ### Problem Management (`/api/v1/problems`)
 - `POST /api/v1/problems`
   - Auth: Required
@@ -444,6 +457,21 @@ JWT_EXPIRES_IN=7d
 # Authentication Rate Limiting
 AUTH_RATE_LIMIT_WINDOW_MS=900000
 AUTH_RATE_LIMIT_MAX=20
+```
+
+Optional Gemini block (AI stays disabled and the tracker works normally when it is absent):
+```env
+# Server-side only. Never exposed to the browser.
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.8-flash
+AI_REQUEST_TIMEOUT_MS=30000
+AI_MAX_OUTPUT_TOKENS=2400
+AI_USER_RATE_LIMIT_WINDOW_MS=600000
+AI_USER_RATE_LIMIT_MAX=20
+AI_GLOBAL_RATE_LIMIT_WINDOW_MS=600000
+AI_GLOBAL_RATE_LIMIT_MAX=150
+AI_CACHE_TTL_MS=21600000
+AI_CACHE_MAX_ENTRIES=500
 ```
 
 ### Frontend (`frontend/.env.example`)
@@ -572,3 +600,35 @@ The application is structured for independent service deployment:
 3. **Legacy Schema Compatibility Mapping**: To preserve backward compatibility with legacy documents that used a single `problemLink`, the `Problem` schema's JSON transform dynamically maps historical links containing `leetcode.com` to `leetcodeLink` and others to `collegeLink` without performing destructive database mutations.
 4. **Terminal SRS Stage**: Stage 9 (365 days) is the terminal cap for reviews. Problems that have reached Stage 9 continue to be scheduled at 365-day intervals upon subsequent successful recall.
 5. **Zero Fictitious Features**: Feature suggestions from earlier roadmaps (such as an unbuilt "Random Recall Chamber") have been removed from documentation to ensure 100% agreement between documented capabilities and the verified codebase.
+
+---
+
+## 16. AI Study Assistant (Phase 2B, optional)
+
+A focused DSA assistance layer on **Problem Detail**. It is not a chatbot: five named actions, each producing one predictable, schema-validated artifact.
+
+| Action | What it produces |
+| :--- | :--- |
+| **Explain Problem** | Summary, observations, constraints, intuition, ordered approach, why it works, complexity, edge cases. No full solution. |
+| **Give me a Hint** | Progressive levels 1→3: conceptual nudge → pattern direction → concrete algorithmic guidance. Code blocks are rejected. |
+| **Analyze Complexity** | Time/space with reasoning, bottlenecks and caveats. Analyses the student's own saved code when supplied, and says which subject it analysed. |
+| **Generate Recall Questions** | 5–7 questions across core idea, pattern, correctness, edge cases, complexity and one "what would change if…", each with a collapsible model answer. |
+| **Create Revision Notes** | Trigger, key insight, algorithm skeleton, edge cases, complexity, common mistake, one recall question — editable before an explicit save. |
+
+### Boundary and safety
+
+- **Server-side only.** The browser calls `/api/v1/ai/*`; `GEMINI_API_KEY` never leaves the backend.
+- **AI never mutates tracker state.** The AI service is read-only over `Problem`. It cannot set mastery, advance a stage, change a due date, mark a problem solved, or change difficulty/pattern. The single write in the UI is an explicit "Save to problem notes", which only appends to `notes`.
+- **Structured output, validated twice.** Every feature has a JSON schema sent as a generation constraint *and* a Zod schema the backend validates before returning. Invalid output gets one constrained repair attempt, then a safe error — never partial or unvalidated content.
+- **Cost protection.** No paid fallback and no model downgrade: if the free tier is exhausted the API returns `AI_QUOTA_EXHAUSTED` with a message that the tracker remains fully usable. The SDK's own retries are disabled; the provider performs at most one bounded retry.
+- **Rate limits.** Per-user and global fixed-window limits are application-level only and make no claim about Google's actual quota.
+- **Privacy.** Generic actions send the problem title, topic, difficulty and source, plus LeetCode identity when present. `complexity` may additionally send the student's saved notes/code, and `revision-notes` may send existing notes — both disclosed in the panel. No email, name, JWT, cookie or database id is ever placed in a prompt. `store: false` keeps interactions out of Google's interaction store.
+- **Caching.** In-process TTL cache keyed by prompt version, model, feature, level, context and scope. Generic explanations of the same public LeetCode problem may be shared between users; anything using private notes or code is scoped to `user:<id>` and never shared.
+
+### Implementation
+
+- SDK: **`@google/genai`** (official Google GenAI SDK), **Interactions API** (`client.interactions.create`).
+- Model: configured through **`GEMINI_MODEL`** (default `gemini-3.8-flash`, a stable Flash-class model chosen for reasoning + structured output on the free tier).
+- Provider boundary: `backend/src/services/ai/gemini.provider.ts` implements `AiProvider`; `ai.service.ts` owns ownership checks, context minimisation, caching, limits and validation.
+- Live quality harness: `AI_QUALITY_LIVE=1 GEMINI_API_KEY=… npx vitest run tests/aiQualitySet.test.ts` (Two Sum, Longest Substring, Number of Islands, Median of Two Sorted Arrays, Invert Binary Tree, Climbing Stairs, Word Break).
+- AI limitations specific to this phase: the model must be available to the project's key; the cache and limiters are per-process (a multi-instance deployment would need a shared store); and without a key the panel intentionally shows a "not configured" state rather than failing requests.

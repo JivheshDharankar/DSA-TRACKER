@@ -1,0 +1,125 @@
+/**
+ * DSA Tracker — Skeleton primitive styles (Phase 2)
+ * One slow opacity pulse built from the motion tokens, disabled under reduced motion.
+ * All values come from `styles/tokens.css`.
+ */
+
+.shape {
+  display: block;
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-1);
+  animation: skeletonPulse calc(var(--duration-slow) * 4) var(--ease-standard) infinite;
+  flex-shrink: 0;
+}
+
+.block {
+  width: 100%;
+  height: var(--space-4);
+}
+
+.circle {
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-pill);
+}
+
+/* ------------------------------------------------------------------- text */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.textLine {
+  width: 100%;
+  height: var(--space-3);
+}
+
+.textLineLast {
+  width: 60%;
+}
+
+/* -------------------------------------------------------------------- row */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  height: calc(var(--control-height-md) + var(--space-1));
+}
+
+.cell {
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--space-3);
+}
+
+/* ------------------------------------------------------------------- card */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+}
+
+.cardTitle {
+  width: 40%;
+  height: var(--space-4);
+}
+
+/* ------------------------------------------------------------------ table */
+
+.table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+}
+
+.tableHeader,
+.tableRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-2) 0;
+}
+
+.tableHeader {
+  border-bottom: var(--border-width-hairline) solid var(--color-border-hairline);
+}
+
+.tableHeader .cell {
+  height: var(--space-2);
+}
+
+.tableHeader .shape {
+  background: var(--color-bg-active);
+}
+
+@keyframes skeletonPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shape {
+    animation: none;
+  }
+}

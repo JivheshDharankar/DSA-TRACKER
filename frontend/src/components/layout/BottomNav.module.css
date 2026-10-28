@@ -1,0 +1,102 @@
+/**
+ * DSA Tracker — Mobile bottom navigation styles (Phase 3)
+ * ======================================================
+ * Fixed 56px bar (`--layout-bottomnav`) with safe-area padding. Every tab is at least
+ * `--layout-touch-target` (44px) tall. All colours come from `styles/tokens.css`.
+ */
+
+.bottomNav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  height: calc(var(--layout-bottomnav) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--color-bg-surface);
+  border-top: var(--border-width-hairline) solid var(--color-border-hairline);
+  /* Shell chrome stays below the not-yet-migrated page overlays (z-index 50) so those
+     modals keep covering the shell exactly as they do today; the token scale has no
+     step between `--z-base` and `--z-sticky`. Moves to `--z-sticky` when page overlays
+     migrate to the Phase 2 Dialog. */
+  z-index: 10;
+}
+
+.tab {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--layout-touch-target);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-1) 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--color-text-tertiary);
+  font-family: inherit;
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+}
+
+.tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.tabActive {
+  color: var(--color-text-link);
+}
+
+/* 2px accent indicator — the same token the sidebar rail uses. */
+.tabActive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--space-6);
+  height: var(--border-width-thick);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+.tabLabel {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Below 360px the five tabs get 64px each, so a 12px "Dashboard" label overflows its
+   56px content box and ellipsises to "Dashbo…". Drop the horizontal padding and use the
+   compact 11px label size instead; every label then fits without changing its wording. */
+@media (max-width: 359px) {
+  .tab {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .tabLabel {
+    font-size: var(--font-size-0);
+    letter-spacing: -0.01em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

@@ -1,0 +1,75 @@
+/**
+ * DSA Tracker — Badge primitive styles (Phase 2)
+ * ~20px tall, 12px semibold. Tone is expressed by a tinted surface plus a tone-coloured
+ * dot; the label always uses `--color-text-primary` so contrast is AA for every tone
+ * (the token set has no light step for the danger hue).
+ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  /* No 20px geometry token exists; derived from the 32px small control height. */
+  height: calc(var(--control-height-sm) - var(--space-3));
+  padding: 0 var(--space-2);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+  /* Falls back to the text colour if a tone class is ever missing. */
+  --badge-tone-color: var(--color-text-tertiary);
+}
+
+.dot {
+  width: var(--space-1);
+  height: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--badge-tone-color);
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------- tones */
+
+.neutral {
+  --badge-tone-color: var(--color-text-tertiary);
+  background: var(--color-bg-hover);
+}
+
+.accent {
+  --badge-tone-color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  border-color: var(--color-border-accent);
+}
+
+.success {
+  --badge-tone-color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.warning {
+  --badge-tone-color: var(--color-warning);
+  background: var(--color-warning-subtle);
+}
+
+.danger {
+  --badge-tone-color: var(--color-danger);
+  background: var(--color-danger-subtle);
+}
+
+.info {
+  --badge-tone-color: var(--color-info);
+  background: var(--color-info-subtle);
+}
+
+/* ------------------------------------------------------------------ shapes */
+
+.compact {
+  border-radius: var(--radius-1);
+}
+
+.pill {
+  border-radius: var(--radius-pill);
+}

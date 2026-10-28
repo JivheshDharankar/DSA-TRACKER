@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecallSessionModal } from '../../src/components/reviews/RecallSessionModal';
 import { createMockProblem } from '../fixtures/problem.fixture';
@@ -180,9 +180,12 @@ describe('RecallSessionModal component', () => {
       expect(screen.getByText('Revision Recorded!')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/Stage 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/Stage 2/i)).toBeInTheDocument();
-    expect(screen.getByText(/Learning → Familiar/i)).toBeInTheDocument();
+    // Scoped to the result panel: the SRS stepper above it also announces stage numbers
+    // ("Stage 1: Day 1 … — Completed") for assistive technology.
+    const resultPanel = screen.getByRole('status');
+    expect(within(resultPanel).getByText(/Stage 1/i)).toBeInTheDocument();
+    expect(within(resultPanel).getByText(/Stage 2/i)).toBeInTheDocument();
+    expect(within(resultPanel).getByText(/Learning → Familiar/i)).toBeInTheDocument();
     expect(handleSuccess).toHaveBeenCalledWith(mockSubmissionResult);
   });
 
@@ -207,7 +210,7 @@ describe('RecallSessionModal component', () => {
     });
   });
 
-  it('calls onClose when close button is clicked', async () => {
+  it('calls onClose when the dialog close button is clicked', async () => {
     const user = userEvent.setup();
     const handleClose = vi.fn();
 
@@ -220,7 +223,90 @@ describe('RecallSessionModal component', () => {
       />
     );
 
-    await user.click(screen.getByTitle('Close modal'));
+    await user.click(screen.getByRole('button', { name: /close dialog/i }));
     expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * The overlay itself is now the shared `Dialog` primitive. These assertions cover the
+   * contract the migration had to gain: a real modal dialog in a portal, labelled by the
+   * problem title, closable with Escape, and with focus moved into it on open.
+   *
+   * jsdom has no layout, so `useFocusTrap` cannot enumerate focusable descendants
+   * (`getClientRects()` is always empty) and Tab cycling therefore cannot be exercised
+   * here — that is verified in the browser instead.
+   */
+  describe('dialog semantics', () => {
+    it('renders a modal dialog labelled by the problem title', () => {
+      render(
+        <RecallSessionModal
+          isOpen={true}
+          problem={mockProblem}
+          onClose={() => {}}
+          onSuccess={() => {}}
+        />
+      );
+
+      const dialog = screen.getByRole('dialog', { name: /Invert Binary Tree/i });
+      expect(dialog).toHaveAttribute('aria-modal', 'true');
+      expect(dialog).toHaveAccessibleDescription(/COLLEGE DSA #7/i);
+    });
+
+    it('moves focus inside the dialog when it opens', () => {
+      render(
+        <RecallSessionModal
+          isOpen={true}
+          problem={mockProblem}
+          onClose={() => {}}
+          onSuccess={() => {}}
+        />
+      );
+
+      expect(screen.getByRole('dialog')).toContainElement(
+        document.activeElement as HTMLElement
+      );
+    });
+
+    it('closes on Escape', async () => {
+      const user = userEvent.setup();
+      const handleClose = vi.fn();
+
+      render(
+        <RecallSessionModal
+          isOpen={true}
+          problem={mockProblem}
+          onClose={handleClose}
+          onSuccess={() => {}}
+        />
+      );
+
+      await user.keyboard('{Escape}');
+      expect(handleClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('locks page scrolling while open and restores it on close', () => {
+      const { rerender, unmount } = render(
+        <RecallSessionModal
+          isOpen={true}
+          problem={mockProblem}
+          onClose={() => {}}
+          onSuccess={() => {}}
+        />
+      );
+
+      expect(document.body.style.overflow).toBe('hidden');
+
+      rerender(
+        <RecallSessionModal
+          isOpen={false}
+          problem={mockProblem}
+          onClose={() => {}}
+          onSuccess={() => {}}
+        />
+      );
+
+      expect(document.body.style.overflow).toBe('');
+      unmount();
+    });
   });
 });

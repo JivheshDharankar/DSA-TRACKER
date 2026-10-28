@@ -1,4 +1,5 @@
 import { ProblemRetention } from '../models/Problem.model.js';
+import { startOfUtcDayAfter } from '../utils/date.util.js';
 
 export type RecallResult = 'EASY' | 'STRUGGLED' | 'HINT' | 'FORGOT';
 export type TimingStatus = 'EARLY' | 'ON_TIME' | 'LATE';
@@ -81,12 +82,16 @@ export class RevisionScheduler {
   }
 
   /**
-   * Anchors a new nextReviewDate to the calendar date of the actual review + interval in days.
+   * Anchors a new nextReviewDate to the START (00:00:00.000 UTC) of the target calendar day:
+   * the UTC calendar day of the review, advanced by `daysToAdd` calendar days.
+   *
+   * Scheduling is calendar-day based, not elapsed-24-hour-period based: a review completed at
+   * 23:59 with a 1-day interval becomes due at 00:00 the next calendar day, not at 23:59.
+   * The anchor's time-of-day is deliberately discarded, so legacy rows that stored a
+   * time-of-day are replaced by a normalised midnight boundary on their next review.
    */
   static addCalendarDays(anchorDate: Date, daysToAdd: number): Date {
-    const nextDate = new Date(anchorDate.getTime());
-    nextDate.setUTCDate(nextDate.getUTCDate() + daysToAdd);
-    return nextDate;
+    return startOfUtcDayAfter(anchorDate, daysToAdd);
   }
 
   /**

@@ -1,57 +1,9 @@
-.emptyContainer {
-  background: var(--bg-surface);
-  border: 1px dashed var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2xl) var(--space-lg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin: var(--space-xl) 0;
-}
+/**
+ * DSA Tracker — Tracker empty state (Phase 6)
+ * The presentation lives in the shared `EmptyState` primitive; only the page-level
+ * spacing around it belongs here.
+ */
 
-.iconWrapper {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(56, 189, 248, 0.1);
-  color: var(--accent-cyan);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--space-md);
-}
-
-.title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: var(--space-xs);
-}
-
-.description {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  max-width: 420px;
-  margin-bottom: var(--space-lg);
-  line-height: 1.5;
-}
-
-.createBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 var(--space-lg);
-  background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-  color: #04101e;
-  font-weight: 700;
-  font-size: 0.85rem;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
-}
-
-.createBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+.emptyState {
+  margin-top: var(--space-2);
 }

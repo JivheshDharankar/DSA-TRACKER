@@ -1,0 +1,141 @@
+/**
+ * DSA Tracker — Progress primitive styles (Phase 2)
+ * Linear track 6px (4px for `sm`) with a 4px radius; ring stroke 6px. Tones map to
+ * semantic tokens only. All other values come from `styles/tokens.css`.
+ */
+
+.track {
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-1);
+}
+
+/* `sm` is 4px (`--space-1`); `md` is the specified 6px — no 6px token exists. */
+.sm {
+  height: var(--space-1);
+}
+
+.md {
+  height: 6px;
+}
+
+.bar {
+  height: 100%;
+  border-radius: var(--radius-1);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.accent {
+  background: var(--color-accent);
+}
+
+.success {
+  background: var(--color-success);
+}
+
+.warning {
+  background: var(--color-warning);
+}
+
+.danger {
+  background: var(--color-danger);
+}
+
+.info {
+  background: var(--color-info);
+}
+
+.mastery {
+  background: var(--color-mastery-strong);
+}
+
+.muted {
+  background: var(--color-text-tertiary);
+}
+
+/* ------------------------------------------------------------------- ring */
+
+.ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* 64px (`--space-8`) and 96px (1.5×) — the ring geometry mirrors the SVG numbers. */
+.ringMd {
+  width: var(--space-8);
+  height: var(--space-8);
+}
+
+.ringLg {
+  width: calc(var(--space-8) * 1.5);
+  height: calc(var(--space-8) * 1.5);
+}
+
+.ringTrack {
+  fill: none;
+  stroke: var(--color-bg-hover);
+}
+
+.ringBar {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--duration-slow) var(--ease-out);
+}
+
+.ring .accent {
+  stroke: var(--color-accent);
+}
+
+.ring .success {
+  stroke: var(--color-success);
+}
+
+.ring .warning {
+  stroke: var(--color-warning);
+}
+
+.ring .danger {
+  stroke: var(--color-danger);
+}
+
+.ring .info {
+  stroke: var(--color-info);
+}
+
+.ring .mastery {
+  stroke: var(--color-mastery-strong);
+}
+
+.ring .muted {
+  stroke: var(--color-text-tertiary);
+}
+
+.ringContent {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: var(--font-variant-numeric);
+}
+
+/* Ring sizes get their own class names: `.sm`/`.md` belong to the linear track and
+   must never leak a 6px height onto the ring container. */
+.ringLg .ringContent {
+  font-size: var(--font-size-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .ringBar {
+    transition: none;
+  }
+}

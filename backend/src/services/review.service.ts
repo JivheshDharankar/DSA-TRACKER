@@ -169,7 +169,7 @@ export class ReviewService {
   }
 
   /**
-   * Retrieves due problems (nextReviewDate <= current server time) ordered by most overdue first.
+   * Retrieves due problems (scheduled UTC calendar day has arrived) ordered by most overdue first.
    */
   async getDueProblems(
     userId: string,

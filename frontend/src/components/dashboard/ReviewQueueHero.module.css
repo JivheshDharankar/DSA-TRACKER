@@ -1,134 +1,123 @@
+/**
+ * DSA Tracker — Today review panel styles (Phase 5)
+ * Token-only: hairline surfaces, no gradient/blur/glow.
+ */
+
 .card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-lg);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--accent-cyan), var(--accent-violet));
-}
-
-.leftArea {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  max-width: 600px;
-}
-
-.headingRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .title {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
 }
 
 .desc {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  line-height: 1.4;
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-body);
+  color: var(--color-text-secondary);
 }
 
-.metricsRow {
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+@media (min-width: 640px) {
+  .metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.metric {
   display: flex;
-  gap: var(--space-md);
-  margin-top: var(--space-xs);
-  flex-wrap: wrap;
-}
-
-.metricBox {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.35rem 0.75rem;
-}
-
-.metricVal {
-  font-size: 1.25rem;
-  font-weight: 800;
-  font-family: var(--font-mono);
-  color: var(--text-main);
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-raised);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-3);
+  min-width: 0;
 }
 
 .metricLabel {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  font-weight: 600;
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  color: var(--color-text-tertiary);
 }
 
-.overdueVal {
-  color: #f87171;
+.metricValue {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  font-variant-numeric: var(--font-variant-numeric);
+  color: var(--color-text-primary);
 }
 
-.dueTodayVal {
-  color: #38bdf8;
+.toneAccent {
+  color: var(--color-accent-hover);
 }
 
-.dueNowVal {
-  color: #34d399;
+.toneDanger {
+  color: var(--color-danger);
 }
 
-.rightArea {
+.toneInfo {
+  color: var(--color-info);
+}
+
+.toneNeutral {
+  color: var(--color-text-primary);
+}
+
+.actions {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
 }
 
-.startBtn {
+.cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background: var(--accent-cyan);
-  color: var(--text-inverse);
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-md);
-  font-weight: 700;
-  font-size: 0.95rem;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
-  transition: all var(--transition-fast);
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-height-md);
+  padding: 0 var(--space-4);
+  background: var(--color-accent-strong);
+  border-radius: var(--radius-3);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-semibold);
+  transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.startBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+.cta:hover {
+  background: var(--color-accent);
 }
 
-.clearBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #34d399;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 0.85rem;
+.cta:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (max-width: 767px) {
+  .cta {
+    width: 100%;
+  }
 }

@@ -1,84 +1,120 @@
+/**
+ * DSA Tracker — Tracker page shell styles (Phase 6)
+ * ================================================
+ * Page stack, header band with the view toggle, and the loading panel. All values come
+ * from `styles/tokens.css`; the legacy cyan accent, glass surfaces and card shadows are
+ * gone, and the loading state now reserves the layout instead of being a spinner box.
+ *
+ * The header band and the toolbar stack above the list at every width, which is the
+ * "toolbar-first" arrangement: identity, then controls, then data.
+ */
+
 .pageContainer {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-4);
   width: 100%;
+  min-width: 0;
 }
+
+/* ------------------------------------------------------------- header band */
 
 .pageHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-md);
-  margin-bottom: var(--space-sm);
+  gap: var(--space-4);
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .headerInfo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .pageTitle {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
+  font-size: var(--font-size-6);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
 }
 
 .pageSubtitle {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-secondary);
+  max-width: 78ch;
 }
 
 .viewModeToggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 3px;
   gap: 2px;
+  padding: 2px;
+  background: var(--color-bg-sunken);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-2);
+  flex-shrink: 0;
 }
 
 .viewBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
-  transition: all var(--transition-fast);
+  width: 30px;
+  height: 26px;
+  border-radius: var(--radius-1);
+  color: var(--color-text-tertiary);
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.viewBtn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
 }
 
 .viewBtnActive {
-  background: var(--bg-surface-elevated);
-  color: var(--accent-cyan);
-  box-shadow: var(--shadow-sm);
+  background: var(--color-bg-raised);
+  color: var(--color-accent);
 }
 
-.errorBanner {
-  background: var(--color-hard-bg);
-  border: 1px solid var(--color-hard-border);
-  color: var(--color-hard);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+.viewBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.loadingSkeleton {
+@media (max-width: 767px) {
+  .pageTitle {
+    font-size: var(--font-size-4);
+  }
+}
+
+/* ---------------------------------------------------------- loading panel */
+
+.loadingState {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-xl);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  align-items: center;
-  justify-content: center;
-  min-height: 280px;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-surface);
+  border: var(--border-width-hairline) solid var(--color-border-hairline);
+  border-radius: var(--radius-4);
+  min-width: 0;
+}
+
+.loadingCaption {
+  font-size: var(--font-size-2);
+  color: var(--color-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewBtn {
+    transition: none;
+  }
 }
