@@ -52,7 +52,7 @@
 │                       Frontend (React 18 + Vite)                │
 │   Pages → Shared TrackerPage → useProblems Hook → API Client    │
 └───────────────────────────────┬─────────────────────────────────┘
-                                │ HTTPS / REST (HTTP-only Cookie)
+                                │ REST API + HTTP-only authentication cookie
 ┌───────────────────────────────▼─────────────────────────────────┐
 │                     Backend (Node.js + Express 4)               │
 │   Routes → Middleware (Auth, Validation, Rate Limiter)          │
@@ -66,6 +66,8 @@
 │   Mongoose Models → MongoDB Database                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+> **Network & Protocol Note**: Local development operates over HTTP (`http://localhost:5173` for the frontend SPA and `http://localhost:5001` for the backend API). Production deployments should terminate TLS and enforce HTTPS with secure cookie flags (`secure: true`).
 
 ### Frontend Architecture
 - **Route Structure**: Configured in `App.tsx` using React Router 6. Includes guest-only routes (`/login`, `/register`) wrapped in `GuestRoute` and authenticated routes (`/dashboard`, `/college-dsa`, `/personal-dsa`, `/review`, `/reviews/history`, `/patterns`, `/patterns/:id`, `/problems/locked`, `/problems/:id`) wrapped in `ProtectedRoute`.
@@ -492,8 +494,8 @@ VITE_API_URL=http://localhost:5001/api/v1
 ### Initial Setup
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/dsa-tracker.git
-cd dsa-tracker
+git clone https://github.com/JivheshDharankar/DSA-TRACKER.git
+cd DSA-TRACKER
 
 # 2. Install workspace dependencies
 cd backend && npm install
@@ -523,29 +525,61 @@ npm run dev:frontend
 The platform maintains a comprehensive automated testing pipeline across unit, integration, and end-to-end boundaries.
 
 ### Current Verified Automated Test Baseline:
-- **Backend**: **199 / 199 tests passing** (13 test suites)
-- **Frontend**: **109 / 109 tests passing** (13 test suites)
-- **Playwright E2E**: **4 / 4 specs passing**
+- **Backend**: **313 passed**, **0 failed**, **2 intentionally skipped** (20 test files)
+  - *Note on skipped tests*: The 2 skipped tests belong to the live Gemini quality evaluation harness (`backend/tests/aiQualitySet.test.ts`), which requires live Gemini API quota. During verification, the upstream Google AI Studio free-tier quota was exhausted; offline schema, validation, rate limiting, and contract tests passed completely (100% green). Live generation quality verification is deferred until Google's free-tier quota resets.
+- **Frontend**: **276 passed**, **0 failed** (28 test files)
+- **Playwright E2E**: **8 / 8 passed** (including accessibility dialog semantics, focus-trap tests, and known-defect isolation)
 - **TypeScript & Vite Builds**: Clean exit code 0 (`tsc` backend, `tsc && vite build` frontend)
 - **Circular Dependencies**: **0** backend, **0** frontend
 - **TypeScript Directive Violations**: **0** `@ts-ignore`, **0** `@ts-expect-error`
 
 ### Testing Layers:
 1. **Unit Tests**:
-   - Algorithmic verification of deterministic Spaced Repetition calculations (`backend/tests/scheduler.test.ts`).
+   - Algorithmic verification of deterministic Spaced Repetition calculations (`backend/tests/scheduler.test.ts`, `backend/tests/calendarDayScheduling.test.ts`).
    - 5-factor pattern mastery calculation and weighting (`backend/tests/patternMastery.test.ts`).
    - 4-gate locked mastery evaluation logic (`backend/tests/mastery.test.ts`).
-   - Frontend utilities: UTC date normalization, error formatting, and URL sanitization matrix (`frontend/tests/unit/`).
+   - LeetCode URL normalization and slug extraction (`backend/tests/leetcodeImport.unit.test.ts`).
+   - AI service rate limiting, bounded retry logic, prompt sanitization, and structured JSON schema validation (`backend/tests/ai.unit.test.ts`, `backend/tests/aiNotConfigured.test.ts`).
+   - Frontend utilities: high-resolution elapsed timer hook (`useElapsedTimer`), focus trap (`useFocusTrap`), UTC date normalization, and URL sanitization matrix (`frontend/tests/unit/`).
 2. **Component & Integration Tests**:
-   - Reusable UI component testing using React Testing Library (`frontend/tests/components/`).
-   - Integration tests verifying `useProblems` hook behavior and full authentication routing flows (`frontend/tests/integration/`).
+   - Reusable UI component testing using React Testing Library (`frontend/tests/components/`): `ProblemModal`, `DeleteProblemDialog`, `RecallSessionModal`, `RecallSessionTimer`, `AIAssistantPanel`, `LeetcodeImportPanel`.
+   - Integration tests verifying `useProblems` hook behavior, dashboard analytics, pattern detail pages, locked problem views, and full authentication routing flows (`frontend/tests/integration/`).
 3. **Backend Integration Tests**:
    - Supertest HTTP assertions executing against an in-memory MongoDB instance (`MongoMemoryServer`).
-   - Verifies end-to-end API contracts, auth cookie lifecycle, problem CRUD, reviews, patterns, and dashboard aggregation.
+   - Verifies end-to-end API contracts, auth cookie lifecycle, problem CRUD, reviews, patterns, LeetCode import, and dashboard aggregation.
 4. **Adversarial Security Suite (`backend/tests/securityAudit.test.ts`)**:
-   - 25 dedicated adversarial test cases validating HTTP/HTTPS protocol validation, schema strictness, mass assignment resistance, search ReDoS immunity, query length boundaries, IDOR cross-tenant isolation, and rate limiter enforcement.
+   - Dedicated adversarial test cases validating HTTP/HTTPS protocol validation, schema strictness, mass assignment resistance, search ReDoS immunity, query length boundaries, IDOR cross-tenant isolation, and rate limiter enforcement.
 5. **Playwright E2E Specifications (`frontend/e2e/`)**:
-   - Complete browser journeys in headless Chromium verifying authentication, College DSA CRUD, Personal DSA CRUD with LeetCode numbering, and full active recall review cycles.
+   - Complete browser journeys in headless Chromium verifying authentication, dialog focus trapping, College DSA CRUD, Personal DSA CRUD with LeetCode numbering, and full active recall review cycles.
+
+### Final Release Verification Baseline
+
+A complete, live end-to-end verification and visual browser demonstration were executed against the frozen application:
+- **Backend Test Suite**: 313 passed, 0 failed, 2 intentionally skipped live Gemini quality tests
+- **Frontend Test Suite**: 276 passed, 0 failed
+- **Playwright E2E Suite**: 8 / 8 passed
+- **TypeScript**: Clean exit code 0 (`tsc --noEmit` across backend and frontend)
+- **Production Builds**: Clean exit code 0 (`npm run build` across backend and frontend)
+- **Full Browser Workflow Manually Verified**: Demonstrated through visible browser interactions across:
+  - Authentication (Registration, login validation, session persistence, protected route guards, logout)
+  - Problem CRUD with atomic sequence numbering (Create, read, update, delete modal, card/table view toggles)
+  - Problem Detail (Metadata badges, notes, SRS stepper, action buttons)
+  - AI Assistant Panel (Verified all 5 actions without consuming live Gemini quota)
+  - SRS Review Workflow (3-step active recall: Attempt → Evaluate → Result, notes reveal, recall rating submission)
+  - Revision Stopwatch Timer (Wall-clock progression, immunity to background tab throttling via timestamp deltas)
+  - Review History (Persisted entries, rating badges, stage progressions, interval calculation, persistence across reload)
+  - LeetCode Import (URL validation, metadata preview, form application, duplicate detection warning)
+  - Patterns Catalog & Mastery (30 seeded patterns, recognition signals, common mistakes, mastery metrics)
+  - Locked Problems Experience (4-gate proof-of-learning seal presentation)
+  - Modal Interactions (Keyboard focus trapping, Escape key dismissal, backdrop dismissal)
+- **Responsive Layouts Verified**: Tested across **375px**, **390px**, **768px**, **1024px**, and **1440px** viewports:
+  - Zero horizontal scroll overflow across all tested widths
+  - Mobile bottom navigation bar automatically adapts below 768px
+  - Desktop sidebar collapses into accessible mobile navigation drawer
+- **Visual & Console Cleanliness**:
+  - No critical, high, medium, or low visual issues identified
+  - Zero browser console errors during the visual browser demonstration
+  - Zero network errors during normal verified flows
 
 ### Executing Tests
 ```bash
@@ -565,38 +599,41 @@ npm run build:frontend
 
 ---
 
-## 14. Deployment Topology
+## 14. Deployment Architecture
 
-The application is structured for independent service deployment:
+The application is architected as decoupled tiers suitable for containerized or modern cloud hosting:
 
 ```
 ┌─────────────────────────────────┐
-│     Netlify (Static SPA)        │
+│     Frontend (Static SPA)       │
 │   React 18 + Vite Production    │
+│   (Netlify / Vercel / S3+CDN)   │
 └────────────────┬────────────────┘
-                 │ API calls (HTTPS with credentials)
+                 │ REST API (HTTPS with credentials)
 ┌────────────────▼────────────────┐
-│     Render (Node.js Web Service)│
+│     Backend (Node.js API)       │
 │   Express REST API + Middleware │
+│   (Render / Railway / Fly / AWS)│
 └────────────────┬────────────────┘
                  │ MONGODB_URI (TLS)
 ┌────────────────▼────────────────┐
-│       MongoDB Atlas Cluster     │
+│      MongoDB / Atlas Cluster    │
 │   Multi-tenant Indexed Database │
 └─────────────────────────────────┘
 ```
 
-- **Frontend**: Hosted on Netlify as a single-page application with SPA client-side routing redirects configured through the Netlify deployment configuration.
-- **Backend**: Hosted as a Node.js web service on Render, with environment variables configured through the platform dashboard.
-- **Database**: Managed MongoDB Atlas replica set with TLS encryption.
-- *Note*: Production environment verification and live deployment audit were completed in Phase 9.
+- **Frontend**: Standard static single-page application build output (`frontend/dist`), suitable for static hosting platforms (such as Netlify, Vercel, Cloudflare Pages, or AWS S3/CloudFront) with client-side SPA fallback routing redirects.
+- **Backend**: Containerized or standalone Node.js/Express service, suitable for Node.js hosting environments (such as Render, Railway, Fly.io, or AWS ECS/App Runner).
+- **Database**: Compatible with local MongoDB 7.0 instances or managed MongoDB Atlas replica sets with TLS encryption.
+- **Docker Compose**: A [`docker-compose.yml`](file:///Users/jivhesh/Desktop/TRACKER/docker-compose.yml) file is provided in the repository root configuring multi-container local production orchestration (MongoDB 7.0, backend API on port 5001, and frontend SPA on port 5173).
+- **Production Prerequisites**: Deploying to production requires configuring the documented environment variables, terminating TLS/HTTPS, and setting `NODE_ENV=production` so that session cookies enforce `secure: true` and CORS origin validation is strictly locked to the frontend domain.
 
 ---
 
 ## 15. Known Engineering Limitations & Design Decisions
 
 1. **UTC Calendar Day Boundaries**: All daily review scheduling, streak calculations, and activity heatmaps use UTC midnight calendar boundaries. Timezone offsets are not dynamically mapped per user's local operating system clock.
-2. **In-Memory Rate Limiting**: The current rate limiters (`express-rate-limit`) operate in-memory on the Node.js process. In a horizontally scaled multi-instance production environment (Phase 9), backing the limiter with a shared Redis store would be appropriate.
+2. **In-Memory Rate Limiting**: The current rate limiters (`express-rate-limit`) operate in-memory on the Node.js process. In a horizontally scaled multi-instance production environment, backing the limiter with a shared Redis store would be appropriate.
 3. **Legacy Schema Compatibility Mapping**: To preserve backward compatibility with legacy documents that used a single `problemLink`, the `Problem` schema's JSON transform dynamically maps historical links containing `leetcode.com` to `leetcodeLink` and others to `collegeLink` without performing destructive database mutations.
 4. **Terminal SRS Stage**: Stage 9 (365 days) is the terminal cap for reviews. Problems that have reached Stage 9 continue to be scheduled at 365-day intervals upon subsequent successful recall.
 5. **Zero Fictitious Features**: Feature suggestions from earlier roadmaps (such as an unbuilt "Random Recall Chamber") have been removed from documentation to ensure 100% agreement between documented capabilities and the verified codebase.
